@@ -1,0 +1,92 @@
+{
+  "en": "English",
+  "page": {
+    "home": "Users",
+    "login": "Sigh In",
+    "user-profile": "User Profiles"
+  },
+  "login-form": {
+    "title": "Sign In",
+    "email": "Email",
+    "password": "Password",
+    "login-action": "Login",
+    "forget-password": "Forget your passwrod?"
+  },
+  "form": {
+    "ok": "Ok",
+    "cancel": "Cancel",
+    "save": "Save",
+    "error-field-required": "The {0} is required.",
+    "error-field-too-short": "The {0} is too short. Minimun length is {1}.",
+    "error-field-too-long": "The {0} is too long. Maximum length is {1}.",
+    "error-email-invalid": "The E-mail is invalid.",
+    "error-date-invalid": "The date is invalid."
+  },
+  "user-profile": {
+    "title": "Users",
+    "search": "Search",
+    "column-user": "User",
+    "column-created-at": "Date of created",
+    "column-modified-at": "Date of modified",
+    "column-actions": "Actions",
+    "edit-profile": "Edit user",
+    "new-profile": "Create user",
+    "delete_selected_profiles_title": "Delete selected users",
+    "delete_selected_profiles_confirm": "Are you sure you want to delete the selected users?",
+    "delete_profile_title": "Delete user",
+    "delete_profile_confirm": "Are you sure you want to delete user {0}?",
+    "field-name": "Name",
+    "field-surname": "Surname",
+    "field-email": "E-mail",
+    "field-date-of-birthday": "Date of birthday",
+    "field-address": "Address",
+    "field-phone-number": "Phone number"
+  },
+  "not-found": {
+    "title": "Something's wrong here&#8230;",
+    "message": "We can't find the page you're looking for. Head back to <a href=\"{0}\">home</a>."
+  },
+  "locale-switcher": {
+    "title": "Language:"
+  },
+  "server-error": {
+    "user_not_found": "User with the given email or password was not found",
+    "user_profile_not_found": "User profile was not found",
+    "general_error": "An error has occurred. Operation could not complete."
+  },
+  "$vuetify": {
+    "dataIterator": {
+      "noResultsText": "No matching records found",
+      "loadingText": "Loading items..."
+    },
+    "dataTable": {
+      "itemsPerPageText": "Rows per page:",
+      "ariaLabel": {
+        "sortDescending": "Sorted descending.",
+        "sortAscending": "Sorted ascending.",
+        "sortNone": "Not sorted.",
+        "activateNone": "Activate to remove sorting.",
+        "activateDescending": "Activate to sort descending.",
+        "activateAscending": "Activate to sort ascending."
+      },
+      "sortBy": "Sort by"
+    },
+    "dataFooter": {
+      "itemsPerPageText": "Items per page:",
+      "itemsPerPageAll": "All",
+      "nextPage": "Next page",
+      "prevPage": "Previous page",
+      "firstPage": "First page",
+      "lastPage": "Last page",
+      "pageText": "{0}-{1} of {2}"
+    },
+    "datePicker": {
+      "itemsSelected": "{0} selected",
+      "nextMonthAriaLabel": "Next month",
+      "nextYearAriaLabel": "Next year",
+      "prevMonthAriaLabel": "Previous month",
+      "prevYearAriaLabel": "Previous year"
+    },
+    "noDataText": "No data available"
+  }
+}

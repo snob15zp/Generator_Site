@@ -1,0 +1,54 @@
+###############################################################################
+#                          Generated on phpdocker.io                          #
+###############################################################################
+version: "3.1"
+services:
+
+    mariadb:
+      image: mariadb:10.3
+      container_name: generator-mariadb
+      working_dir: /application
+      volumes:
+        - ../webapp:/application
+      environment:
+        - MYSQL_ROOT_PASSWORD=1234
+        - MYSQL_DATABASE=generator_db
+        - MYSQL_USER=generator_db
+        - MYSQL_PASSWORD=1234
+      ports:
+        - "8083:3306"
+      networks:
+        - backend
+
+    webserver:
+      #image: bitnami/apache:latest
+      build: phpdocker/apache
+      container_name: generator-webserver
+      working_dir: /application
+      volumes:
+          - ../webapp:/application
+          - ./phpdocker/apache/generator.apache.conf:/opt/bitnami/apache/conf/vhosts/generator.apache.conf:ro
+      ports:
+       - "8080:80"
+       - "443:8443"
+       - "8090:8090"
+      networks: 
+        - backend
+        - frontend
+      depends_on: 
+        - mariadb
+        - php-fpm
+
+    php-fpm:
+      build: phpdocker/php-fpm
+      container_name: generator-php-fpm
+      working_dir: /application
+      volumes:
+        - ../webapp:/application
+        - ./phpdocker/php-fpm/php-ini-overrides.ini:/etc/php/7.3/fpm/conf.d/99-overrides.ini
+      networks: 
+        - backend
+
+networks:
+  backend:
+  frontend:
