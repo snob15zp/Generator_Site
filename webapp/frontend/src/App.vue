@@ -1,13 +1,13 @@
 <template>
   <v-app>
-    <v-app-bar app v-if="isAuthorized" elevation="2">
-      <v-btn icon @click="$router.push('/')" v-if="userName">
+    <v-app-bar app v-if="isAuthorized" dark color="primary">
+      <v-btn icon @click="$router.push('/')">
         <v-icon>mdi-home</v-icon>
       </v-btn>
       <v-toolbar-title>{{ $router.currentRoute.meta.title }}</v-toolbar-title>
       <v-spacer />
-      <a href="#" v-if="userName">{{ userName }}</a>
-      <v-btn icon @click="logout" v-if="userName">
+      <v-btn text><v-icon left>mdi-account</v-icon>{{ userName }}</v-btn>
+      <v-btn icon @click="logout">
         <v-icon>mdi-logout</v-icon>
       </v-btn>
     </v-app-bar>
@@ -16,35 +16,36 @@
         <router-view />
       </v-container>
     </v-main>
-
-    <v-footer>
-      <v-row>
-        <v-col></v-col>
-        <v-col cols="auto">
-          <LocaleSwitcher />
-        </v-col>
-      </v-row>
-    </v-footer>
   </v-app>
 </template>
 
 <script lang="ts">
 import { Component, Vue, Watch } from "vue-property-decorator";
 import LocaleSwitcher from "@/components/LocaleSwitcher.vue";
-import users from "@/store/modules/users";
+import UserModule from "./store/modules/user";
 
 @Component({
   components: { LocaleSwitcher }
 })
 export default class App extends Vue {
-  public isAuthorized = true;
+  get isAuthorized() {
+    return UserModule.isAuthorized;
+  }
   get userName() {
-    return users.user ? users.user.name : null;
+    return UserModule.userName;
   }
 
   logout() {
-    users.logout();
+    UserModule.logout();
     this.$router.push("/login");
   }
 }
 </script>
+
+<style lang="scss">
+@import "~vuetify/src/styles/main.sass";
+
+#app {
+  background: map-get($grey, lighten-4);
+}
+</style>

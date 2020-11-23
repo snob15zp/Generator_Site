@@ -1,11 +1,6 @@
 <template>
   <div class="login-form justify-center">
-    <v-card
-      elevation="4"
-      width="25rem"
-      class="mx-auto my-12"
-      :loading="inProgress"
-    >
+    <v-card elevation="4" width="25rem" class="mx-auto my-12" :loading="inProgress">
       <v-card-title>
         <v-row justify="center">{{ $t("login-form.title") }}</v-row>
       </v-card-title>
@@ -42,9 +37,7 @@
               >
             </div>
             <div class="d-flex justify-center mt-3">
-              <a class="ml-3 text-decoration-none text-sm caption" href="#">{{
-                $t("login-form.forget-password")
-              }}</a>
+              <a class="ml-3 text-decoration-none text-sm caption" href="#">{{ $t("login-form.forget-password") }}</a>
             </div>
           </v-container>
         </v-card-actions>
@@ -55,7 +48,7 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
-import users from "@/store/modules/users";
+import UserModule from "../store/modules/user";
 
 @Component
 export default class LoginForm extends Vue {
@@ -67,21 +60,16 @@ export default class LoginForm extends Vue {
 
   private errorMessage: any | null = null;
 
-  private emailRules = [
-    (v: string | null) => !!v || this.$t("login-form.email_required")
-  ];
+  private emailRules = [(v: string | null) => !!v || this.$t("login-form.email_required")];
 
-  private passwordRules = [
-    (v: string | null) => !!v || this.$t("login-form.password_required")
-  ];
+  private passwordRules = [(v: string | null) => !!v || this.$t("login-form.password_required")];
 
   private submit() {
     this.inProgress = true;
     this.errorMessage = null;
-    users
-      .login({ login: this.login, password: this.password })
+    UserModule.login({ login: this.login, password: this.password })
       .then(() => this.$router.push("/"))
-      .catch(err => {
+      .catch((err) => {
         this.errorMessage = err.message;
       })
       .finally(() => (this.inProgress = false));

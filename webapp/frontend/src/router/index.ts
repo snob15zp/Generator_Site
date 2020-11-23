@@ -4,7 +4,7 @@ import Login from "../views/Login.vue";
 import Home from "../views/Home.vue";
 import UserProfileDetails from "../views/UserProfileDetails.vue";
 import NotFound from "../views/NotFound.vue";
-import users from "@/store/modules/users";
+import UserModule from "@/store/modules/user";
 import i18n from "@/i18n";
 
 Vue.use(VueRouter);
@@ -58,7 +58,7 @@ const router = new VueRouter({
 router.beforeEach((to, from, next) => {
   window.document.title = (to.name ? to.name + " - " : "") + "Generator";
   if (to.matched.some((record) => record.meta.requiresAuth)) {
-    if (users.user) {
+    if (UserModule.isAuthorized) {
       next();
       return;
     }
