@@ -18,7 +18,7 @@ class AuthService {
     });
   }
 
-  async logout(): Promise<Boolean> {
+  async logout(): Promise<boolean> {
     return new Promise((resolve) => resolve(true));
   }
 }
