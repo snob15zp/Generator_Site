@@ -2,12 +2,19 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Throwable;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Validation\ValidationException;
 use Laravel\Lumen\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Throwable;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\Response;
 
 class Handler extends ExceptionHandler
 {
@@ -28,27 +35,57 @@ class Handler extends ExceptionHandler
      *
      * This is a great spot to send exceptions to Sentry, Bugsnag, etc.
      *
-     * @param  \Throwable  $exception
+     * @param Throwable $e
      * @return void
-     *
-     * @throws \Exception
      */
-    public function report(Throwable $exception)
+    public function report(Throwable $e)
     {
-        parent::report($exception);
+        parent::report($e);
     }
 
     /**
      * Render an exception into an HTTP response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Throwable  $exception
-     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
-     *
-     * @throws \Throwable
+     * @param $request
+     * @param Throwable $e
+     * @return JsonResponse
+     * @throws Throwable
      */
-    public function render($request, Throwable $exception)
+    public function render($request, Throwable $e)
     {
-        return parent::render($request, $exception);
+        Log::error($e);
+
+        if(env("APP_DEBUG")) {
+            return parent::render($request, $e);
+        }
+
+        $status = Response::HTTP_INTERNAL_SERVER_ERROR;
+
+        if ($e instanceof HttpResponseException) {
+          $status = Response::HTTP_INTERNAL_SERVER_ERROR;
+        } elseif ($e instanceof MethodNotAllowedHttpException) {
+          $status = Response::HTTP_METHOD_NOT_ALLOWED;
+          $e = new MethodNotAllowedHttpException([], 'HTTP_METHOD_NOT_ALLOWED', $e);
+        } elseif ($e instanceof NotFoundHttpException) {
+          $status = Response::HTTP_NOT_FOUND;
+          $e = new NotFoundHttpException('HTTP_NOT_FOUND', $e);
+        } elseif ($e instanceof AuthorizationException) {
+          $status = Response::HTTP_FORBIDDEN;
+          $e = new AuthorizationException('HTTP_FORBIDDEN', $status);
+        } elseif ($e instanceof \Dotenv\Exception\ValidationException && $e->getResponse()) {
+          $status = Response::HTTP_BAD_REQUEST;
+          $e = new \Dotenv\Exception\ValidationException('HTTP_BAD_REQUEST', $status, $e);
+        } elseif ($e instanceof ModelNotFoundException) {
+            $status = Response::HTTP_NOT_FOUND;
+            $e = new NotFoundHttpException('HTTP_NOT_FOUND', $e);
+        } elseif ($e) {
+          $e = new HttpException($status, 'HTTP_INTERNAL_SERVER_ERROR');
+        }
+
+        return response()->json([
+          'success' => false,
+          'status' => $status,
+          'message' => $e->getMessage()
+        ], $status);
     }
 }

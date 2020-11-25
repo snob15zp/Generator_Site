@@ -1,4 +1,1 @@
 RewriteEngine On
-
-
-RewriteRule ^/api/(.*)$ ./api/public/$1 [L,NC,R=302]

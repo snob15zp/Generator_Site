@@ -9,18 +9,20 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Lumen\Auth\Authorizable;
 
+/**
+ * @property string $login
+ * @property UserRole $role
+ */
 class User extends Model implements AuthenticatableContract, AuthorizableContract
 {
     use Authenticatable, Authorizable, HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
-    protected $fillable = [
-        'name', 'email',
-    ];
+    protected $table = 'user';
+
+    protected $primaryKey = 'id';
+    public $incrementing = true;
+
+    protected $fillable = ['login', 'password', 'salt', 'role'];
 
     /**
      * The attributes excluded from the model's JSON form.
@@ -28,6 +30,35 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
      * @var array
      */
     protected $hidden = [
-        'password',
+        'password', 'salt'
     ];
+
+    public function role() {
+        return $this->belongsTo('\App\Models\UserRole')->first();
+    }
+
+    public function sessions() {
+        return $this->hasMany('\App\Models\Session');
+    }
+
+
+    /**
+     * Get the identifier that will be stored in the subject claim of the JWT.
+     *
+     * @return mixed
+     */
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    /**
+     * Return a key value array, containing any custom claims to be added to the JWT.
+     *
+     * @return array
+     */
+    public function getJWTCustomClaims()
+    {
+        return [];
+    }
 }
