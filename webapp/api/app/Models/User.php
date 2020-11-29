@@ -42,6 +42,10 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         return $this->hasMany('\App\Models\Session');
     }
 
+    public function profile(){
+        return $this->hasOne('\App\Models\UserProfile');
+    }
+
 
     /**
      * Get the identifier that will be stored in the subject claim of the JWT.
