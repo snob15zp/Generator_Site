@@ -23,7 +23,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     protected $primaryKey = 'id';
     public $incrementing = true;
 
-    protected $fillable = ['login', 'password', 'salt', 'role'];
+    protected $fillable = ['login', 'password', 'role'];
 
     /**
      * The attributes excluded from the model's JSON form.
@@ -34,12 +34,19 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         'password', 'salt'
     ];
 
-    public function role() {
+    public function role()
+    {
         return $this->belongsTo('\App\Models\UserRole');
     }
 
-    public function sessions() {
+    public function sessions()
+    {
         return $this->hasMany('\App\Models\Session');
+    }
+
+    public function profile()
+    {
+        return $this->hasOne('\App\Models\UserProfile');
     }
 
 
