@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\UserResource;
 use App\Models\Session;
 use App\Models\User;
 use http\Client\Response;
@@ -45,7 +46,8 @@ class AuthController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        return $this->respondWithToken($token);
+        //return $this->respondWithToken($token);
+        return new UserResource(Auth::user());
     }
 
 }

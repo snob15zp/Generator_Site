@@ -9,6 +9,8 @@ class Controller extends BaseController
 {
     protected function respondWithToken($token)
     {
+        $user = Auth::user();
+
         return response()->json([
             'token' => $token,
             'token_type' => 'bearer',
