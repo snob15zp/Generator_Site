@@ -19,7 +19,7 @@ class CreateUserProfileTable extends Migration
             $table->string('surname')->nullable();
             $table->string('address')->nullable();
             $table->string('phone_number')->nullable();
-            $table->string('email')->nullable();
+            $table->string('email');
             $table->timestamp('date_of_birth')->nullable();
             $table->unsignedBigInteger('user_id');
             $table->timestamps();

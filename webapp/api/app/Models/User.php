@@ -44,8 +44,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         return $this->hasMany('\App\Models\Session');
     }
 
-    public function profile()
-    {
+    public function profile(){
         return $this->hasOne('\App\Models\UserProfile');
     }
 
