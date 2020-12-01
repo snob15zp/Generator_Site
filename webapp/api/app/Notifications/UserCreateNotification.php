@@ -11,13 +11,15 @@ class UserCreateNotification extends Notification
     use Queueable;
 
     private $user;
+    private $resetPassword;
 
     /**
      * UserCreateNotification constructor.
      */
-    public function __construct($user)
+    public function __construct($user, $resetPassword)
     {
         $this->user = $user;
+        $this->resetPassword = $resetPassword;
     }
 
     public function via($notifiable)
@@ -29,6 +31,6 @@ class UserCreateNotification extends Notification
     {
         return (new MailMessage)
             ->subject('New account')
-            ->markdown('user_create', $this->user);
+            ->markdown('mails.user-create', ['user' => $this->user, 'resetPassword' => $this->resetPassword]);
     }
 }

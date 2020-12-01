@@ -56,3 +56,6 @@ RUN sed -i "s/#LoadModule\ rewrite_module/LoadModule\ rewrite_module/" /usr/loca
 COPY generator.apache.conf /usr/local/apache2/conf/generator.apache.conf
 RUN echo "Include /usr/local/apache2/conf/generator.apache.conf" \
     >> /usr/local/apache2/conf/httpd.conf
+
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer

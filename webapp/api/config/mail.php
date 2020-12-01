@@ -17,7 +17,7 @@ return [
     'username' => env('MAIL_USERNAME'),
     'password' => env('MAIL_PASSWORD'),
 
-    'sendmail' => '/usr/sbin/sendmail -bs',
+    'sendmail' => '/usr/bin/mhsendmail --smtp-addr mailhog:1025',
 
     'markdown' => [
         'theme' => 'default',

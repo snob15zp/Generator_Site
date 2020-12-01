@@ -31,6 +31,10 @@ class AuthServiceProvider extends ServiceProvider
             return $user->role->name == UserRole::ROLE_ADMIN;
         });
 
+        Gate::define(UserPrivileges::CREATE_USER, function ($user) {
+            return $user->role->name == UserRole::ROLE_ADMIN;
+        });
+
         Gate::define(UserPrivileges::MANAGE_PROGRAMS, function ($user) {
             Log::info($user->role->name);
             return $user->hasRole(UserRole::ROLE_ADMIN);

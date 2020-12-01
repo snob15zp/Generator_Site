@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 
-class AuthController extends Controller
+class UserController extends Controller
 {
     /**
      * @param Request $request
@@ -29,9 +29,6 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
-        if ($user->one_time_password) {
-            $user->update(['password' => null, 'one_time_password' => false]);
-        }
         return response()->json(new UserResource($user, $token));
     }
 
@@ -42,5 +39,13 @@ class AuthController extends Controller
     {
         auth()->logout();
         return response()->json(['status' => 'OK']);
+    }
+
+    public function resetPassword(Request $request) {
+
+    }
+
+    public function update(Request $request, $id) {
+
     }
 }

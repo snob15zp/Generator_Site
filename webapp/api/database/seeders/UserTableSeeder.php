@@ -18,8 +18,7 @@ class UserTableSeeder extends Seeder
         $userAdminRole = UserRole::where('name', UserRole::ROLE_ADMIN)->first();
         $user = new User([
             'login' => 'admin',
-            'password' => Hash::make('admin'),
-            'one_time_password' => false
+            'password' => Hash::make('admin')
         ]);
         $user->role()->associate($userAdminRole);
         $user->save();

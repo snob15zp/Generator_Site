@@ -5,17 +5,22 @@ namespace App\Http\Controllers;
 
 
 use App\Http\Resources\UserProfileResource;
+use App\Models\ResetPassword;
 use App\Models\User;
 use App\Models\UserPrivileges;
 use App\Models\UserProfile;
 use App\Models\UserRole;
+use App\Notifications\UserCreateNotification;
+use DateTime;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Exception;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Vinkla\Hashids\Facades\Hashids;
+use Illuminate\Support\Str;
 
 class UserProfileController extends Controller
 {
@@ -41,13 +46,18 @@ class UserProfileController extends Controller
         return UserProfileResource::collection($profiles);
     }
 
+    public function update(Request $request, $id)
+    {
+
+    }
+
     public function create(Request $request)
     {
         if ($request->user()->cannot(UserPrivileges::CREATE_USER)) {
             abort(403, 'Operation is restricted');
         }
         $this->validate($request, [
-            'email' => 'required|email',
+            'email' => 'required|email|unique:user,login',
             'name' => 'required|max:255',
             'surname' => 'required|max:255',
             'address' => 'required|max:255',
@@ -64,15 +74,22 @@ class UserProfileController extends Controller
         $role = UserRole::query()->where('name', $userRoleName)->first();
         $profile = new UserProfile($request->only(['name', 'surname', 'address', 'phone_number', 'email', 'date_of_birth']));
 
-        $user = User::create([
-            'login' => $profile['email'],
-            'one_time_password' => true,
-            'password' => Hash::make(str_random(8))
+        $user = new User([
+            'login' => $profile->email,
+            'password' => null
+        ]);
+        $user->role()->associate($role);
+        $user->save();
+
+        $resetPassword = ResetPassword::create([
+            'login' => $profile->email,
+            'hash' => Hash::make(Str::random(12)),
+            'expired_at' => (new DateTime())->modify('+7 day')
         ]);
 
-
-
-
+        $user->profile()->save($profile);
+        Notification::route('mail', $profile->email)->notify(new UserCreateNotification($user, $resetPassword));
+        return new UserProfileResource($profile);
     }
 
     public function get(Request $request, string $id)

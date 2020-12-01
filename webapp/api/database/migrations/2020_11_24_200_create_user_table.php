@@ -17,7 +17,6 @@ class CreateUserTable extends Migration
             $table->id();
             $table->string('login')->unique()->nullable(false);
             $table->string('password')->nullable();
-            $table->boolean('one_time_password');
             $table->unsignedBigInteger('role_id');
             $table->timestamps();
             $table->foreign('role_id')->references('id')->on('user_role');
