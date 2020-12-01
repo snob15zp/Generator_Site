@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\UserResource;
+use Illuminate\Support\Facades\Gate;
 use App\Models\Session;
 use App\Models\User;
 use http\Client\Response;
@@ -45,9 +46,12 @@ class AuthController extends Controller
         if (!$token = Auth::attempt($credentials)) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
-
-        //return $this->respondWithToken($token);
-        return new UserResource(Auth::user());
+        $user = Auth::user();
+        $session = $user->sessions()->create([
+            'token' => $token,
+            'expires_in' =>  Auth::factory()->getTTL() * 60,
+            'active' => true
+        ]);
+        return new UserResource($user, $session);
     }
-
 }

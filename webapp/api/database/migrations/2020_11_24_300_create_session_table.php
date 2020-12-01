@@ -16,7 +16,9 @@ class CreateSessionTable extends Migration
         Schema::create('session', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->string('token')->unique()->nullable(false);
+            $table->string('token', 512)->unique()->nullable(false);
+            $table->unsignedInteger('expires_in');
+            $table->boolean('active');
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('user');
         });
