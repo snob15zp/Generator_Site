@@ -5,20 +5,21 @@ namespace Database\Seeders;
 
 
 use App\Models\User;
-use App\Models\UserRole;
 use App\Models\UserProfile;
+use App\Models\UserRole;
+use Database\Factories\UserProfileFactory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-
 
 class UserTableSeeder extends Seeder
 {
     public function run()
     {
-        $userAdminRole = UserRole::where('name', 'ROLE_ADMIN')->first();
+        $userAdminRole = UserRole::where('name', UserRole::ROLE_ADMIN)->first();
         $user = new User([
             'login' => 'admin',
-            'password' => Hash::make('admin')
+            'password' => Hash::make('admin'),
+            'one_time_password' => false
         ]);
         $user->role()->associate($userAdminRole);
         $user->save();
@@ -28,14 +29,15 @@ class UserTableSeeder extends Seeder
             'email' => 'admin@mail.fake'
         ]));
 
-        // $userRole = UserRole::where('name', 'ROLE_USER')->first();
-        // $users = User::factory()
-        //     ->count(30)
-        //     ->make()
-        //     ->each(function ($user) use ($userRole) {
-        //         $user->role()->associate($userRole);
-        //         $user->save();
-        //         $user->profile()->save(UserProfile::factory()->make());
-        //     });
+        $userRole = UserRole::where('name', UserRole::ROLE_USER)->first();
+        User::factory()
+            ->count(30)
+            ->make()
+            ->each(function ($user) use ($userRole) {
+                $userProfile = new UserProfileFactory();
+                $user->role()->associate($userRole);
+                $user->save();
+                $user->profile()->save($userProfile->make());
+            });
     }
 }

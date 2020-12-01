@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Models\User;
+use App\Models\UserPrivileges;
 use App\Models\UserRole;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -27,22 +27,22 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $roles = UserRole::all();
-        $roles->flatMap(function ($role) {
-            return $role->privileges()->get()->map(function ($privileges) use ($role) {
-                return [$role->name, $privileges->name];
-            });
-        })->each(function ($entry) {
-            Gate::define($entry[1], function ($user) use ($entry) {
-                return $user->role()->get()->name == $entry[0];
-            });
+        Gate::define(UserPrivileges::MANAGE_PROFILES, function ($user) {
+            return $user->role->name == UserRole::ROLE_ADMIN;
         });
 
+        Gate::define(UserPrivileges::MANAGE_PROGRAMS, function ($user) {
+            Log::info($user->role->name);
+            return $user->hasRole(UserRole::ROLE_ADMIN);
+        });
 
-        //    $this->app['auth']->viaRequest('api', function ($request) {
-        //        if ($request->input('api_token')) {
-        //            return User::where('api_token', $request->input('api_token'))->first();
-        //        }
-        //    });
+        Gate::define(UserPrivileges::VIEW_PROFILE, function ($user, $profile) {
+            return $user->id == $profile->user->id || $user->hasRole(UserRole::ROLE_ADMIN);
+        });
+
+        Gate::define(UserPrivileges::VIEW_PROGRAMS, function ($user) {
+            return true;
+        });
+
     }
 }

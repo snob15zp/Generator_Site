@@ -10,6 +10,10 @@ use Illuminate\Database\Eloquent\Model;
  */
 class UserRole extends Model
 {
+    const ROLE_ADMIN = 'ROLE_ADMIN';
+    const ROLE_USER = 'ROLE_USER';
+    const ROLE_GUEST = 'ROLE_GUEST';
+
     protected $table = 'user_role';
     public $timestamps = false;
 

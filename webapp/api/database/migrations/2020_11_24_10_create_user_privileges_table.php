@@ -16,7 +16,7 @@ class CreateUserPrivilegesTable extends Migration
         Schema::create('user_privileges', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger("user_role_id");
-            $table->enum('name', ['manage_profile', 'view_profile', 'create_user', 'manage_programs', 'view_programs']);
+            $table->string('name');
             $table->unique(['user_role_id', 'name']);
             $table->foreign('user_role_id')->references('id')->on('user_role');
         });

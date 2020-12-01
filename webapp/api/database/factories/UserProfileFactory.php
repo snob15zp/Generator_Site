@@ -5,7 +5,6 @@ namespace Database\Factories;
 use App\Models\UserProfile;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-
 class UserProfileFactory extends Factory
 {
     /**
@@ -25,7 +24,7 @@ class UserProfileFactory extends Factory
         return [
             'email' => $this->faker->unique()->safeEmail,
             'name' => $this->faker->firstName,
-            'suranme' => $this->faker->lastName,
+            'surname' => $this->faker->lastName,
             'address' => $this->faker->address,
             'phone_number' => $this->faker->phoneNumber,
             'date_of_birth' => $this->faker->date()

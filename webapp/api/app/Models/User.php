@@ -23,7 +23,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     protected $primaryKey = 'id';
     public $incrementing = true;
 
-    protected $fillable = ['login', 'password', 'role'];
+    protected $fillable = ['login', 'password', 'role', 'one_time_password'];
 
     /**
      * The attributes excluded from the model's JSON form.
@@ -46,6 +46,10 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 
     public function profile(){
         return $this->hasOne('\App\Models\UserProfile');
+    }
+
+    public function hasRole(string $role) {
+        return $this->role->name === $role;
     }
 
 

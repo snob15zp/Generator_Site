@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class CreateUserProfileTable extends Migration
@@ -25,6 +26,8 @@ class CreateUserProfileTable extends Migration
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('user');
         });
+
+        DB::statement('ALTER TABLE user_profile ADD FULLTEXT search(name, surname, address, phone_number, email)');
     }
 
     /**

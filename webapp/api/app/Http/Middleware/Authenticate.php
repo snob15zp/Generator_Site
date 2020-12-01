@@ -3,44 +3,29 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Contracts\Auth\Factory as Auth;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
+use Tymon\JWTAuth\Exceptions\TokenInvalidException;
+use Tymon\JWTAuth\Http\Middleware\BaseMiddleware;
 
-class Authenticate
+class Authenticate extends BaseMiddleware
 {
-    /**
-     * The authentication guard factory instance.
-     *
-     * @var \Illuminate\Contracts\Auth\Factory
-     */
-    protected $auth;
-
-    /**
-     * Create a new middleware instance.
-     *
-     * @param  \Illuminate\Contracts\Auth\Factory  $auth
-     * @return void
-     */
-    public function __construct(Auth $auth)
+    public function handle($request, Closure $next, $optional = null)
     {
-        $this->auth = $auth;
-    }
+        $this->auth->setRequest($request);
 
-    /**
-     * Handle an incoming request.
-     *
-     * @param  Request  $request
-     * @param Closure $next
-     * @param  string|null  $guard
-     * @return mixed
-     */
-    public function handle($request, Closure $next, $guard = null)
-    {
-        Log::info('Authenticate');
-
-        if ($this->auth->guard($guard)->guest()) {
-            return response('Unauthorized.', 401);
+        try {
+            if (!$user = $this->auth->parseToken()->authenticate()) {
+                abort(401, 'JWT error: User not found');
+            }
+        } catch (TokenExpiredException $e) {
+            abort(401, 'JWT error: Token has expired');
+        } catch (TokenInvalidException $e) {
+            abort(401, 'JWT error: Token is invalid');
+        } catch (JWTException $e) {
+            if ($optional === null) {
+                abort(401);
+            }
         }
 
         return $next($request);
