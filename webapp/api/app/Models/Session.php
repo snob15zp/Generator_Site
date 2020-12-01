@@ -11,7 +11,7 @@ class Session extends Model
     protected $primaryKey = 'id';
     public $incrementing = true;
 
-    public $timestamps = false;
+    public $timestamps = true;
 
-    protected $fillable = ['token'];
+    protected $fillable = ['token', 'expires_in', 'active'];
 }

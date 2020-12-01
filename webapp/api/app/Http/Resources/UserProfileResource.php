@@ -8,15 +8,22 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Crypt;
 use Vinkla\Hashids\HashidsManager;
 
-class UserProfileResource extends JsonResource {
+class UserProfileResource extends JsonResource
+{
 
-    public function toArray($request) {
-        $t = (\extension_loaded('gmp')) ? "gmp" : "none_gmp";
-        $v = (\extension_loaded('bcmath')) ? "bcmath" : "none_bcmatch";
-
+    public function toArray($request)
+    {
         $collection =  collect([
-            'id' => $t . $v//Hashids::encode($this->id)
-        ]);
+            'id' => Hashids::encode($this->id),
+            'name' => $this->name,
+            'suranme' => $this->suranme,
+            'email' => $this->email,
+            'address' => $this->address,
+            'phone_number' => $this->phone_number,
+            'date_of_birth' => $this->date_of_birth
+        ])->filter(function ($value, $key) {
+            return $value !== null;
+        });
         return $collection->toArray();
     }
 }
