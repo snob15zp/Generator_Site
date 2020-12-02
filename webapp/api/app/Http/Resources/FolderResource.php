@@ -3,15 +3,18 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Vinkla\Hashids\Facades\Hashids;
 
-class SessionResource extends JsonResource
+class FolderResource extends JsonResource
 {
     public function toArray($request)
     {
         return [
-            'token' => $this->token,
+            'id' => Hashids::encode($this->id),
+            'name' => $this->name,
             'expires_in' => $this->expires_in,
             'created_at' => $this->created_at,
+            'programs' => ProgramResource::collection($this->programs)
         ];
     }
 }

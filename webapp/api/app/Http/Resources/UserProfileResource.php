@@ -2,25 +2,25 @@
 
 namespace App\Http\Resources;
 
-use Vinkla\Hashids\Facades\Hashids;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Crypt;
-use Vinkla\Hashids\HashidsManager;
+use Vinkla\Hashids\Facades\Hashids;
 
 class UserProfileResource extends JsonResource
 {
 
     public function toArray($request)
     {
-        $collection =  collect([
+        $collection = collect([
             'id' => Hashids::encode($this->id),
+            'user_id' => Hashids::encode($this->user->id),
             'name' => $this->name,
-            'suranme' => $this->suranme,
+            'surname' => $this->surname,
             'email' => $this->email,
             'address' => $this->address,
             'phone_number' => $this->phone_number,
-            'date_of_birth' => $this->date_of_birth
+            'date_of_birth' => $this->date_of_birth,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at
         ])->filter(function ($value, $key) {
             return $value !== null;
         });

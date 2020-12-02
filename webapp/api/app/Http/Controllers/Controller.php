@@ -2,19 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Laravel\Lumen\Routing\Controller as BaseController;
 
 class Controller extends BaseController
 {
-    protected function respondWithToken($token)
+    protected function raiseError($status, $message)
     {
-        $user = Auth::user();
+        abort($status, $message);
+    }
 
+    protected function respondWithMessage($message = null)
+    {
         return response()->json([
-            'token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => Auth::factory()->getTTL() * 60
-        ], 200);
+            'status' => 'OK',
+            'message' => $message
+        ]);
+    }
+
+    protected function respondWithResource(JsonResource $resource)
+    {
+        return response()->json($resource);
     }
 }

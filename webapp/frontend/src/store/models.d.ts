@@ -10,7 +10,7 @@ export interface UserCredetials {
 
 export interface ErrorReponse {
   code: Number;
-  message?: String = null;
+  message?: String;
 }
 
 export interface PagingRequest {

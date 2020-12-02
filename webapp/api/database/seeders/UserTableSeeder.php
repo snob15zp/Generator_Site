@@ -7,6 +7,8 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Models\UserRole;
+use Database\Factories\FolderFactory;
+use Database\Factories\ProgramFactory;
 use Database\Factories\UserProfileFactory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -37,6 +39,20 @@ class UserTableSeeder extends Seeder
                 $user->role()->associate($userRole);
                 $user->save();
                 $user->profile()->save($userProfile->make());
+
+                $folderFactory = new FolderFactory();
+                $folders = $folderFactory
+                    ->count(10)
+                    ->make();
+
+                $user->folders()->saveMany($folders);
+
+                $folders->each(function ($folder) use ($user) {
+                    $programs = (new ProgramFactory())
+                        ->count(10)
+                        ->make();
+                    $folder->programs()->saveMany($programs);
+                });
             });
     }
 }

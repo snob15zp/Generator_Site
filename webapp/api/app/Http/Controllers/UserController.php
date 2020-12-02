@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\UserResource;
-use App\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -25,11 +23,11 @@ class UserController extends Controller
 
         $credentials = $request->only(['login', 'password']);
         if (!$token = Auth::attempt($credentials)) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+            $this->raiseError(401, 'Invalid credentials');
         }
 
         $user = Auth::user();
-        return response()->json(new UserResource($user, $token));
+        return $this->respondWithResource(new UserResource($user, $token));
     }
 
     /**
@@ -38,14 +36,16 @@ class UserController extends Controller
     public function logout()
     {
         auth()->logout();
-        return response()->json(['status' => 'OK']);
+        return $this->respondWithMessage();
     }
 
-    public function resetPassword(Request $request) {
+    public function resetPassword(Request $request)
+    {
 
     }
 
-    public function update(Request $request, $id) {
+    public function update(Request $request, $id)
+    {
 
     }
 }
