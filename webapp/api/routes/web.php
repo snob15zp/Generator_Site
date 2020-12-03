@@ -19,6 +19,8 @@ $router->group(['prefix' => 'folders'], function () use ($router) {
 });
 
 $router->group(['prefix' => 'programs'], function () use ($router) {
+    $router->get('/{id}/download', ['middleware' => 'auth', 'uses' => 'ProgramController@download']);
+    $router->delete('/{id}', ['middleware' => 'auth', 'uses' => 'ProgramController@delete']);
 });
 
 $router->group(['prefix' => 'profiles'], function () use ($router) {

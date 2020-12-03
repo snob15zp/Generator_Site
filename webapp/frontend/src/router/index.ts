@@ -20,7 +20,7 @@ const routes: Array<RouteConfig> = [
     }
   },
   {
-    path: "/profile/:hash",
+    path: "/profile/:id",
     name: "User Profile",
     component: UserProfileDetails,
     meta: {

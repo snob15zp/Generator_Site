@@ -6,18 +6,18 @@ let rawProfiles = fakeUserProfiles;
 
 class UserProfileService {
   async delete(userProfiles: Array<UserProfile>) {
-    rawProfiles = rawProfiles.filter((profile) => !userProfiles.some((p) => p.hash == profile.hash));
+    rawProfiles = rawProfiles.filter((profile) => !userProfiles.some((p) => p.id == profile.id));
     return Promise.resolve(userProfiles.length);
   }
 
   async save(userProfile: UserProfile) {
-    const index = rawProfiles.findIndex((p) => p.hash == userProfile.hash);
-    userProfile.modifiedAt = new Date();
+    const index = rawProfiles.findIndex((p) => p.id == userProfile.id);
+    userProfile.updatedAt = new Date();
 
     if (index >= 0) {
       rawProfiles[index] = userProfile;
     } else {
-      userProfile.hash = Math.random()
+      userProfile.id = Math.random()
         .toString(36)
         .substr(2, 5);
       rawProfiles.push(userProfile);
@@ -48,8 +48,8 @@ class UserProfileService {
             case "createdAt":
               items.sort((a, b) => a.createdAt!.getTime() - b.createdAt!.getTime());
               break;
-            case "modifiedAt":
-              items.sort((a, b) => a.modifiedAt!.getTime() - b.modifiedAt!.getTime());
+            case "updatedAt":
+              items.sort((a, b) => a.updatedAt!.getTime() - b.updatedAt!.getTime());
               break;
           }
           if (pagingRequest.sortDesc[index]) {
@@ -65,7 +65,7 @@ class UserProfileService {
   async fetchByHash(hash: string): Promise<UserProfile> {
     return new Promise<UserProfile>((resolve, reject) => {
       setTimeout(() => {
-        const userProfile = rawProfiles.find((profile) => profile.hash == hash);
+        const userProfile = rawProfiles.find((profile) => profile.id == hash);
         if (userProfile) {
           resolve(userProfile);
         } else {

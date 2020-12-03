@@ -1,21 +1,31 @@
-import { User, UserCredetials } from "@/store/models";
+import { UserJson, User, UserCredetials } from "@/store/models";
 import { apiErrorMapper } from "./utils";
+import axios from "axios";
+import transformers from "./transformers"
 
 class AuthService {
   async login(userCredentials: UserCredetials): Promise<User> {
-    return new Promise<User>((resolve, reject) => {
-      setTimeout(() => {
-        if (userCredentials.login === "admin" && userCredentials.password === "admin") {
-          const user: User = {
-            token: "123456",
-            name: "Administrator"
-          };
-          resolve(user);
-        } else {
-          reject(new Error(apiErrorMapper({ code: 100 })));
-        }
-      }, 500);
+    return new Promise((resolve, reject) => {
+      axios.post<UserJson>("/users/login", userCredentials)
+        .then(function (response) {
+          console.log(response);
+          if (response.status == 200) {
+            resolve(transformers.userFromJson(response.data));
+          } else {
+            reject(response.data);
+          }
+        })
+        .catch(function (error) {
+          console.log(error.response);
+          if (error.response) { 
+            reject(new Error(error.response.data.errors.message));
+          } else {
+            reject(new Error());
+          }
+         
+        });
     });
+
   }
 
   async logout(): Promise<boolean> {

@@ -1,11 +1,16 @@
 {
     "name": "laravel/lumen",
     "description": "The Laravel Lumen Framework.",
-    "keywords": ["framework", "laravel", "lumen"],
+    "keywords": [
+        "framework",
+        "laravel",
+        "lumen"
+    ],
     "license": "MIT",
     "type": "project",
     "require": {
         "php": "^7.3|^8.0",
+        "fruitcake/laravel-cors": "^2.0",
         "graham-campbell/flysystem": "^7.1",
         "graham-campbell/markdown": "^13.1",
         "guzzlehttp/guzzle": "^7.2",

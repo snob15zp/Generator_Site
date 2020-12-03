@@ -1,6 +1,29 @@
+export interface UserJson {
+  id: String;
+  token: String;
+  privileges: Stringp[];
+  profile: UserProfileJson;
+}
+
+export interface UserProfileJson {
+  id?: string;
+  user_id: string;
+  name: string;
+  surname?: string;
+  phone_number?: string;
+  addres?: string;
+  date_of_birth?: string;
+  email: string;
+  created_at: string;
+  updated_at?: string;
+}
+
 export interface User {
+  id: String;
   token: String;
   name: String;
+  privileges: Stringp[];
+  profile: UserProfile;
 }
 
 export interface UserCredetials {
@@ -27,7 +50,8 @@ export interface PagingResponse<R> {
 }
 
 export interface UserProfile {
-  hash?: string;
+  id?: string;
+  userId?: string;
   name: string;
   surname: string;
   phoneNumber: string;
@@ -35,7 +59,7 @@ export interface UserProfile {
   dateOfBirth: Date | null;
   email: string;
   createdAt?: Date;
-  modifiedAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface Program {

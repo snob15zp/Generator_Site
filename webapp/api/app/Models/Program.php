@@ -19,4 +19,9 @@ class Program extends Model
     {
         return $this->belongsTo('\App\Models\Folder');
     }
+
+    public function fileName()
+    {
+        return $this->folder->path . '/' . $this->name;
+    }
 }

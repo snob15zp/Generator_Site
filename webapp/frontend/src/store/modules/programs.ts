@@ -16,7 +16,7 @@ class ProgramsModule extends VuexModule {
 
   @MutationAction
   async loadFoldersByUserProfile(userProfile: UserProfile) {
-    const folders = await programService.fetchFolders(userProfile.hash!);
+    const folders = await programService.fetchFolders(userProfile.id!);
     return { folders };
   }
 

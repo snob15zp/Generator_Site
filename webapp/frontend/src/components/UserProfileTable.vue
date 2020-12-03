@@ -35,7 +35,7 @@
       <a :href="'/profile/' + item.hash">{{ item.name + " " + item.surname }}</a>
     </template>
     <template v-slot:[`item.createdAt`]="{ item }">{{ $d(item.createdAt) }}</template>
-    <template v-slot:[`item.modifiedAt`]="{ item }">{{ $d(item.modifiedAt) }}</template>
+    <template v-slot:[`item.updatedAt`]="{ item }">{{ $d(item.updatedAt) }}</template>
     <template v-slot:[`item.actions`]="{ item }">
       <v-icon small class="mr-2" @click="onSaveItem(item)">mdi-pencil</v-icon>
       <v-icon small @click="onDeleteItem(item)">mdi-delete</v-icon>
@@ -68,7 +68,7 @@ export default class UserProfileTable extends Vue {
     return [
       { text: this.$t("user-profile.column-user"), value: "user" },
       { text: this.$t("user-profile.column-created-at"), value: "createdAt", width: "20%" },
-      { text: this.$t("user-profile.column-modified-at"), value: "modifiedAt", width: "20%" },
+      { text: this.$t("user-profile.column-modified-at"), value: "updatedAt", width: "20%" },
       { text: this.$t("user-profile.column-actions"), value: "actions", sortable: false, width: "90px" }
     ];
   }
