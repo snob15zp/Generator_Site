@@ -90,7 +90,7 @@ export default class UserProfileDetails extends Vue {
     this.filesLoading = false;
     this.foldersLoding = false;
 
-    UserProfilesModule.findByHash(this.$route.params.hash)
+    UserProfilesModule.findById(this.$route.params.id)
       .then((v) => {
         this.userProfile = v.profile;
         this.fetchFodlers(v.profile);

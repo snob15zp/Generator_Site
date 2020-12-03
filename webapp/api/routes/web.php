@@ -4,6 +4,7 @@
 
 $router->group(['prefix' => 'users'], function () use ($router) {
     $router->post('login', 'UserController@login');
+    $router->put('refresh', 'UserController@refresh');
     $router->post('reset-password', 'UserController@ressetPassword');
 
     $router->post('logout', ['middleware' => 'auth', 'uses' => 'UserController@logout']);
@@ -27,6 +28,7 @@ $router->group(['prefix' => 'profiles'], function () use ($router) {
     $router->post('/', ['middleware' => 'auth', 'uses' => 'UserProfileController@create']);
     $router->put('/{id}', ['middleware' => 'auth', 'uses' => 'UserProfileController@update']);
     $router->delete('/{id}', ['middleware' => 'auth', 'uses' => 'UserProfileController@delete']);
+    $router->delete('/', ['middleware' => 'auth', 'uses' => 'UserProfileController@deleteAll']);
 
     $router->get('/', ['middleware' => 'auth', 'uses' => 'UserProfileController@getAll']);
     $router->get('/{id}', ['middleware' => 'auth', 'uses' => 'UserProfileController@get']);

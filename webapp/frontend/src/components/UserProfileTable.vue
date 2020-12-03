@@ -26,16 +26,16 @@
         <v-btn icon @click="onCreateItem">
           <v-icon>mdi-account-plus</v-icon>
         </v-btn>
-        <v-btn icon :disabled="selected.length == 0" @click="onDeleteItems">
+        <v-btn icon :disabled="selected.length === 0" @click="onDeleteItems">
           <v-icon>mdi-delete</v-icon>
         </v-btn>
       </v-toolbar>
     </template>
-    <template v-slot:[`item.user`]="{ item }">
-      <a :href="'/profile/' + item.hash">{{ item.name + " " + item.surname }}</a>
+    <template v-slot:[`item.name`]="{ item }">
+      <a :href="'/profile/' + item.id">{{ item.name + " " + item.surname }}</a>
     </template>
-    <template v-slot:[`item.createdAt`]="{ item }">{{ $d(item.createdAt) }}</template>
-    <template v-slot:[`item.updatedAt`]="{ item }">{{ $d(item.updatedAt) }}</template>
+    <template v-slot:[`item.created_at`]="{ item }">{{ $d(item.createdAt) }}</template>
+    <template v-slot:[`item.updated_at`]="{ item }">{{ $d(item.updatedAt) }}</template>
     <template v-slot:[`item.actions`]="{ item }">
       <v-icon small class="mr-2" @click="onSaveItem(item)">mdi-pencil</v-icon>
       <v-icon small @click="onDeleteItem(item)">mdi-delete</v-icon>
@@ -66,15 +66,11 @@ export default class UserProfileTable extends Vue {
 
   private get headers() {
     return [
-      { text: this.$t("user-profile.column-user"), value: "user" },
-      { text: this.$t("user-profile.column-created-at"), value: "createdAt", width: "20%" },
-      { text: this.$t("user-profile.column-modified-at"), value: "updatedAt", width: "20%" },
+      { text: this.$t("user-profile.column-user"), value: "name" },
+      { text: this.$t("user-profile.column-created-at"), value: "created_at", width: "20%" },
+      { text: this.$t("user-profile.column-modified-at"), value: "updated_at", width: "20%" },
       { text: this.$t("user-profile.column-actions"), value: "actions", sortable: false, width: "90px" }
     ];
-  }
-
-  mounted() {
-    this.fetchData();
   }
 
   @Watch("options")

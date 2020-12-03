@@ -12,7 +12,6 @@ class UserProfileResource extends JsonResource
     {
         $collection = collect([
             'id' => Hashids::encode($this->id),
-            'user_id' => Hashids::encode($this->user->id),
             'name' => $this->name,
             'surname' => $this->surname,
             'email' => $this->email,

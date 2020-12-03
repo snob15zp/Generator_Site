@@ -3,6 +3,8 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
@@ -12,6 +14,10 @@ class Authenticate extends BaseMiddleware
 {
     public function handle($request, Closure $next, $optional = null)
     {
+        DB::listen(function ($query) {
+            Log::info($query->sql, ['Bindings' => $query->bindings, 'Time' => $query->time]);
+        });
+
         $this->auth->setRequest($request);
 
         try {

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use JWTAuth;
 
 
 class UserController extends Controller
@@ -28,6 +29,15 @@ class UserController extends Controller
 
         $user = Auth::user();
         return $this->respondWithResource(new UserResource($user, $token));
+    }
+
+    public function refresh()
+    {
+        try {
+            return response()->json(['token' => auth()->refresh()]);
+        } catch (\Exception $e) {
+            return $this->raiseError(401, 'Invalid token');
+        }
     }
 
     /**

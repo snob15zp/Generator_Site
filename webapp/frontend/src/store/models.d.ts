@@ -1,7 +1,7 @@
 export interface UserJson {
   id: String;
   token: String;
-  privileges: Stringp[];
+  privileges: String[];
   profile: UserProfileJson;
 }
 
@@ -11,18 +11,36 @@ export interface UserProfileJson {
   name: string;
   surname?: string;
   phone_number?: string;
-  addres?: string;
+  address?: string;
   date_of_birth?: string;
   email: string;
   created_at: string;
   updated_at?: string;
+}
+export interface Link {
+  direction: string;
+  url: string;
+}
+
+export interface PagingMeta {
+  current_page: number;
+  from: number;
+  to: number;
+  last_page: number;
+  total: number;
+}
+
+export interface PagingResponseJson<T> {
+  data: T[];
+  links: Link[];
+  meta: PagingMeta;
 }
 
 export interface User {
   id: String;
   token: String;
   name: String;
-  privileges: Stringp[];
+  privileges: String[];
   profile: UserProfile;
 }
 

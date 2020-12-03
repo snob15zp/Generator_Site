@@ -74,6 +74,7 @@ $app->alias('mailer', Illuminate\Contracts\Mail\Mailer::class);
 $app->alias('mailer', Illuminate\Contracts\Mail\MailQueue::class);
 
 $app->alias('Markdown', GrahamCampbell\Markdown\Facades\Markdown::class);
+$app->alias('JWTAuth', Tymon\JWTAuth\Facades\JWTAuth::class);
 
 /*
 |--------------------------------------------------------------------------

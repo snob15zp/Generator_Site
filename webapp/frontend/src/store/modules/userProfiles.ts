@@ -30,8 +30,8 @@ class UserProfilesModule extends VuexModule {
   }
 
   @Action
-  async findByHash(hash: string) {
-    const profile = await userProfileService.fetchByHash(hash);
+  async findById(id: string) {
+    const profile = await userProfileService.fetchById(id);
     return { profile };
   }
 }

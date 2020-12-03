@@ -1,5 +1,4 @@
-import { UserJson, User, UserCredetials } from "@/store/models";
-import { apiErrorMapper } from "./utils";
+import {User, UserCredetials, UserJson} from "@/store/models";
 import axios from "axios";
 import transformers from "./transformers"
 
@@ -17,12 +16,12 @@ class AuthService {
         })
         .catch(function (error) {
           console.log(error.response);
-          if (error.response) { 
+          if (error.response) {
             reject(new Error(error.response.data.errors.message));
           } else {
             reject(new Error());
           }
-         
+
         });
     });
 

@@ -28,7 +28,7 @@ class UserProfileController extends Controller
         $this->validate($request, [
             'page' => 'nullable|numeric',
             'perPage' => 'nullable|numeric',
-            'query' => 'nullable|between:3,255',
+            'query' => 'nullable|min:3|max:255',
             'sortBy' => 'nullable|array',
             'sortDir' => 'required_with:sortBy|array'
         ]);
@@ -39,22 +39,44 @@ class UserProfileController extends Controller
         collect($sortBy)
             ->map(function ($item, $key) use ($sortDir) {
                 $dir = array_key_exists($key, $sortDir) ? $sortDir[$key] : 'asc';
-                return [$item => $dir];
-            })->filter(function ($item, $key) {
-                in_array($key, ['created_at', 'updated_at', 'email', 'name', 'surname', 'address', 'phone_number', 'date_of_birth']);
-            })->each(function ($item, $key) use ($query) {
-                $query->orderBy($key, $item);
+                return ["column" => $item, "dir" => $dir];
+            })->filter(function ($item) {
+                return in_array($item["column"], ['created_at', 'updated_at', 'email', 'name', 'surname', 'address', 'phone_number', 'date_of_birth']);
+            })->each(function ($item) use ($query) {
+                $query->orderBy($item['column'], $item['dir']);
             });
 
         $perPage = $request->input('perPage', 10);
         $profiles = null;
-        if ($request->has('query')) {
+        $search = trim($request->input('query', ''));
+        if ($search !== '') {
             $where = 'MATCH(name, surname, address, phone_number, email) AGAINST(? IN BOOLEAN MODE)';
-            $profiles = $query->whereRaw($where, [$request->input('query')])->paginate($perPage);
+            $profiles = $query->whereKeyNot(1)->whereRaw($where, ["*$search*"])->paginate($perPage);
         } else {
-            $profiles = $query->paginate($perPage);
+            $profiles = $query->whereKeyNot(1)->paginate($perPage);
         }
-        return $this->respondWithResource(UserProfileResource::collection($profiles));
+        return UserProfileResource::collection($profiles);
+    }
+
+    public function deleteAll(Request $request)
+    {
+        if ($request->user()->cannot(UserPrivileges::CREATE_USER)) {
+            $this->raiseError(403, 'Operation is restricted');
+        }
+
+        $this->validate($request, [
+            'ids' => 'required|array|min:1'
+        ]);
+
+        $ids = collect($request->input('ids'))->map(function ($id) {
+            return Hashids::decode($id)[0];
+        });
+
+        UserProfile::query()->findMany($ids)->each(function($profile){
+            $this->deleteProfile($profile);
+        });
+
+        return $this->respondWithMessage();
     }
 
     public function delete(Request $request, $id)
@@ -67,11 +89,13 @@ class UserProfileController extends Controller
         if ($profile == null) {
             $this->raiseError(404, 'Profile not found');
         }
+        $this->deleteProfile($profile);
+        return $this->respondWithMessage();
+    }
 
+    private function deleteProfile($profile) {
         $profile->user->delete();
         $profile->delete();
-
-        return $this->respondWithMessage();
     }
 
     public function update(Request $request, $id)
@@ -86,9 +110,9 @@ class UserProfileController extends Controller
         }
 
         $this->validate($request, [
-            'name' => 'required|max:255',
-            'surname' => 'required|max:255',
-            'address' => 'required|max:255',
+            'name' => 'required|max:40',
+            'surname' => 'required|max:40',
+            'address' => 'required|max:200',
             'phone_number' => 'required|max:255',
             'date_of_birth' => 'date_format:Y-m-d'
         ]);
