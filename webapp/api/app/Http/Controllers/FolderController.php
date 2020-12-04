@@ -8,6 +8,7 @@ use App\Http\Resources\FolderResource;
 use App\Models\Folder;
 use App\Models\User;
 use App\Models\UserPrivileges;
+use App\Models\UserProfile;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -16,16 +17,16 @@ use Vinkla\Hashids\Facades\Hashids;
 
 class FolderController extends Controller
 {
-    public function getAllByUserId(Request $request, $userId)
+    public function getAllByUserProfileId(Request $request, $userProfileId)
     {
-        $user = $this->verifyUser($userId);
+        $user = $this->verifyUser($userProfileId);
         if ($request->user()->cannot(UserPrivileges::VIEW_PROGRAMS, $user)) {
             $this->raiseError(403, "Resource not available");
         }
         return $this->respondWithResource(FolderResource::collection($user->folders));
     }
 
-    public function create(Request $request, $userId)
+    public function create(Request $request, $userProfileId)
     {
         if ($request->user()->cannot(UserPrivileges::MANAGE_PROGRAMS)) {
             $this->raiseError(403, "Resource not available");
@@ -35,7 +36,7 @@ class FolderController extends Controller
             'name' => 'required|date_format:d-m-y|after:today'
         ]);
 
-        $user = $this->verifyUser($userId);
+        $user = $this->verifyUser($userProfileId);
         $name = $request->input('name');
 
         try {
@@ -86,13 +87,13 @@ class FolderController extends Controller
         return $this->respondWithMessage('Folder deleted');
     }
 
-    private function verifyUser($userId)
+    private function verifyUser($userProfileId)
     {
-        $user = User::query()->whereKey(Hashids::decode($userId))->first();
-        if ($user == null) {
+        $userProfile = UserProfile::query()->whereKey(Hashids::decode($userProfileId))->first();
+        if ($userProfile == null) {
             $this->raiseError(404, 'Resource not found');
         }
 
-        return $user;
+        return $userProfile->user;
     }
 }

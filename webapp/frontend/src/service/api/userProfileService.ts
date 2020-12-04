@@ -4,6 +4,7 @@ import api from "."
 
 class UserProfileService {
     async delete(userProfiles: Array<UserProfile>) {
+        console.log(userProfiles);
         return new Promise((resolve, reject) => {
             const query = userProfiles.map((profile) => `ids[]=${profile.id}`).join('&');
             api.delete(`/profiles?${query}`)

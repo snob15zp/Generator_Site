@@ -6,9 +6,9 @@
     :options.sync="options"
     :headers="headers"
     :items="items"
-    item-key="hash"
-    show-select
-  >
+    :single-select="false"
+    item-key="id"
+    show-select>
     <template v-slot:top>
       <v-toolbar flat>
         <!-- Search bar -->
@@ -26,7 +26,7 @@
         <v-btn icon @click="onCreateItem">
           <v-icon>mdi-account-plus</v-icon>
         </v-btn>
-        <v-btn icon :disabled="selected.length === 0" @click="onDeleteItems">
+        <v-btn icon :disabled="selected.length == 0" @click="onDeleteItems">
           <v-icon>mdi-delete</v-icon>
         </v-btn>
       </v-toolbar>

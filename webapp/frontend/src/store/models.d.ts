@@ -17,6 +17,7 @@ export interface UserProfileJson {
   created_at: string;
   updated_at?: string;
 }
+
 export interface Link {
   direction: string;
   url: string;
@@ -34,6 +35,21 @@ export interface PagingResponseJson<T> {
   data: T[];
   links: Link[];
   meta: PagingMeta;
+}
+
+export interface FolderJson {
+  id: string | null;
+  name: string;
+  expires_in: number;
+  created_at?: string;
+  programs?: ProgramJson[];
+}
+
+export interface ProgramJson {
+  id: string;
+  name: string;
+  hash: string;
+  created_at: string;
 }
 
 export interface User {
@@ -81,14 +97,14 @@ export interface UserProfile {
 }
 
 export interface Program {
-  hash: string;
-  path: string;
+  id: string;
   name: string;
 }
 
 export interface Folder {
-  hash: string | null;
-  path: string;
+  id: string | null;
   name: string;
   expiredAt: Date;
+  createdAt?: Date;
+  programs?: Program[];
 }

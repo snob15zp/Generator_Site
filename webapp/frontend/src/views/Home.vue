@@ -29,6 +29,10 @@
       </v-card>
     </v-dialog>
     <v-card outlined class="mt-8 mb-8">
+      <v-overlay
+        :absolute="true"
+        :value="loading"
+      />
       <UserProfileTable
         :loading="loading"
         :items="items"
@@ -131,9 +135,13 @@ export default class Home extends Vue {
   }
 
   private deleteConfirm() {
+    this.loading = true;
     UserProfilesModule.remove(this.deleteDialog.items!)
       .then(() => this.fetchUserProfiles(this.request))
-      .catch((e) => console.error(e));
+      .catch((e) => console.error(e))
+      .finally(() => {
+        this.loading = false;
+      });
 
     this.closeDelete();
   }
@@ -144,9 +152,13 @@ export default class Home extends Vue {
 
   private saveProfile() {
     this.closeEditDialog();
+    this.loading = true;
     UserProfilesModule.save(this.editDialog.items![0])
       .then(() => this.fetchUserProfiles(this.request))
-      .catch((e) => console.error(e));
+      .catch((e) => console.error(e))
+      .finally(() => {
+        this.loading = false;
+      });
   }
 }
 </script>

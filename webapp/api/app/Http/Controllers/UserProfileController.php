@@ -15,6 +15,7 @@ use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Vinkla\Hashids\Facades\Hashids;
 
@@ -72,7 +73,7 @@ class UserProfileController extends Controller
             return Hashids::decode($id)[0];
         });
 
-        UserProfile::query()->findMany($ids)->each(function($profile){
+        UserProfile::query()->findMany($ids)->each(function ($profile) {
             $this->deleteProfile($profile);
         });
 
@@ -93,9 +94,18 @@ class UserProfileController extends Controller
         return $this->respondWithMessage();
     }
 
-    private function deleteProfile($profile) {
-        $profile->user->delete();
+    private function deleteProfile($profile)
+    {
+        $profile->user->folders->each(function ($folder) {
+            $folder->programs()->delete();
+            $folder->delete();
+            if (Storage::exists($folder->path())) {
+                Storage::deleteDirectory($folder->path());
+            }
+        });
+        $user = $profile->user;
         $profile->delete();
+        $user->delete();
     }
 
     public function update(Request $request, $id)

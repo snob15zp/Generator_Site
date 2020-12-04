@@ -1,4 +1,5 @@
 import {getModule, Module, Mutation, MutationAction, VuexModule} from "vuex-module-decorators";
+import { Vue } from "vue-property-decorator";
 import {User, UserCredetials} from "../models";
 import authService from "../../service/api/authService";
 import store from "@/store";
@@ -34,7 +35,7 @@ class UserModule extends VuexModule {
     @Mutation
     setToken(token: string) {
         if (this.user != null) {
-            this.user.token = token;
+            Vue.set(this.user, "token", token);
         }
     }
 

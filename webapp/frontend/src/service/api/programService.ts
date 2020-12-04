@@ -1,44 +1,21 @@
-import { Folder, Program } from "@/store/models";
-import { fakeFolders } from "./data";
-
-const rawFolders = fakeFolders;
+import { Folder, FolderJson, Program, UserProfile } from "@/store/models";
+import api from ".";
+import transformers from "./transformers";
 
 class ProgramService {
-  async fetchFolders(userProfileHash: string): Promise<Folder[]> {
+  async fetchFolders(userProfileId: string): Promise<Folder[]> {
     return new Promise<Folder[]>((resolve, reject) => {
-      setTimeout(() => {
-        resolve(rawFolders.sort((a, b) => a.expiredAt.getTime() - b.expiredAt.getTime()));
-      }, 100);
+      api.get(`profiles/${userProfileId}/folders`)
+        .then((response) => resolve(response.data.map((json: FolderJson) => transformers.folderFromJson(json))))
+        .catch((error) => reject(new Error(error)));
     });
   }
 
-  async saveFolder(folder: Folder): Promise<Folder> {
+  async saveFolder(userProfile: UserProfile, folder: Folder): Promise<Folder> {
     return new Promise<Folder>((resolve, reject) => {
-      setTimeout(() => {
-        const index = rawFolders.findIndex((f) => f.hash == folder.hash);
-        if (index >= 0) {
-          rawFolders[index] = folder;
-        } else {
-          folder.hash = Math.random()
-            .toString(36)
-            .substr(2, 5);
-          rawFolders.push(folder);
-        }
-        resolve(folder);
-      }, 100);
-    });
-  }
-
-  async fetchPrograms(folderHash: string): Promise<Program[]> {
-    return new Promise<Program[]>((resolve, reject) => {
-      setTimeout(() => {
-        resolve([
-          { hash: "213123123", path: "/data/", name: "program1.txt" },
-          { hash: "213123124", path: "/data/", name: "program2.txt" },
-          { hash: "213123125", path: "/data/", name: "program3.txt" },
-          { hash: "213123126", path: "/data/", name: "program4.txt" }
-        ]);
-      }, 100);
+      api.post(`profiles/${userProfile.id}/folders`, transformers.folderToJson(folder))
+        .then((response) => resolve(transformers.folderFromJson(response.data)))
+        .catch((error) => reject(new Error(error)));
     });
   }
 }

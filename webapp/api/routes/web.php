@@ -9,9 +9,6 @@ $router->group(['prefix' => 'users'], function () use ($router) {
 
     $router->post('logout', ['middleware' => 'auth', 'uses' => 'UserController@logout']);
     $router->put('/{id}', ['middleware' => 'auth', 'uses' => 'UserController@update']);
-
-    $router->get('/{userId}/folders', ['middleware' => 'auth', 'uses' => 'FolderController@getAllByUserId']);
-    $router->post('/{userId}/folders', ['middleware' => 'auth', 'uses' => 'FolderController@create']);
 });
 
 $router->group(['prefix' => 'folders'], function () use ($router) {
@@ -32,6 +29,9 @@ $router->group(['prefix' => 'profiles'], function () use ($router) {
 
     $router->get('/', ['middleware' => 'auth', 'uses' => 'UserProfileController@getAll']);
     $router->get('/{id}', ['middleware' => 'auth', 'uses' => 'UserProfileController@get']);
+
+    $router->get('/{userProfileId}/folders', ['middleware' => 'auth', 'uses' => 'FolderController@getAllByUserProfileId']);
+    $router->post('/{userProfileId}/folders', ['middleware' => 'auth', 'uses' => 'FolderController@create']);
 });
 
 

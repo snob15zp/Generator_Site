@@ -22,13 +22,13 @@ class ProgramsModule extends VuexModule {
 
   @MutationAction
   async loadFilesByFolder(folder: Folder) {
-    const files = await programService.fetchPrograms(folder.hash!);
+    const files = folder.programs;
     return { files };
   }
 
   @Action
-  async saveFolder(folder: Folder) {
-    await programService.saveFolder(folder);
+  async saveFolder(args: Array<any>) {
+    await programService.saveFolder(args[0], args[1]);
   }
 }
 

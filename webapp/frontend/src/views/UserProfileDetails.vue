@@ -134,16 +134,14 @@ export default class UserProfileDetails extends Vue {
 
   private createFolderConfirm() {
     const date = moment(this.expiredAt);
-    this.folder = {
-      hash: null,
+    const folder = {
+      id: null,
       name: date.format("DD-MM-YY"),
-      path: "",
       expiredAt: date.toDate()
-    };
-    ProgramsModule.saveFolder(this.folder)
+    } as Folder;
+    ProgramsModule.saveFolder([this.userProfile, folder])
       .then(() => this.fetchFodlers(this.userProfile!))
       .finally(() => this.createFolderClose());
-    console.log("");
   }
 
   private save(date: string) {
