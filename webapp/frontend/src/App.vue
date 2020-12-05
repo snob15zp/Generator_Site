@@ -25,7 +25,7 @@ import LocaleSwitcher from "@/components/LocaleSwitcher.vue";
 import UserModule from "./store/modules/user";
 
 @Component({
-  components: { LocaleSwitcher }
+  components: { LocaleSwitcher },
 })
 export default class App extends Vue {
   get isAuthorized() {
@@ -36,8 +36,10 @@ export default class App extends Vue {
   }
 
   logout() {
-    UserModule.logout();
-    this.$router.push("/login");
+    UserModule.logout().then(() => {
+      console.log(UserModule.user);
+      this.$router.push("/login");
+    });
   }
 }
 </script>

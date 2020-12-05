@@ -1,5 +1,5 @@
 import { VuexModule, Module, MutationAction, getModule, Action } from "vuex-module-decorators";
-import { UserProfile, Program, Folder } from "../models";
+import { UserProfile, Program, Folder, UploadFileRequest } from "../models";
 import programService from "../../service/api/programService";
 import store from "@/store";
 
@@ -29,6 +29,11 @@ class ProgramsModule extends VuexModule {
   @Action
   async saveFolder(args: Array<any>) {
     await programService.saveFolder(args[0], args[1]);
+  }
+
+  @Action
+  async uploadFile(fileRequest: UploadFileRequest) {
+    await programService.uploadFile(fileRequest);
   }
 }
 

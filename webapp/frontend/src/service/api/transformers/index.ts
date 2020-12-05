@@ -66,6 +66,6 @@ export default {
     userProfileFromJson,
     userProfileToJson,
     folderFromJson,
-    programFronJson,
+    programFromJson: programFronJson,
     folderToJson
 }

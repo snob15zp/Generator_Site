@@ -44,7 +44,7 @@
         <v-list class="overflow-y-auto p-list" nav dense>
           <v-list-item v-for="file in files" :key="file.hash">
             <v-list-item-content>
-              <a :href="'/program/' + file.hash">{{ file.name }}</a>
+              <a :href="'/api/programs/' + file.id + '/download'">{{ file.name }}</a>
             </v-list-item-content>
           </v-list-item>
         </v-list>
@@ -94,7 +94,7 @@ export default class Programs extends Vue {
 
   @Watch("fileInput")
   private onfileInputChanged() {
-    this.uploadFile(this.fileInput.toString());
+    this.uploadFile(this.fileInput);
   }
 
   @Emit()
@@ -108,7 +108,7 @@ export default class Programs extends Vue {
   }
 
   @Emit()
-  uploadFile(file: string) {
+  uploadFile(file: File) {
     return file;
   }
 

@@ -1,6 +1,6 @@
-import {getModule, Module, Mutation, MutationAction, VuexModule} from "vuex-module-decorators";
+import { getModule, Module, Mutation, MutationAction, Action, VuexModule } from "vuex-module-decorators";
 import { Vue } from "vue-property-decorator";
-import {User, UserCredetials} from "../models";
+import { User, UserCredetials } from "../models";
 import authService from "../../service/api/authService";
 import store from "@/store";
 
@@ -29,19 +29,20 @@ class UserModule extends VuexModule {
     @MutationAction
     async login(userCredentials: UserCredetials) {
         const user = await authService.login(userCredentials);
-        return {user};
+        return { user };
     }
 
     @Mutation
     setToken(token: string) {
         if (this.user != null) {
-            Vue.set(this.user, "token", token);
+            this.user.token = token;
         }
     }
 
-    @Mutation
-    logout() {
-        this.user = null;
+    @MutationAction
+    async logout() {
+        await authService.logout();
+        return { user: null as any }
     }
 }
 

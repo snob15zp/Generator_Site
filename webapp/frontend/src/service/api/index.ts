@@ -28,9 +28,7 @@ api.interceptors.response.use((response) => response, (error) => {
         return axios.put('/users/refresh', null, {headers: {'Authorization': `Bearer ${UserModule.token}`}})
             .then(response => {
                 if (response.status === 200) {
-                    // 1) put token to LocalStorage
                     UserModule.setToken(response.data.token);
-                    // 3) return originalRequest object with Axios.
                     return axios(originalRequest);
                 }
             })

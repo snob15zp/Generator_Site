@@ -108,3 +108,9 @@ export interface Folder {
   createdAt?: Date;
   programs?: Program[];
 }
+
+export interface UploadFileRequest {
+  file: File;
+  folder: Folder;
+  onProgressCallback: (_: number) => void;
+}

@@ -1,5 +1,6 @@
-import {User, UserCredetials, UserJson} from "@/store/models";
+import { User, UserCredetials, UserJson } from "@/store/models";
 import axios from "axios";
+import api from "."
 import transformers from "./transformers"
 
 class AuthService {
@@ -28,7 +29,10 @@ class AuthService {
   }
 
   async logout(): Promise<boolean> {
-    return new Promise((resolve) => resolve(true));
+    return new Promise((resolve) => {
+      api.post("/users/logout")
+        .finally(() => resolve(true))
+    });
   }
 }
 

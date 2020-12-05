@@ -34,6 +34,17 @@
       </v-card>
     </v-dialog>
 
+    <v-snackbar v-model="snackbar" :timeout="-1">
+      <v-container>
+        <v-row v-if="file">
+          {{file.name}}
+        </v-row>
+        <v-row>
+          <v-progress-linear :value="progress"/>
+        </v-row>
+      </v-container>
+    </v-snackbar>
+
     <user-profile-info :user-profile="userProfile" :loading="profileLoading" />
     <programs
       class="flex-column fill-height mt-8 mb-8"
@@ -42,13 +53,14 @@
       :loading="foldersLoding || filesLoading"
       @on-folder-changed="fetchPrograms"
       @create-folder="openCreateFolderDialog"
+      @upload-file="uploadFile"
     />
   </v-layout>
 </template>
 
 <script lang="ts">
 import { Component, Vue, Watch, Ref } from "vue-property-decorator";
-import { Folder, UserProfile } from "../store/models";
+import { Folder, UploadFileRequest, UserProfile } from "../store/models";
 import { fields } from "../forms/UserProfileFormValidator";
 import UserProfilesModule from "../store/modules/userProfiles";
 import ProgramsModule from "../store/modules/programs";
@@ -72,6 +84,9 @@ export default class UserProfileDetails extends Vue {
   private folder: Folder | null = null;
   private isCreateDialogShow = false;
   private expiredAt: string | null = null;
+  private progress = 0;
+  private snackbar = false;
+  private file: File | null = null;
 
   get folders() {
     return ProgramsModule.folders;
@@ -104,6 +119,7 @@ export default class UserProfileDetails extends Vue {
   }
 
   private fetchPrograms(folder: Folder) {
+    this.folder = folder;
     this.filesLoading = true;
     ProgramsModule.loadFilesByFolder(folder)
       .then()
@@ -146,6 +162,21 @@ export default class UserProfileDetails extends Vue {
 
   private save(date: string) {
     this.menuRef!.save(date);
+  }
+
+  private uploadFile(file: File) {
+    this.snackbar = true;
+    this.file = file;
+    ProgramsModule.uploadFile({
+      file: file,
+      folder: this.folder,
+      onProgressCallback: (progress) => this.progress = progress
+    } as UploadFileRequest)
+    .then(() => ProgramsModule.loadFilesByFolder(this.folder))
+    .finally(() => {
+      this.snackbar = false;
+    });
+
   }
 }
 </script>
