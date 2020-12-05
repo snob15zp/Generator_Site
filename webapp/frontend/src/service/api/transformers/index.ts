@@ -48,8 +48,7 @@ function folderFromJson(json: FolderJson): Folder {
         id: json.id,
         name: json.name,
         expiredAt: moment(json.created_at).add(json.expires_in, "s").toDate(),
-        createdAt: moment(json.created_at).toDate(),
-        programs: json.programs?.map(json=>programFronJson(json)) || []
+        createdAt: moment(json.created_at).toDate()
     }
 }
 

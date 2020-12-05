@@ -8,3 +8,8 @@ PHP version: 7.3.6
 
 FTP: 
     ftpuser@inhealion.gr:puQu7UWZhJVB@ftp.inhealion.gr
+
+DATABASE:
+    name - inhealio_db
+    user - inhealio_db/3WpW$Ug1z_nW
+    user - inhealio_api/MlA@IiRgYiZS

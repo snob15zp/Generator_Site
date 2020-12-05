@@ -13,8 +13,7 @@ class FolderResource extends JsonResource
             'id' => Hashids::encode($this->id),
             'name' => $this->name,
             'expires_in' => $this->expires_in,
-            'created_at' => $this->created_at,
-            'programs' => ProgramResource::collection($this->programs)
+            'created_at' => $this->created_at
         ];
     }
 }

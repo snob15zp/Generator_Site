@@ -33,7 +33,7 @@
                   {{ folder.expiredAt | expiredAtInterval }}
                 </v-list-item-subtitle>
               </v-list-item-content>
-              <v-list-item-action v-if="folders[selected].hash == folder.hash">
+              <v-list-item-action v-if="folders[selected].hash === folder.hash">
                 <v-icon>mdi-chevron-right</v-icon>
               </v-list-item-action>
             </v-list-item>
@@ -44,7 +44,7 @@
         <v-list class="overflow-y-auto p-list" nav dense>
           <v-list-item v-for="file in files" :key="file.hash">
             <v-list-item-content>
-              <a :href="'/api/programs/' + file.id + '/download'">{{ file.name }}</a>
+              <a @click="downloadFile(file)" href="#">{{ file.name }}</a>
             </v-list-item-content>
           </v-list-item>
         </v-list>
@@ -55,10 +55,10 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch, Emit, Ref } from "vue-property-decorator";
-import { Folder, Program } from "../store/models";
-import { isExpired, expiredAtInterval } from "../utils/dateUtils";
+import { Folder, Program } from "@/store/models";
+import { isExpired, expiredAtInterval } from "@/utils/dateUtils";
 import { ResizeObserver } from "@juggle/resize-observer";
-
+import {settings} from "@/settings";
 @Component({
   filters: {
     expiredAtInterval: function(value: Date) {
@@ -110,6 +110,11 @@ export default class Programs extends Vue {
   @Emit()
   uploadFile(file: File) {
     return file;
+  }
+
+  @Emit()
+  downloadFile(program: Program) {
+      return program;
   }
 
   private isExpired(date: Date) {

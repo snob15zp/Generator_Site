@@ -22,6 +22,6 @@ class Program extends Model
 
     public function fileName()
     {
-        return $this->folder->path . '/' . $this->name;
+        return $this->folder->path() . '/' . $this->name;
     }
 }

@@ -42,7 +42,6 @@ export interface FolderJson {
   name: string;
   expires_in: number;
   created_at?: string;
-  programs?: ProgramJson[];
 }
 
 export interface ProgramJson {
@@ -106,7 +105,6 @@ export interface Folder {
   name: string;
   expiredAt: Date;
   createdAt?: Date;
-  programs?: Program[];
 }
 
 export interface UploadFileRequest {
@@ -114,3 +112,14 @@ export interface UploadFileRequest {
   folder: Folder;
   onProgressCallback: (_: number) => void;
 }
+
+export interface DownloadFileRequest {
+  program: Program;
+  onProgressCallback: (_: number) => void;
+}
+
+export interface SaveFolderRequest {
+  folder: Folder;
+  userProfile: UserProfile;
+}
+

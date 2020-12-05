@@ -6,23 +6,23 @@
         <v-divider></v-divider>
         <v-card-text class="mt-4">
           <v-menu
-            ref="menuRef"
-            v-model="menu"
-            :close-on-content-click="false"
-            transition="scale-transition"
-            offset-y
-            min-width="290px"
+              ref="menuRef"
+              v-model="menu"
+              :close-on-content-click="false"
+              transition="scale-transition"
+              offset-y
+              min-width="290px"
           >
             <template v-slot:activator="{ on, attrs }">
-              <v-text-field v-model="expiredAt" label="Expired Date" v-bind="attrs" v-on="on" readonly />
+              <v-text-field v-model="expiredAt" label="Expired Date" v-bind="attrs" v-on="on" readonly/>
             </template>
             <v-date-picker
-              ref="pickerRef"
-              no-title
-              v-model="expiredAt"
-              :locale="$i18n.locale"
-              :min="$options.filters.formatDate(new Date())"
-              @change="save"
+                ref="pickerRef"
+                no-title
+                v-model="expiredAt"
+                :locale="$i18n.locale"
+                :min="$options.filters.formatDate(new Date())"
+                @change="save"
             />
           </v-menu>
         </v-card-text>
@@ -37,7 +37,7 @@
     <v-snackbar v-model="snackbar" :timeout="-1">
       <v-container>
         <v-row v-if="file">
-          {{file.name}}
+          {{ file.name }}
         </v-row>
         <v-row>
           <v-progress-linear :value="progress"/>
@@ -45,37 +45,39 @@
       </v-container>
     </v-snackbar>
 
-    <user-profile-info :user-profile="userProfile" :loading="profileLoading" />
+    <user-profile-info :user-profile="userProfile" :loading="profileLoading"/>
     <programs
-      class="flex-column fill-height mt-8 mb-8"
-      :folders="folders"
-      :files="files"
-      :loading="foldersLoding || filesLoading"
-      @on-folder-changed="fetchPrograms"
-      @create-folder="openCreateFolderDialog"
-      @upload-file="uploadFile"
+        class="flex-column fill-height mt-8 mb-8"
+        :folders="folders"
+        :files="files"
+        :loading="foldersLoding || filesLoading"
+        @on-folder-changed="fetchPrograms"
+        @create-folder="openCreateFolderDialog"
+        @upload-file="uploadFile"
+        @download-file="downloadFile"
     />
   </v-layout>
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch, Ref } from "vue-property-decorator";
-import { Folder, UploadFileRequest, UserProfile } from "../store/models";
-import { fields } from "../forms/UserProfileFormValidator";
+import {Component, Ref, Vue} from "vue-property-decorator";
+import {Folder, Program, SaveFolderRequest, UploadFileRequest, UserProfile} from "@/store/models";
+import {fields} from "@/forms/UserProfileFormValidator";
 import UserProfilesModule from "../store/modules/userProfiles";
 import ProgramsModule from "../store/modules/programs";
 import UserProfileInfo from "@/components/UserProfileInfo.vue";
 import Programs from "@/components/Programs.vue";
 import moment from "moment";
+import programService from "@/service/api/programService";
+import saveDownloadFile from "../utils/download-file";
 
 @Component({
-  components: { UserProfileInfo, Programs }
+  components: {UserProfileInfo, Programs}
 })
 export default class UserProfileDetails extends Vue {
   @Ref() readonly menuRef: (Vue & { save: (date: string) => void }) | undefined;
 
   private userProfile: UserProfile | null = null;
-  private selected = 0;
   private profileLoading = false;
   private foldersLoding = false;
   private filesLoading = false;
@@ -106,37 +108,38 @@ export default class UserProfileDetails extends Vue {
     this.foldersLoding = false;
 
     UserProfilesModule.findById(this.$route.params.id)
-      .then((v) => {
-        this.userProfile = v.profile;
-        this.fetchFodlers(v.profile);
-      })
-      .catch((e) => {
-        console.error(e);
-      })
-      .finally(() => {
-        this.profileLoading = false;
-      });
+        .then((v) => {
+          this.userProfile = v.profile;
+          this.fetchFodlers(v.profile);
+        })
+        .catch((e) => {
+          console.error(e);
+        })
+        .finally(() => {
+          this.profileLoading = false;
+        });
   }
 
   private fetchPrograms(folder: Folder) {
     this.folder = folder;
     this.filesLoading = true;
     ProgramsModule.loadFilesByFolder(folder)
-      .then()
-      .finally(() => {
-        this.filesLoading = false;
-      });
+        .finally(() => {
+          this.filesLoading = false;
+        });
   }
 
   private fetchFodlers(userProfile: UserProfile) {
     this.foldersLoding = true;
     ProgramsModule.loadFoldersByUserProfile(userProfile)
-      .then(() => {
-        this.fetchPrograms(this.folders![0]!);
-      })
-      .finally(() => {
-        this.foldersLoding = false;
-      });
+        .then(() => {
+          if(this.folders && this.folders.length > 0) {
+            this.fetchPrograms(this.folders[0]);
+          }
+        })
+        .finally(() => {
+          this.foldersLoding = false;
+        });
   }
 
   private openCreateFolderDialog() {
@@ -155,9 +158,9 @@ export default class UserProfileDetails extends Vue {
       name: date.format("DD-MM-YY"),
       expiredAt: date.toDate()
     } as Folder;
-    ProgramsModule.saveFolder([this.userProfile, folder])
-      .then(() => this.fetchFodlers(this.userProfile!))
-      .finally(() => this.createFolderClose());
+    ProgramsModule.saveFolder({userProfile: this.userProfile, folder: folder} as SaveFolderRequest)
+        .then(() => this.fetchFodlers(this.userProfile!))
+        .finally(() => this.createFolderClose());
   }
 
   private save(date: string) {
@@ -172,11 +175,18 @@ export default class UserProfileDetails extends Vue {
       folder: this.folder,
       onProgressCallback: (progress) => this.progress = progress
     } as UploadFileRequest)
-    .then(() => ProgramsModule.loadFilesByFolder(this.folder))
-    .finally(() => {
-      this.snackbar = false;
-    });
+        .finally(() => this.snackbar = false);
+  }
 
+  private downloadFile(program: Program) {
+    this.snackbar = true;
+    this.file = new File([], program.name);
+    programService.downloadFile({
+      program: program,
+      onProgressCallback: (process) => this.progress = process
+    })
+        .then(blob => saveDownloadFile(blob, program.name))
+        .finally(() => this.snackbar = false)
   }
 }
 </script>

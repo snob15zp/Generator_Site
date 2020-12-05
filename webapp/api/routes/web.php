@@ -2,6 +2,9 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
+use App\Http\Resources\UserResource;
+use Illuminate\Support\Facades\DB;
+
 $router->group(['prefix' => 'users'], function () use ($router) {
     $router->post('login', 'UserController@login');
     $router->put('refresh', 'UserController@refresh');
@@ -14,6 +17,7 @@ $router->group(['prefix' => 'users'], function () use ($router) {
 $router->group(['prefix' => 'folders'], function () use ($router) {
     $router->delete('/{id}', ['middleware' => 'auth', 'uses' => 'FolderController@delete']);
     $router->post('/{folderId}/programs', ['middleware' => 'auth', 'uses' => 'ProgramController@create']);
+    $router->get('/{folderId}/programs', ['middleware' => 'auth', 'uses' => 'ProgramController@getAll']);
 });
 
 $router->group(['prefix' => 'programs'], function () use ($router) {
@@ -36,6 +40,6 @@ $router->group(['prefix' => 'profiles'], function () use ($router) {
 
 
 $router->get('/test', function () {
-    phpinfo();
-
+    $users = DB::select('select * from user', [], false);
+    return response()->json($users);
 });
