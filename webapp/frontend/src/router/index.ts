@@ -2,17 +2,19 @@ import Vue from "vue";
 import VueRouter, { RouteConfig } from "vue-router";
 import Login from "../views/Login.vue";
 import Home from "../views/Home.vue";
-import UserProfileDetails from "../views/UserProfileDetails.vue";
+import Profile from "../views/Profile.vue";
 import NotFound from "../views/NotFound.vue";
 import UserModule from "@/store/modules/user";
 import i18n from "@/i18n";
+import ResetPassword from "@/views/ResetPassword.vue";
+import ForgetPassword from "@/views/ForgetPassword.vue";
 
 Vue.use(VueRouter);
 
 const routes: Array<RouteConfig> = [
   {
     path: "/",
-    name: "Users",
+    name: "home",
     component: Home,
     meta: {
       requiresAuth: true,
@@ -21,8 +23,8 @@ const routes: Array<RouteConfig> = [
   },
   {
     path: "/profile/:id",
-    name: "User Profile",
-    component: UserProfileDetails,
+    name: "user-profile",
+    component: Profile,
     meta: {
       requiresAuth: true,
       title: i18n.t("page.user-profile")
@@ -30,10 +32,26 @@ const routes: Array<RouteConfig> = [
   },
   {
     path: "/login",
-    name: "Login",
+    name: "login",
     component: Login,
     meta: {
       title: i18n.t("page.login")
+    }
+  },
+  {
+    path: "/reset-password/:hash",
+    name: "reset-password",
+    component: ResetPassword,
+    meta: {
+      title: i18n.t("page.reset-password")
+    }
+  },
+  {
+    path: "/forget-password",
+    name: "forget-password",
+    component: ForgetPassword,
+    meta: {
+      title: i18n.t("page.forget-password")
     }
   },
   {
@@ -56,6 +74,7 @@ const router = new VueRouter({
 });
 
 router.beforeEach((to, from, next) => {
+  console.log("Route to " + to.name);
   window.document.title = (to.name ? to.name + " - " : "") + "Generator";
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (UserModule.isAuthorized) {

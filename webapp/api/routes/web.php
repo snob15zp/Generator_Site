@@ -8,10 +8,12 @@ use Illuminate\Support\Facades\DB;
 $router->group(['prefix' => 'users'], function () use ($router) {
     $router->post('login', 'UserController@login');
     $router->put('refresh', 'UserController@refresh');
-    $router->post('reset-password', 'UserController@ressetPassword');
+    $router->post('reset-password', 'UserController@resetPassword');
 
     $router->post('logout', ['middleware' => 'auth', 'uses' => 'UserController@logout']);
     $router->put('/{id}', ['middleware' => 'auth', 'uses' => 'UserController@update']);
+
+    $router->get('/{id}/profile', ['middleware' => 'auth', 'uses' => 'UserProfileController@getByUserId']);
 });
 
 $router->group(['prefix' => 'folders'], function () use ($router) {
@@ -36,10 +38,4 @@ $router->group(['prefix' => 'profiles'], function () use ($router) {
 
     $router->get('/{userProfileId}/folders', ['middleware' => 'auth', 'uses' => 'FolderController@getAllByUserProfileId']);
     $router->post('/{userProfileId}/folders', ['middleware' => 'auth', 'uses' => 'FolderController@create']);
-});
-
-
-$router->get('/test', function () {
-    $users = DB::select('select * from user', [], false);
-    return response()->json($users);
 });

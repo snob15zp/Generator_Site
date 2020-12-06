@@ -30,29 +30,29 @@ class UserTableSeeder extends Seeder
             'email' => 'admin@mail.fake'
         ]));
 
-//        $userRole = UserRole::where('name', UserRole::ROLE_USER)->first();
-//        User::factory()
-//            ->count(30)
-//            ->make()
-//            ->each(function ($user) use ($userRole) {
-//                $userProfile = new UserProfileFactory();
-//                $user->role()->associate($userRole);
-//                $user->save();
-//                $user->profile()->save($userProfile->make());
-//
-//                $folderFactory = new FolderFactory();
-//                $folders = $folderFactory
-//                    ->count(10)
-//                    ->make();
-//
-//                $user->folders()->saveMany($folders);
-//
-//                $folders->each(function ($folder) use ($user) {
-//                    $programs = (new ProgramFactory())
-//                        ->count(10)
-//                        ->make();
-//                    $folder->programs()->saveMany($programs);
-//                });
-//            });
+        $userRole = UserRole::where('name', UserRole::ROLE_USER)->first();
+        User::factory()
+            ->count(30)
+            ->make()
+            ->each(function ($user) use ($userRole) {
+                $userProfile = new UserProfileFactory();
+                $user->role()->associate($userRole);
+                $user->save();
+                $user->profile()->save($userProfile->make());
+
+                $folderFactory = new FolderFactory();
+                $folders = $folderFactory
+                    ->count(10)
+                    ->make();
+
+                $user->folders()->saveMany($folders);
+
+                $folders->each(function ($folder) use ($user) {
+                    $programs = (new ProgramFactory())
+                        ->count(10)
+                        ->make();
+                    $folder->programs()->saveMany($programs);
+                });
+            });
     }
 }

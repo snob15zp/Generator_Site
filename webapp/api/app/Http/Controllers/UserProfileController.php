@@ -180,4 +180,16 @@ class UserProfileController extends Controller
         }
         return $this->respondWithResource(new UserProfileResource($profile));
     }
+
+    public function getByUserId(Request $request, $id) {
+        $user = User::query()->whereKey(Hashids::decode($id))->first();
+        if ($user == null) {
+            $this->raiseError(404, "User not found");
+        }
+        if ($request->user()->cannot(UserPrivileges::VIEW_PROFILE, $user->profile)) {
+            $this->raiseError(403, 'Resource not available');
+        }
+
+        return $this->respondWithResource(new UserProfileResource($user->profile));
+    }
 }

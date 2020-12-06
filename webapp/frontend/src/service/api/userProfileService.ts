@@ -34,9 +34,10 @@ class UserProfileService {
         return new Promise<PagingResponse<UserProfile>>((resolve, reject) => {
             api.get<PagingResponseJson<UserProfileJson>>("/profiles?" + query)
                 .then((response) => {
+                    const profiles = response.data;
                     resolve({
-                        data: response.data.data.map(json => transformers.userProfileFromJson(json)),
-                        total: response.data.meta.total
+                        data: profiles.data.map(json => transformers.userProfileFromJson(json)),
+                        total: profiles.meta.total
                     });
                 }).catch((error) => reject(new Error(error)));
         });
@@ -45,6 +46,14 @@ class UserProfileService {
     async fetchById(id: string): Promise<UserProfile> {
         return new Promise<UserProfile>((resolve, reject) => {
             api.get(`/profiles/${id}`)
+                .then((response) => resolve(transformers.userProfileFromJson(response.data)))
+                .catch((error) => reject(new Error(error)))
+        });
+    }
+
+    async fetchByUserId(id: string): Promise<UserProfile> {
+        return new Promise<UserProfile>((resolve, reject) => {
+            api.get(`/users/${id}/profile`)
                 .then((response) => resolve(transformers.userProfileFromJson(response.data)))
                 .catch((error) => reject(new Error(error)))
         });

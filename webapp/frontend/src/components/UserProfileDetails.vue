@@ -1,5 +1,5 @@
 <template>
-  <v-layout fill-height column class="user-profile col-md-12 col-lg-9">
+  <v-layout fill-height column class="user-profile">
     <v-dialog v-model="isCreateDialogShow" max-width="500px">
       <v-card>
         <v-card-title class="headline">Create Folder</v-card-title>
@@ -60,7 +60,7 @@
 </template>
 
 <script lang="ts">
-import {Component, Ref, Vue} from "vue-property-decorator";
+import {Component, Prop, Ref, Vue, Watch} from "vue-property-decorator";
 import {Folder, Program, SaveFolderRequest, UploadFileRequest, UserProfile} from "@/store/models";
 import {fields} from "@/forms/UserProfileFormValidator";
 import UserProfilesModule from "../store/modules/userProfiles";
@@ -75,6 +75,8 @@ import saveDownloadFile from "../utils/download-file";
   components: {UserProfileInfo, Programs}
 })
 export default class UserProfileDetails extends Vue {
+  @Prop({default: null}) readonly userProfileId?: string;
+  @Prop({default: null}) readonly userId?: string;
   @Ref() readonly menuRef: (Vue & { save: (date: string) => void }) | undefined;
 
   private userProfile: UserProfile | null = null;
@@ -102,12 +104,37 @@ export default class UserProfileDetails extends Vue {
     return fields;
   }
 
-  mounted() {
+  @Watch("userId")
+  onUserIdChanged() {
+    console.log(this.userId)
+    if (this.userId) {
+      const promise = UserProfilesModule.fetchByUserId(this.userId);
+      this.fetchUserProfile(promise);
+    }
+  }
+
+  @Watch("userProfileId")
+  onUserProfileIdChanged() {
+    if (this.userProfileId) {
+      const promise = UserProfilesModule.fetchById(this.userProfileId!);
+      this.fetchUserProfile(promise);
+    }
+  }
+
+  mounted(){
+    if(this.userId) {
+      this.fetchUserProfile(UserProfilesModule.fetchByUserId(this.userId));
+    } else if(this.userProfileId){
+      this.fetchUserProfile(UserProfilesModule.fetchById(this.userProfileId));
+    }
+  }
+
+  private fetchUserProfile(promise: Promise<{ profile: UserProfile }>) {
     this.profileLoading = true;
     this.filesLoading = false;
     this.foldersLoding = false;
 
-    UserProfilesModule.findById(this.$route.params.id)
+    promise
         .then((v) => {
           this.userProfile = v.profile;
           this.fetchFodlers(v.profile);
@@ -133,7 +160,7 @@ export default class UserProfileDetails extends Vue {
     this.foldersLoding = true;
     ProgramsModule.loadFoldersByUserProfile(userProfile)
         .then(() => {
-          if(this.folders && this.folders.length > 0) {
+          if (this.folders && this.folders.length > 0) {
             this.fetchPrograms(this.folders[0]);
           }
         })

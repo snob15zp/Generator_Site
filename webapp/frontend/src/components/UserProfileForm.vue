@@ -1,5 +1,5 @@
 <template>
-  <v-form v-model="valid">
+  <v-form v-model="valid" ref="form">
     <v-row>
       <v-col>
         <v-text-field
@@ -99,6 +99,7 @@ export default class UserProfileForm extends Mixins(UserProfileFormValidator) {
 
   @Ref() readonly pickerRef: (Vue & { activePicker: string }) | undefined;
   @Ref() readonly menuRef: (Vue & { save: (date: string) => void }) | undefined;
+  @Ref() readonly form: (Vue & { reset: () => void }) | undefined;
 
   private menu = false;
   private valid = false;

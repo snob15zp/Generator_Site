@@ -3,10 +3,10 @@
     <v-card-title class="headline">
       Programms
       <v-spacer />
-      <v-btn icon @click="createFolder">
+      <v-btn icon @click="createFolder" v-if="canManagePrograms">
         <v-icon>mdi-folder-plus</v-icon>
       </v-btn>
-      <div>
+      <div v-if="canManagePrograms">
         <v-file-input
           dense
           v-model="fileInput"
@@ -44,7 +44,8 @@
         <v-list class="overflow-y-auto p-list" nav dense>
           <v-list-item v-for="file in files" :key="file.hash">
             <v-list-item-content>
-              <a @click="downloadFile(file)" href="#">{{ file.name }}</a>
+              <span v-if="isDownloadDisabled" style="color: rgba(0,0,0,.6);">{{ file.name }}</span>
+              <a @click="downloadFile(file)" href="#" v-else>{{ file.name }}</a>
             </v-list-item-content>
           </v-list-item>
         </v-list>
@@ -58,7 +59,8 @@ import { Vue, Component, Prop, Watch, Emit, Ref } from "vue-property-decorator";
 import { Folder, Program } from "@/store/models";
 import { isExpired, expiredAtInterval } from "@/utils/dateUtils";
 import { ResizeObserver } from "@juggle/resize-observer";
-import {settings} from "@/settings";
+import UserModule from "@/store/modules/user";
+
 @Component({
   filters: {
     expiredAtInterval: function(value: Date) {
@@ -82,6 +84,14 @@ export default class Programs extends Vue {
       el.style.height = height + "px";
     });
   });
+
+  get canManagePrograms() {
+    return UserModule.canManagePrograms;
+  }
+
+  get isDownloadDisabled() {
+    return isExpired(this.folders[this.selected].expiredAt) && !this.canManagePrograms;
+  }
 
   mounted() {
     this.observer.observe(this.container!.$el);

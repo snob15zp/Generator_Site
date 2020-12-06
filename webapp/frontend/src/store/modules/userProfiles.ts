@@ -30,8 +30,14 @@ class UserProfilesModule extends VuexModule {
   }
 
   @Action
-  async findById(id: string) {
+  async fetchById(id: string) {
     const profile = await userProfileService.fetchById(id);
+    return { profile };
+  }
+
+  @Action
+  async fetchByUserId(id: string) {
+    const profile = await userProfileService.fetchByUserId(id);
     return { profile };
   }
 }

@@ -37,7 +37,7 @@
               >
             </div>
             <div class="d-flex justify-center mt-3">
-              <a class="ml-3 text-decoration-none text-sm caption" href="#">{{ $t("login-form.forget-password") }}</a>
+              <a class="ml-3 text-decoration-none text-sm caption" href="/forget-password">{{ $t("login-form.forget-password") }}</a>
             </div>
           </v-container>
         </v-card-actions>

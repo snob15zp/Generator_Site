@@ -1,8 +1,13 @@
-import { getModule, Module, Mutation, MutationAction, Action, VuexModule } from "vuex-module-decorators";
-import { Vue } from "vue-property-decorator";
-import { User, UserCredetials } from "../models";
+import {Action, getModule, Module, Mutation, MutationAction, VuexModule} from "vuex-module-decorators";
+import {User, UserCredetials} from "../models";
 import authService from "../../service/api/authService";
 import store from "@/store";
+
+const MANAGE_PROFILES = 'manage-profiles';
+const MANAGE_PROGRAMS = 'manage-programs';
+const CREATE_USER = 'create-user';
+const VIEW_PROFILE = 'view-profile';
+const VIEW_PROGRAMS = 'view-programs';
 
 @Module({
     namespaced: true,
@@ -18,7 +23,16 @@ class UserModule extends VuexModule {
         return this.user != null;
     }
 
+    get canManageProfiles() {
+        return this.user ? this.user.privileges.indexOf(MANAGE_PROFILES) != -1 : false;
+    }
+
+    get canManagePrograms() {
+        return this.user ? this.user.privileges.indexOf(MANAGE_PROGRAMS) != -1 : false;
+    }
+
     get userName() {
+        console.log("Get User name: " + this.user);
         return this.user ? this.user.name : null;
     }
 
@@ -29,20 +43,25 @@ class UserModule extends VuexModule {
     @MutationAction
     async login(userCredentials: UserCredetials) {
         const user = await authService.login(userCredentials);
-        return { user };
+        return {user};
     }
 
     @Mutation
     setToken(token: string) {
-        if (this.user != null) {
-            this.user.token = token;
+        if (this.user) {
+            Object.assign(this.user.token, token);
         }
     }
 
-    @MutationAction
+    @Action({commit: "reset"})
     async logout() {
         await authService.logout();
-        return { user: null as any }
+    }
+
+    @Mutation
+    reset() {
+        console.log("Reset user");
+        this.user = null;
     }
 }
 

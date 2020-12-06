@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\UserResource;
+use App\Models\ResetPassword;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use JWTAuth;
 
 
@@ -51,7 +54,22 @@ class UserController extends Controller
 
     public function resetPassword(Request $request)
     {
+        $hash = base64_decode($request->input('hash'));
+        $resetPassword = ResetPassword::query()->where('hash', $hash)->first();
+        if ($resetPassword == null) {
+            $this->raiseError(404, "Link is expired");
+        }
 
+        $user = User::query()->where('login', $resetPassword->login)->first();
+        if ($user == null) {
+            $this->raiseError(404, "User not found");
+        }
+
+        $user->update([
+            "password" => Hash::make($request->input('password'))
+        ]);
+
+        return $this->respondWithMessage("Password changed");
     }
 
     public function update(Request $request, $id)

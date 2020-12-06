@@ -37,7 +37,6 @@ export default class App extends Vue {
 
   logout() {
     UserModule.logout().then(() => {
-      console.log(UserModule.user);
       this.$router.push("/login");
     });
   }
