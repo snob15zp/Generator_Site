@@ -3,7 +3,8 @@
   "page": {
     "home": "Users",
     "login": "Sigh In",
-    "user-profile": "User Profiles"
+    "user-profile": "User Profiles",
+    "firmware": "Firmware"
   },
   "login-form": {
     "title": "Sign In",

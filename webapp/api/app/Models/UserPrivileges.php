@@ -13,6 +13,7 @@ class UserPrivileges extends Model
     const CREATE_USER = 'create-user';
     const VIEW_PROFILE = 'view-profile';
     const VIEW_PROGRAMS = 'view-programs';
+    const MANAGE_FIRMWARE = 'manage-firmware';
 
     protected $table = 'user_privileges';
     public $timestamps = false;

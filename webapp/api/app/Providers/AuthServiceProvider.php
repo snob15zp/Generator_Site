@@ -27,11 +27,11 @@ class AuthServiceProvider extends ServiceProvider
     public function boot()
     {
         Gate::define(UserPrivileges::MANAGE_PROFILES, function ($user) {
-            return $user->role->name === UserRole::ROLE_ADMIN;
+            return $user->hasRole(UserRole::ROLE_ADMIN);
         });
 
         Gate::define(UserPrivileges::CREATE_USER, function ($user) {
-            return $user->role->name === UserRole::ROLE_ADMIN;
+            return $user->hasRole(UserRole::ROLE_ADMIN);
         });
 
         Gate::define(UserPrivileges::MANAGE_PROGRAMS, function ($user) {
@@ -46,5 +46,8 @@ class AuthServiceProvider extends ServiceProvider
             return $user->hasRole(UserRole::ROLE_ADMIN) || $user->id === $owner->id;
         });
 
+        Gate::define(UserPrivileges::MANAGE_FIRMWARE, function ($user) {
+            return $user->hasRole(UserRole::ROLE_ADMIN);
+        });
     }
 }

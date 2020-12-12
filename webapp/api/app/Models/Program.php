@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Program extends Model
 {
@@ -15,12 +16,12 @@ class Program extends Model
 
     protected $fillable = ['name', 'hash', 'active'];
 
-    public function folder()
+    public function folder(): BelongsTo
     {
         return $this->belongsTo('\App\Models\Folder');
     }
 
-    public function fileName()
+    public function fileName(): string
     {
         return $this->folder->path() . '/' . $this->name;
     }

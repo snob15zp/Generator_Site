@@ -3,8 +3,8 @@ import {User, UserCredetials} from "../models";
 import authService from "../../service/api/authService";
 import store from "@/store";
 
-const MANAGE_PROFILES = 'manage-profiles';
-const MANAGE_PROGRAMS = 'manage-programs';
+export const MANAGE_PROFILES = 'manage-profiles';
+export const MANAGE_PROGRAMS = 'manage-programs';
 const CREATE_USER = 'create-user';
 const VIEW_PROFILE = 'view-profile';
 const VIEW_PROGRAMS = 'view-programs';

@@ -17,7 +17,8 @@ class UsersRoleTableSeeder extends Seeder
                 new UserPrivileges(['name' => UserPrivileges::MANAGE_PROGRAMS]),
                 new UserPrivileges(['name' => UserPrivileges::CREATE_USER]),
                 new UserPrivileges(['name' => UserPrivileges::VIEW_PROFILE]),
-                new UserPrivileges(['name' => UserPrivileges::VIEW_PROGRAMS])
+                new UserPrivileges(['name' => UserPrivileges::VIEW_PROGRAMS]),
+                new UserPrivileges(['name' => UserPrivileges::MANAGE_FIRMWARE])
             ]);
 
         UserRole::create(['name' => UserRole::ROLE_USER])
