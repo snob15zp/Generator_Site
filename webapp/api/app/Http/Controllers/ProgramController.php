@@ -62,7 +62,7 @@ class ProgramController extends Controller
             $path = $request->file('program')->store($folder->path());
             $program = $folder->programs()->create([
                 'name' => basename($path),
-                'hash' => hash_file('sha256', Storage::disk('local')->path($path)),
+                'hash' => crc32(Storage::disk('local')->path($path)),
                 'active' => true
             ]);
             DB::commit();

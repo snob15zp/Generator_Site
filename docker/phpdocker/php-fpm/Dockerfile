@@ -15,6 +15,10 @@ RUN apt-get update \
     && apt-get -y install git \
     && apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/3
 
+RUN apt-get update \
+    && apt-get -y install zip unzip \
+    && apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
+
 
 RUN apt-get update \
     && apt install -y libgmp-dev \

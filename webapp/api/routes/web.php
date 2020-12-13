@@ -28,6 +28,11 @@ $router->group(['prefix' => 'programs'], function () use ($router) {
     $router->delete('/{id}', ['middleware' => 'auth', 'uses' => 'ProgramController@delete']);
 });
 
+$router->group(['prefix' => 'firmware'], function () use ($router) {
+    $router->get('/', ['middleware' => 'auth', 'uses' => 'FirmwareController@getAll']);
+    $router->get('/{hash}/download', 'FirmwareController@download');
+});
+
 $router->group(['prefix' => 'profiles'], function () use ($router) {
     $router->post('/', ['middleware' => 'auth', 'uses' => 'UserProfileController@create']);
     $router->put('/{id}', ['middleware' => 'auth', 'uses' => 'UserProfileController@update']);
