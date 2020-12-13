@@ -11,8 +11,6 @@ class Folder extends Model
     protected $primaryKey = 'id';
     public $incrementing = true;
 
-    public $timestamps = true;
-
     protected $fillable = ['name', 'expires_in', 'active'];
 
     public function user()

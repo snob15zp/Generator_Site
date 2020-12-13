@@ -1,5 +1,5 @@
 <template>
-  <v-layout fill-height column class="user-profile col-md-12 col-lg-9">
+  <v-layout fill-height column class="user-profile col-md-12">
     <UserProfileTable v-if="canManageProfiles"/>
     <UserProfileDetails v-else :user-id="userId"/>
   </v-layout>

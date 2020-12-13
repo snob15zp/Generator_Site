@@ -8,23 +8,21 @@ use App\Http\Resources\ProgramResource;
 use App\Models\Folder;
 use App\Models\Program;
 use App\Models\UserPrivileges;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Vinkla\Hashids\Facades\Hashids;
 
-class ProgramController extends Controller
+class FirmwareController extends Controller
 {
-    public function getAll(Request $request, $folderId): JsonResponse
+    public function getAll(Request $request)
     {
-        $folder = Folder::query()->whereKey(Hashids::decode($folderId))->first();
-        if ($request->user()->cannot(UserPrivileges::VIEW_PROGRAMS, $folder->user)) {
+        if ($request->user()->cannot(UserPrivileges::MANAGE_FIRMWARE)) {
             $this->raiseError(403, "Resource not available");
         }
-
-        return $this->respondWithResource(ProgramResource::collection($folder->programs));
+        $files = Storage::files(env('FIRMWARE_PATH'));
+        return $files;
     }
 
     public function download(Request $request, $id)
@@ -41,9 +39,11 @@ class ProgramController extends Controller
         return Storage::download($program->fileName());
     }
 
-    public function create(Request $request, $folderId): JsonResponse
+    public function create(Request $request, $folderId)
     {
-        $this->verifyUserPrivileges($request);
+        if ($request->user()->cannot(UserPrivileges::MANAGE_PROGRAMS)) {
+            $this->raiseError(403, "Resource not available");
+        }
 
         $this->validate($request, [
             'program' => 'required|file'
@@ -74,9 +74,11 @@ class ProgramController extends Controller
         }
     }
 
-    public function delete(Request $request, $id): JsonResponse
+    public function delete(Request $request, $id)
     {
-        $this->verifyUserPrivileges($request);
+        if ($request->user()->cannot(UserPrivileges::MANAGE_PROGRAMS)) {
+            $this->raiseError(403, "Resource not available");
+        }
 
         $program = Program::query()->whereKey(Hashids::decode($id))->first();
         if ($program == null) {
@@ -90,11 +92,5 @@ class ProgramController extends Controller
 
         $program->delete();
         return $this->respondWithMessage('Program deleted');
-    }
-
-    private function verifyUserPrivileges(Request $request) {
-        if ($request->user()->cannot(UserPrivileges::MANAGE_PROGRAMS)) {
-            $this->raiseError(403, "Resource not available");
-        }
     }
 }

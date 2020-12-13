@@ -4,10 +4,11 @@ import Login from "../views/Login.vue";
 import Home from "../views/Home.vue";
 import Profile from "../views/Profile.vue";
 import NotFound from "../views/NotFound.vue";
-import UserModule from "@/store/modules/user";
+import UserModule, {MANAGE_PROFILES} from "@/store/modules/user";
 import i18n from "@/i18n";
 import ResetPassword from "@/views/ResetPassword.vue";
 import ForgetPassword from "@/views/ForgetPassword.vue";
+import Firmware from "@/views/Firmware.vue";
 
 Vue.use(VueRouter);
 
@@ -17,15 +18,32 @@ const routes: Array<RouteConfig> = [
     name: "home",
     component: Home,
     meta: {
+      icon: "mdi-account-multiple",
+      navigation: true,
       requiresAuth: true,
+      requiresPermissions: [MANAGE_PROFILES],
       title: i18n.t("page.home")
     }
   },
+  {
+    path: "/firmware",
+    name: "firmware",
+    component: Firmware,
+    meta: {
+      icon: "mdi-memory",
+      navigation: true,
+      requiresAuth: true,
+      requiresPermissions: [MANAGE_PROFILES],
+      title: i18n.t("page.firmware")
+    }
+  },
+
   {
     path: "/profile/:id",
     name: "user-profile",
     component: Profile,
     meta: {
+      navigation: false,
       requiresAuth: true,
       title: i18n.t("page.user-profile")
     }
@@ -35,6 +53,7 @@ const routes: Array<RouteConfig> = [
     name: "login",
     component: Login,
     meta: {
+      navigation: false,
       title: i18n.t("page.login")
     }
   },
@@ -43,6 +62,7 @@ const routes: Array<RouteConfig> = [
     name: "reset-password",
     component: ResetPassword,
     meta: {
+      navigation: false,
       title: i18n.t("page.reset-password")
     }
   },
@@ -51,6 +71,7 @@ const routes: Array<RouteConfig> = [
     name: "forget-password",
     component: ForgetPassword,
     meta: {
+      navigation: false,
       title: i18n.t("page.forget-password")
     }
   },
@@ -59,6 +80,7 @@ const routes: Array<RouteConfig> = [
     name: "404",
     component: NotFound,
     meta: {
+      navigation: false,
       title: i18n.t("page.not-found")
     }
   },
