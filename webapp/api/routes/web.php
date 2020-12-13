@@ -9,6 +9,7 @@ $router->group(['prefix' => 'users'], function () use ($router) {
     $router->post('login', 'UserController@login');
     $router->put('refresh', 'UserController@refresh');
     $router->post('reset-password', 'UserController@resetPassword');
+    $router->post('forget-password', 'UserController@forgetPassword');
 
     $router->post('logout', ['middleware' => 'auth', 'uses' => 'UserController@logout']);
     $router->put('/{id}', ['middleware' => 'auth', 'uses' => 'UserController@update']);

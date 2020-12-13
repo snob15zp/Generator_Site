@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Http\Resources\UserResource;
 use App\Models\ResetPassword;
 use App\Models\User;
+use App\Notifications\ForgetPasswordNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use JWTAuth;
 
 
@@ -52,6 +55,23 @@ class UserController extends Controller
         return $this->respondWithMessage();
     }
 
+    public function forgetPassword(Request $request)
+    {
+        $user = User::query()->where('login', $request->input('login'))->first();
+        if ($user == null) {
+            return $this->respondWithMessage("User not found");
+        }
+
+        $resetPassword = ResetPassword::create([
+            'login' => $user->login,
+            'hash' => Hash::make(Str::random(12)),
+            'expired_at' => (new \DateTime())->modify('+7 day')
+        ]);
+
+        Notification::route('mail', $user->login)->notify(new ForgetPasswordNotification($user, $resetPassword));
+        return $this->respondWithMessage("OK");
+    }
+
     public function resetPassword(Request $request)
     {
         $hash = base64_decode($request->input('hash'));
@@ -74,6 +94,5 @@ class UserController extends Controller
 
     public function update(Request $request, $id)
     {
-
     }
 }

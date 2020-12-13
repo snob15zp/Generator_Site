@@ -83,7 +83,12 @@ router.beforeEach((to, from, next) => {
     }
     next("/login");
   } else {
-    next();
+    if (to.name === "login" && UserModule.isAuthorized) {
+      next("/");
+    } else {
+      next();
+    }
+
   }
 });
 
