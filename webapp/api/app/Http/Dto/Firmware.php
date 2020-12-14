@@ -6,19 +6,22 @@ use DateTime;
 
 class Firmware
 {
-    public $name;
     public $version;
     public $createdAt;
     public $device;
     public $hash;
 
-    public function __construct(string $name, string $version, DateTime $createdAt, string $device, string $hash)
+    public function __construct(string $version, DateTime $createdAt, string $device, string $hash)
     {
-        $this->name = $name;
         $this->version = $version;
         $this->createdAt = $createdAt;
         $this->device = $device;
         $this->hash = $hash;
+    }
+
+    public function getFileName()
+    {
+        return $this->version . '-' . $this->createdAt->getTimestamp() . '.bf';
     }
 
     public function toArray() {

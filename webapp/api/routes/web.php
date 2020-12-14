@@ -30,6 +30,8 @@ $router->group(['prefix' => 'programs'], function () use ($router) {
 
 $router->group(['prefix' => 'firmware'], function () use ($router) {
     $router->get('/', ['middleware' => 'auth', 'uses' => 'FirmwareController@getAll']);
+    $router->post('/', ['middleware' => 'auth', 'uses' => 'FirmwareController@create']);
+    $router->delete('/{hash}', ['middleware' => 'auth', 'uses' => 'FirmwareController@delete']);
     $router->get('/{hash}/download', 'FirmwareController@download');
 });
 

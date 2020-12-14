@@ -20,6 +20,13 @@ use Vinkla\Hashids\Facades\Hashids;
 
 class FirmwareController extends Controller
 {
+    private $firmwarePath;
+
+    public function __construct()
+    {
+        $this->firmwarePath = env('FIRMWARE_PATH');
+    }
+
     public function getAll(Request $request)
     {
         if ($request->user()->cannot(UserPrivileges::MANAGE_FIRMWARE)) {
@@ -31,17 +38,14 @@ class FirmwareController extends Controller
 
     public function download(Request $request, $hash)
     {
-        $firmwares = $this->load();
-        $firmware = collect($firmwares)->first(function($value, $key) use ($hash) {
-            return $value->hash == $hash;
-        });
-        if($firmware == null) {
+        $firmware = $this->findByHash($hash);
+        if ($firmware == null) {
             $this->raiseError(404, "File not found");
         }
         return Storage::download($firmware->name);
     }
 
-    public function create(Request $request, $folderId)
+    public function create(Request $request)
     {
         if ($request->user()->cannot(UserPrivileges::MANAGE_FIRMWARE)) {
             $this->raiseError(403, "Resource not available");
@@ -51,58 +55,57 @@ class FirmwareController extends Controller
             'firmware' => 'required|file'
         ]);
 
-        $folder = Folder::query()->whereKey(Hashids::decode($folderId))->first();
-        if ($folder == null) {
-            $this->raiseError(404, "Folder not found");
-        }
+        $fileExists = false;
+        $uploadedFile = $request->file('firmware');
         try {
-            $folderFileName = $folder->path();
-            if (!Storage::exists($folderFileName)) {
-                Storage::makeDirectory($folderFileName);
+            $firmware = $this->parse($uploadedFile->get());
+            $fileExists = $this->findByHash($firmware->hash) != null;
+            if (!$fileExists) {
+                $uploadedFile->storeAs($this->firmwarePath, $firmware->getFileName());
+                return $this->respondWithResource(new JsonResource($firmware));
             }
-            DB::beginTransaction();
-            $path = $request->file('program')->store($folder->path());
-            $program = $folder->programs()->create([
-                'name' => basename($path),
-                'hash' => hash_file('sha256', Storage::disk('local')->path($path)),
-                'active' => true
-            ]);
-            DB::commit();
-            return $this->respondWithResource(new ProgramResource($program));
         } catch (\Exception  $e) {
-            DB::rollBack();
             Log::error($e->getMessage());
-            $this->raiseError(500, "Cannot to make folder");
+            $this->raiseError(500, "Cannot to upload firmware");
+        }
+
+        if ($fileExists) {
+            $this->raiseError(422, "File already exists");
         }
     }
 
-    public function delete(Request $request, $id)
+    public function delete(Request $request, $hash)
     {
-        if ($request->user()->cannot(UserPrivileges::MANAGE_PROGRAMS)) {
+        if ($request->user()->cannot(UserPrivileges::MANAGE_FIRMWARE)) {
             $this->raiseError(403, "Resource not available");
         }
 
-        $program = Program::query()->whereKey(Hashids::decode($id))->first();
-        if ($program == null) {
-            $this->raiseError(404, "Folder not found");
+        try {
+            $firmware = $this->findByHash($hash);
+            Storage::delete($this->firmwarePath . '/' . $firmware->getFileName());
+            return $this->respondWithMessage('Firmware deleted');
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            $this->raiseError(500, "Cannot to delete firmware");
         }
-
-        $fileName = $program->fileName();
-        if (Storage::exists($fileName)) {
-            Storage::delete($fileName);
-        }
-
-        $program->delete();
-        return $this->respondWithMessage('Program deleted');
     }
 
-    private function load(): array {
-        $files = Storage::files(env('FIRMWARE_PATH'));
+    private function findByHash(string $hash): Firmware
+    {
+        $firmwares = $this->load();
+        return collect($firmwares)->first(function ($value, $key) use ($hash) {
+            return $value->hash == $hash;
+        });
+    }
+
+    private function load(): array
+    {
+        $files = Storage::files($this->firmwarePath);
         $firmware = [];
         $errors = [];
         foreach ($files as $file) {
             try {
-                $firmware[] = $this->parse($file);
+                $firmware[] = $this->parse(Storage::get($file));
             } catch (\Exception $e) {
                 Log::error($e->getMessage());
                 $errors[] = "$file is not parsable";
@@ -112,13 +115,11 @@ class FirmwareController extends Controller
         return $firmware;
     }
 
-    private function parse(string $file): Firmware
+    private function parse(string $xml): Firmware
     {
-        $xml = Storage::get($file);
         $element = new SimpleXMLElement($xml);
 
         return new Firmware(
-            $file,
             (string) $element->fw->version,
             DateTime::createFromFormat('d/m/Y h:i:s A', (string) $element->fw->date),
             (string) $element->fw->device,
