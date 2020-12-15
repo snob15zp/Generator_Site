@@ -53,28 +53,24 @@ class FirmwareController extends Controller
         }
 
         $this->validate($request, [
-            'firmware' => 'required|file'
+            'version' => 'required|regex:/^\d+\.\d+\.\d+$/',
+            'cpu' => 'required|file',
+            'fpga' => 'required|file'
         ]);
 
-        $fileExists = false;
-        $uploadedFile = $request->file('firmware');
         try {
-            $firmware = $this->parse($uploadedFile->get());
-            $fileExists = $this->findByHash($firmware->hash) != null;
-            Log::info("fileExists " . $fileExists);
-            if (!$fileExists) {
-                Log::info("Upload");
-                $uploadedFile->storeAs($this->firmwarePath, $firmware->getFileName());
-                return $this->respondWithResource(new JsonResource($firmware));
+            $path = $this->firmwarePath . '/' . $request->input('version');
+            if (Storage::exists($path)) {
+                Storage::deleteDirectory($path);
             }
+            Storage::makeDirectory($path);
+            $request->file('cpu')->storeAs($path, 'cpu.bf');
+            $request->file('fpga')->storeAs($path, 'fpga.bin');
+
+            return $this->respondWithResource(new JsonResource(new Firmware("", new DateTime(), "", "")));
         } catch (\Exception  $e) {
             Log::error($e->getMessage());
             $this->raiseError(500, "Cannot to upload firmware");
-        }
-
-        if ($fileExists) {
-            Log::info("Raise error");
-            $this->raiseError(422, "File already exists");
         }
     }
 

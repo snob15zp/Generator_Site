@@ -15,21 +15,56 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model="uploadDialogShow" max-width="500px">
+      <v-form v-model="valid" @submit.prevent="submit" :disabled="uploadInProgress" ref="form">
+        <v-card>
+          <v-card-title>Upload new version</v-card-title>
+          <v-progress-linear :value="progress" v-if="uploadInProgress"/>
+          <v-divider/>
+          <v-card-text>
+             <div v-if="errorMessage" class="error--text mb-4">
+              {{ errorMessage }}
+            </div>
+            <v-text-field
+              class="ml-2 mr-1"
+              hint="For example 2.1.0"
+              persistent-hint
+              v-model="version"
+              :rules="versionRules"
+              label="Version" />
+              <v-file-input
+                dense
+                required
+                :rules="fileRules"
+                v-model="cpuFileInput"
+                label="CPU"
+                class="mt-6" />
+            <v-file-input
+                dense
+                required
+                :rules="fileRules"
+                v-model="fpgaFileInput"
+                label="FPGA"
+                class="mt-4" />
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="primary" text @click="cancel()">{{ $t("form.cancel") }}</v-btn>
+            <v-btn 
+                color="primary" 
+                text
+                type="submit"
+                :disabled="!valid || uploadInProgress">{{ $t("form.save") }}</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-form>
+    </v-dialog>
+
     <v-card outlined class="mt-8 mb-8">
       <v-card-title>
         Releases
         <v-spacer/>
-        <v-file-input
-            :disabled="uploadInProgress"
-            outlined
-            dense
-            placeholder="Select your file"
-            v-model="fileInput"
-            class="mr-4"
-            style="height: 40px"
-        ></v-file-input>
-        <v-btn color="primary" @click="uploadFile"
-               :disabled="fileInput == null || uploadInProgress">Upload
+        <v-btn color="primary" @click="uploadDialogShow = true">Upload
           <v-icon right>mdi-upload</v-icon>
         </v-btn>
       </v-card-title>
@@ -43,8 +78,7 @@
           :items="items"
           show-select
           disable-pagination
-          hide-default-footer
-      >
+          hide-default-footer >
         <template v-slot:[`item.createdAt`]="{ item }">{{ $d(item.createdAt) }}</template>
         <template v-slot:[`item.actions`]="{ item }">
           <v-btn icon small :loading="downloadInProgress">
@@ -56,22 +90,12 @@
         </template>
       </v-data-table>
     </v-card>
-    <v-snackbar v-model="snackbar" :timeout="-1">
-      <v-container>
-        <v-row v-if="file">
-          {{ file.name }}
-        </v-row>
-        <v-row>
-          <v-progress-linear :value="progress"/>
-        </v-row>
-      </v-container>
-    </v-snackbar>
   </v-container>
 </template>
 
 
 <script lang="ts">
-import {Component, Vue, Watch} from "vue-property-decorator";
+import {Component, Vue, Watch, Ref} from "vue-property-decorator";
 import {DataOptions} from "vuetify";
 import firmwareService from "@/service/api/firmwareService";
 import {Firmware} from "@/store/models";
@@ -83,18 +107,26 @@ export default class FirmwareView extends Vue {
   private loading = false;
   private options: DataOptions | null = null;
 
+  private items: Firmware[] = [];
+  private selected: Firmware[] = [];
+  
+  // Delete
   private deleteDialogShow = false;
   private firmware: Firmware | null = null;
 
-  private items: Firmware[] = [];
-  private selected: Firmware[] = [];
-
-  private fileInput: any | null = null;
-
-  private progress = 0;
-  private downloadInProgress = false;
+  // Upload
+   @Ref() readonly form: (Vue & { reset: () => void }) | undefined;
+  private uploadDialogShow = false;
+  private version: string | null = null;
+  private cpuFileInput: any | null = null;
+  private fpgaFileInput: any | null = null;
   private uploadInProgress = false;
-  private snackbar = false;
+  private valid = false;
+  private errorMessage: string | null = null;
+  private progress = 0;
+
+  // Download 
+  private downloadInProgress = false;
   private file: File | null = null;
 
   private get headers() {
@@ -109,6 +141,12 @@ export default class FirmwareView extends Vue {
       },
     ];
   }
+
+  private fileRules = [(v: string | null) => !!v || "File is required"];
+  private versionRules = [
+    (v: string | null) => !!v || "Version is required",
+    (v: string) => /^\d+\.\d+.\d+$/.test(v) || "Version is not valid"
+  ];
 
   mounted() {
     this.fetchData();
@@ -133,6 +171,22 @@ export default class FirmwareView extends Vue {
     this.deleteDialogShow = false;
   }
 
+  private submit() {
+    this.uploadInProgress = true;
+    firmwareService.upload(this.version, this.cpuFileInput, this.fpgaFileInput, (process) => this.progress = process)
+      .then(() => {
+        this.cancel();
+        this.fetchData();
+      })
+      .catch(error => this.errorMessage = error)
+      .finally(() =>  this.uploadInProgress = false);
+  }
+
+  private cancel() {
+    this.uploadDialogShow = false;
+    this.form.reset();
+  }
+
   private deleteConfirm() {
     this.loading = true;
     this.closeDelete();
@@ -151,26 +205,12 @@ export default class FirmwareView extends Vue {
     this.deleteDialogShow = true;
   }
 
-  private uploadFile() {
-    this.snackbar = true;
-    this.uploadInProgress = true;
-    this.file = this.fileInput;
-    firmwareService.uploadFile(this.fileInput, (progress) => this.progress = progress)
-        .then(() => this.fetchData())
-        .catch(error => EventBus.$emit("error", error))
-        .finally(() => {
-          this.snackbar = false;
-          this.uploadInProgress = false;
-          this.fileInput = null;
-        });
-  }
-
   private onDownloadItem(item: Firmware) {
     this.file = new File([], item.name);
     this.downloadInProgress = true;
     firmwareService.downloadFile(item.hash, (process) => this.progress = process)
         .then(blob => saveDownloadFile(blob, item.name))
-        .catch(error => console.log(error))
+        .catch(error => EventBus.$emit("error", error))
         .finally(() => {
           this.downloadInProgress = false;
           this.file = null;
