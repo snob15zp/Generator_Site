@@ -52,7 +52,7 @@ import {Component, Vue} from "vue-property-decorator";
 import authService from "@/service/api/authService";
 
 @Component
-export default class ResetPassword extends Vue {
+export default class ResetPasswordView extends Vue {
   private password = "";
   private passwordConfirm = "";
   private inProgress = false;

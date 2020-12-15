@@ -59,9 +59,10 @@ class ProgramController extends Controller
                 Storage::makeDirectory($folderFileName);
             }
             DB::beginTransaction();
-            $path = $request->file('program')->store($folder->path());
+            $name = 'program_' . date("YmdHis") . '.txt';
+            $path = $request->file('program')->storeAs($folder->path(), $name);
             $program = $folder->programs()->create([
-                'name' => basename($path),
+                'name' => $name,
                 'hash' => crc32(Storage::disk('local')->path($path)),
                 'active' => true
             ]);

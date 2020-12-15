@@ -33,28 +33,14 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-
-    <v-snackbar v-model="snackbar" :timeout="-1">
-      <v-container>
-        <v-row v-if="file">
-          {{ file.name }}
-        </v-row>
-        <v-row>
-          <v-progress-linear :value="progress"/>
-        </v-row>
-      </v-container>
-    </v-snackbar>
-
     <user-profile-info :user-profile="userProfile" :loading="profileLoading"/>
     <programs
         class="flex-column fill-height mt-8 mb-8"
         :folders="folders"
-        :files="files"
-        :loading="foldersLoding || filesLoading"
+        :files="programs"
+        :loading="foldersLoading || filesLoading"
         @on-folder-changed="fetchPrograms"
         @create-folder="openCreateFolderDialog"
-        @upload-file="uploadFile"
-        @download-file="downloadFile"
     />
   </v-layout>
 </template>
@@ -63,13 +49,13 @@
 import {Component, Prop, Ref, Vue, Watch} from "vue-property-decorator";
 import {Folder, Program, SaveFolderRequest, UploadFileRequest, UserProfile} from "@/store/models";
 import {fields} from "@/forms/UserProfileFormValidator";
-import UserProfilesModule from "../store/modules/userProfiles";
-import ProgramsModule from "../store/modules/programs";
 import UserProfileInfo from "@/components/UserProfileInfo.vue";
 import Programs from "@/components/Programs.vue";
 import moment from "moment";
 import programService from "@/service/api/programService";
+import userProfileService from "@/service/api/userProfileService";
 import saveDownloadFile from "../utils/download-file";
+import {EventBus} from "@/utils/event-bus";
 
 @Component({
   components: {UserProfileInfo, Programs}
@@ -80,25 +66,17 @@ export default class UserProfileDetails extends Vue {
   @Ref() readonly menuRef: (Vue & { save: (date: string) => void }) | undefined;
 
   private userProfile: UserProfile | null = null;
-  private profileLoading = false;
-  private foldersLoding = false;
-  private filesLoading = false;
 
+  private folders: Folder[] = [];
+  private programs: Program[] = [];
+
+  private profileLoading = false;
+
+  private foldersLoading = false;
+  private filesLoading = false;
   private menu = false;
-  private folder: Folder | null = null;
   private isCreateDialogShow = false;
   private expiredAt: string | null = null;
-  private progress = 0;
-  private snackbar = false;
-  private file: File | null = null;
-
-  get folders() {
-    return ProgramsModule.folders;
-  }
-
-  get files() {
-    return ProgramsModule.files;
-  }
 
   get fields() {
     return fields;
@@ -108,7 +86,7 @@ export default class UserProfileDetails extends Vue {
   onUserIdChanged() {
     console.log(this.userId)
     if (this.userId) {
-      const promise = UserProfilesModule.fetchByUserId(this.userId);
+      const promise = userProfileService.fetchByUserId(this.userId)
       this.fetchUserProfile(promise);
     }
   }
@@ -116,56 +94,57 @@ export default class UserProfileDetails extends Vue {
   @Watch("userProfileId")
   onUserProfileIdChanged() {
     if (this.userProfileId) {
-      const promise = UserProfilesModule.fetchById(this.userProfileId!);
+      const promise = userProfileService.fetchById(this.userProfileId!);
       this.fetchUserProfile(promise);
     }
   }
 
   mounted(){
     if(this.userId) {
-      this.fetchUserProfile(UserProfilesModule.fetchByUserId(this.userId));
+      this.fetchUserProfile(userProfileService.fetchByUserId(this.userId));
     } else if(this.userProfileId){
-      this.fetchUserProfile(UserProfilesModule.fetchById(this.userProfileId));
+      this.fetchUserProfile(userProfileService.fetchById(this.userProfileId));
     }
   }
 
-  private fetchUserProfile(promise: Promise<{ profile: UserProfile }>) {
+  private fetchUserProfile(promise: Promise<UserProfile>) {
     this.profileLoading = true;
     this.filesLoading = false;
-    this.foldersLoding = false;
+    this.foldersLoading = false;
 
     promise
-        .then((v) => {
-          this.userProfile = v.profile;
-          this.fetchFodlers(v.profile);
+        .then((profile) => {
+          this.userProfile = profile;
+          this.fetchFolders(profile);
         })
-        .catch((e) => {
-          console.error(e);
-        })
+        .catch((e) => EventBus.$emit("error", e))
         .finally(() => {
           this.profileLoading = false;
         });
   }
 
   private fetchPrograms(folder: Folder) {
-    this.folder = folder;
     this.filesLoading = true;
-    ProgramsModule.loadFilesByFolder(folder)
+    programService.fetchPrograms(folder)
+        .then(programs => this.programs = programs)
+        .catch((e) => EventBus.$emit("error", e))
         .finally(() => {
           this.filesLoading = false;
         });
   }
 
-  private fetchFodlers(userProfile: UserProfile) {
-    this.foldersLoding = true;
-    ProgramsModule.loadFoldersByUserProfile(userProfile)
-        .then(() => {
+  private fetchFolders(userProfile: UserProfile) {
+    this.foldersLoading = true;
+    programService.fetchFolders(userProfile.id!)
+        .then((folders) => {
+          this.folders = folders;
           if (this.folders && this.folders.length > 0) {
             this.fetchPrograms(this.folders[0]);
           }
         })
+        .catch((e) => EventBus.$emit("error", e))
         .finally(() => {
-          this.foldersLoding = false;
+          this.foldersLoading = false;
         });
   }
 
@@ -185,35 +164,14 @@ export default class UserProfileDetails extends Vue {
       name: date.format("DD-MM-YY"),
       expiredAt: date.toDate()
     } as Folder;
-    ProgramsModule.saveFolder({userProfile: this.userProfile, folder: folder} as SaveFolderRequest)
-        .then(() => this.fetchFodlers(this.userProfile!))
+    programService.saveFolder(this.userProfile!, folder)
+        .then(() => this.fetchFolders(this.userProfile!))
+        .catch((e) => EventBus.$emit("error", e))
         .finally(() => this.createFolderClose());
   }
 
   private save(date: string) {
     this.menuRef!.save(date);
-  }
-
-  private uploadFile(file: File) {
-    this.snackbar = true;
-    this.file = file;
-    ProgramsModule.uploadFile({
-      file: file,
-      folder: this.folder,
-      onProgressCallback: (progress) => this.progress = progress
-    } as UploadFileRequest)
-        .finally(() => this.snackbar = false);
-  }
-
-  private downloadFile(program: Program) {
-    this.snackbar = true;
-    this.file = new File([], program.name);
-    programService.downloadFile({
-      program: program,
-      onProgressCallback: (process) => this.progress = process
-    })
-        .then(blob => saveDownloadFile(blob, program.name))
-        .finally(() => this.snackbar = false)
   }
 }
 </script>

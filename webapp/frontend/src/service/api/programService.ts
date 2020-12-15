@@ -9,13 +9,14 @@ import {
 } from "@/store/models";
 import api from ".";
 import transformers from "./transformers";
+import {apiErrorMapper} from "@/service/api/utils";
 
 class ProgramService {
     async fetchFolders(userProfileId: string): Promise<Folder[]> {
         return new Promise<Folder[]>((resolve, reject) => {
             api.get(`/profiles/${userProfileId}/folders`)
                 .then((response) => resolve(response.data.map((json: FolderJson) => transformers.folderFromJson(json))))
-                .catch((error) => reject(new Error(error)));
+                .catch((error) => reject(new Error(apiErrorMapper(error))));
         });
     }
 
@@ -23,7 +24,7 @@ class ProgramService {
         return new Promise<Program[]>((resolve, reject) => {
             api.get(`/folders/${folder.id}/programs`)
                 .then(response => resolve(response.data.map((json: ProgramJson) => transformers.programFromJson(json))))
-                .catch(error => reject(new Error(error)))
+                .catch(error => reject(new Error(apiErrorMapper(error))))
         });
     }
 
@@ -31,7 +32,7 @@ class ProgramService {
         return new Promise<Folder>((resolve, reject) => {
             api.post(`/profiles/${userProfile.id}/folders`, transformers.folderToJson(folder))
                 .then((response) => resolve(transformers.folderFromJson(response.data)))
-                .catch((error) => reject(new Error(error)));
+                .catch((error) => reject(new Error(apiErrorMapper(error))));
         });
     }
 
@@ -46,7 +47,7 @@ class ProgramService {
                 }
             })
                 .then((response) => resolve(transformers.programFromJson(response.data)))
-                .catch((error) => reject(new Error(error)));
+                .catch((error) => reject(new Error(apiErrorMapper(error))));
         });
     }
 
@@ -59,7 +60,7 @@ class ProgramService {
                 }
             })
                 .then(response => resolve(new Blob([response.data], {type: 'application/octet-stream'})))
-                .catch(error => reject(new Error(error)))
+                .catch(error => reject(new Error(apiErrorMapper(error))))
         })
     }
 }

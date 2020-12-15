@@ -20,7 +20,7 @@
 import { Component, Vue } from "vue-property-decorator";
 
 @Component
-export default class NotFound extends Vue {}
+export default class NotFoundView extends Vue {}
 </script>
 
 <style lang="scss">

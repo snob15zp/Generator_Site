@@ -18,6 +18,7 @@ const VIEW_PROGRAMS = 'view-programs';
 })
 class UserModule extends VuexModule {
     user: User | null = null;
+    error: Error | null = null;
 
     get isAuthorized() {
         return this.user != null;

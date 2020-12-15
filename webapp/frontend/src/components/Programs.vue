@@ -1,22 +1,27 @@
 <template>
   <v-card ref="container" outlined :loading="loading">
     <v-card-title class="headline">
-      Programms
-      <v-spacer />
-      <v-btn icon @click="createFolder" v-if="canManagePrograms">
-        <v-icon>mdi-folder-plus</v-icon>
+      Programs
+      <v-spacer/>
+      <v-file-input v-if="canManagePrograms"
+                    :disabled="uploadInProgress || isFoldersEmpty"
+                    outlined
+                    dense
+                    placeholder="Select your file"
+                    v-model="fileInput"
+                    class="mr-4"
+                    style="height: 40px"
+      ></v-file-input>
+      <v-btn color="primary" v-if="canManagePrograms" @click="uploadFile"
+             :disabled="fileInput == null || uploadInProgress">Upload
+        <v-icon right>mdi-upload</v-icon>
       </v-btn>
-      <div v-if="canManagePrograms">
-        <v-file-input
-          dense
-          v-model="fileInput"
-          hide-input
-          :disabled="selected === null"
-          prepend-icon="mdi-file-upload"
-        ></v-file-input>
-      </div>
+      <v-btn color="primary" @click="createFolder" v-if="canManagePrograms" class="ml-2">
+        New folder
+        <v-icon right>mdi-folder-plus</v-icon>
+      </v-btn>
     </v-card-title>
-    <v-divider />
+    <v-divider/>
     <v-layout row class="row--dense">
       <v-col cols="12" md="6">
         <v-list class="overflow-y-auto p-list" nav>
@@ -28,7 +33,7 @@
                 </v-icon>
               </v-list-item-avatar>
               <v-list-item-content>
-                <v-list-item-title>{{ folder.name }} </v-list-item-title>
+                <v-list-item-title>{{ folder.name }}</v-list-item-title>
                 <v-list-item-subtitle v-bind:class="{ 'error--text': isExpired(folder.expiredAt) }">
                   {{ folder.expiredAt | expiredAtInterval }}
                 </v-list-item-subtitle>
@@ -51,32 +56,51 @@
         </v-list>
       </v-col>
     </v-layout>
+
+    <v-snackbar v-model="snackbar" :timeout="-1">
+      <v-container>
+        <v-row v-if="file">
+          {{ file.name }}
+        </v-row>
+        <v-row>
+          <v-progress-linear :value="progress"/>
+        </v-row>
+      </v-container>
+    </v-snackbar>
   </v-card>
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch, Emit, Ref } from "vue-property-decorator";
-import { Folder, Program } from "@/store/models";
-import { isExpired, expiredAtInterval } from "@/utils/dateUtils";
-import { ResizeObserver } from "@juggle/resize-observer";
+import {Component, Emit, Prop, Ref, Vue, Watch} from "vue-property-decorator";
+import {Folder, Program, UploadFileRequest} from "@/store/models";
+import {expiredAtInterval, isExpired} from "@/utils/dateUtils";
+import {ResizeObserver} from "@juggle/resize-observer";
 import UserModule from "@/store/modules/user";
+import programService from "@/service/api/programService";
+import saveDownloadFile from "@/utils/download-file";
 
 @Component({
   filters: {
-    expiredAtInterval: function(value: Date) {
+    expiredAtInterval: function (value: Date) {
       return expiredAtInterval(value);
     }
   }
 })
 export default class Programs extends Vue {
-  @Prop({ default: false }) readonly loading!: boolean;
+  @Prop({default: false}) readonly loading!: boolean;
   @Prop() readonly folders!: Folder[];
-  @Prop({ default: () => [] }) readonly files!: Program[];
+  @Prop({default: () => []}) readonly files!: Program[];
 
   @Ref() readonly container: Vue | undefined;
 
   private selected = 0;
   private fileInput: any | null = null;
+  private folder: Folder | null = null;
+
+  private uploadInProgress = false;
+  private progress = 0;
+  private snackbar = false;
+  private file: File | null = null;
 
   private observer = new ResizeObserver((entries) => {
     const height = Math.max(entries[0].contentBoxSize[0].blockSize - 80, 300);
@@ -84,6 +108,10 @@ export default class Programs extends Vue {
       el.style.height = height + "px";
     });
   });
+
+  get isFoldersEmpty() {
+    return this.folders.length === 0;
+  }
 
   get canManagePrograms() {
     return UserModule.canManagePrograms;
@@ -99,16 +127,21 @@ export default class Programs extends Vue {
 
   @Watch("selected")
   private onSelectedChanged() {
-    this.onFolderChanged(this.folders[this.selected]);
+    this.folder = this.folders[this.selected];
+    this.onFolderChanged(this.folder);
   }
 
-  @Watch("fileInput")
-  private onfileInputChanged() {
-    this.uploadFile(this.fileInput);
+  @Watch("folders")
+  private onFoldersChanged() {
+    if (!this.isFoldersEmpty) {
+      this.folder = this.folders[this.selected];
+    }
   }
+
 
   @Emit()
   onFolderChanged(folder: Folder) {
+    this.folder = folder;
     return folder;
   }
 
@@ -117,14 +150,32 @@ export default class Programs extends Vue {
     return;
   }
 
-  @Emit()
-  uploadFile(file: File) {
-    return file;
+  private uploadFile() {
+    this.snackbar = true;
+    this.uploadInProgress = true;
+    this.file = this.fileInput;
+    programService.uploadFile({
+      file: this.fileInput,
+      folder: this.folder,
+      onProgressCallback: (progress) => this.progress = progress
+    } as UploadFileRequest)
+        .finally(() => {
+          this.snackbar = false;
+          this.uploadInProgress = false;
+          this.fileInput = null;
+          this.onFolderChanged(this.folder!);
+        });
   }
 
-  @Emit()
-  downloadFile(program: Program) {
-      return program;
+  private downloadFile(program: Program) {
+    this.snackbar = true;
+    this.file = new File([], program.name);
+    programService.downloadFile({
+      program: program,
+      onProgressCallback: (process) => this.progress = process
+    })
+        .then(blob => saveDownloadFile(blob, program.name))
+        .finally(() => this.snackbar = false)
   }
 
   private isExpired(date: Date) {

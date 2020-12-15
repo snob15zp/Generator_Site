@@ -62,6 +62,7 @@ function folderToJson(folder: Folder): FolderJson {
 
 function firmwareFromJson(json: FirmwareJson): Firmware {
     return {
+        name: json.name,
         hash: json.hash,
         version: json.version,
         device: json.device,

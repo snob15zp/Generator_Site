@@ -42,7 +42,7 @@ import {Component, Vue} from "vue-property-decorator";
 import authService from "@/service/api/authService";
 
 @Component
-export default class ForgetPassword extends Vue {
+export default class ForgetPasswordView extends Vue {
   private login = "";
   private inProgress = false;
   private valid = false;

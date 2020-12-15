@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, {AxiosError} from "axios";
 import {settings} from "@/settings";
 import UserModule from "@/store/modules/user";
 import router from "@/router";

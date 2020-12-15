@@ -1,15 +1,15 @@
 import {PagingRequest, PagingResponse, PagingResponseJson, UserProfile, UserProfileJson} from "@/store/models";
 import transformers from "./transformers";
 import api from "."
+import {apiErrorMapper} from "@/service/api/utils";
 
 class UserProfileService {
     async delete(userProfiles: Array<UserProfile>) {
-        console.log(userProfiles);
         return new Promise((resolve, reject) => {
             const query = userProfiles.map((profile) => `ids[]=${profile.id}`).join('&');
             api.delete(`/profiles?${query}`)
                 .then(() => resolve())
-                .catch((error) => reject(new Error(error)));
+                .catch((error) => reject(new Error(apiErrorMapper(error))));
         });
     }
 
@@ -21,7 +21,7 @@ class UserProfileService {
 
             request
                 .then((response) => resolve(transformers.userProfileFromJson(response.data)))
-                .catch((error) => reject(new Error(error)))
+                .catch((error) => reject(new Error(apiErrorMapper(error))))
         })
     }
 
@@ -39,7 +39,7 @@ class UserProfileService {
                         data: profiles.data.map(json => transformers.userProfileFromJson(json)),
                         total: profiles.meta.total
                     });
-                }).catch((error) => reject(new Error(error)));
+                }).catch((error) => reject(new Error(apiErrorMapper(error))));
         });
     }
 
@@ -47,7 +47,7 @@ class UserProfileService {
         return new Promise<UserProfile>((resolve, reject) => {
             api.get(`/profiles/${id}`)
                 .then((response) => resolve(transformers.userProfileFromJson(response.data)))
-                .catch((error) => reject(new Error(error)))
+                .catch((error) => reject(new Error(apiErrorMapper(error))))
         });
     }
 
@@ -55,7 +55,7 @@ class UserProfileService {
         return new Promise<UserProfile>((resolve, reject) => {
             api.get(`/users/${id}/profile`)
                 .then((response) => resolve(transformers.userProfileFromJson(response.data)))
-                .catch((error) => reject(new Error(error)))
+                .catch((error) => reject(new Error(apiErrorMapper(error))))
         });
     }
 }

@@ -57,11 +57,13 @@
               ></v-text-field>
             </v-layout>
             <v-spacer></v-spacer>
-            <v-btn icon @click="onCreateItem">
-              <v-icon>mdi-account-plus</v-icon>
+            <v-btn color="primary" @click="onCreateItem">
+              New user
+              <v-icon right dark>mdi-account-plus</v-icon>
             </v-btn>
-            <v-btn icon :disabled="selected.length === 0" @click="onDeleteItems">
-              <v-icon>mdi-delete</v-icon>
+            <v-btn color="primary" :disabled="selected.length === 0" @click="onDeleteItems" class="ml-2">
+              Delete
+              <v-icon right dark>mdi-delete</v-icon>
             </v-btn>
           </v-toolbar>
         </template>
@@ -84,8 +86,9 @@ import {Component, Vue, Watch} from "vue-property-decorator";
 import {PagingRequest, UserProfile} from "@/store/models";
 import {DataOptions} from "vuetify";
 import {TranslateResult} from "vue-i18n";
-import UserProfilesModule from "@/store/modules/userProfiles";
 import UserProfileForm from "@/components/UserProfileForm.vue";
+import userProfileService from "@/service/api/userProfileService";
+import {EventBus} from "@/utils/event-bus";
 
 const START_PAGE = 1;
 const DEFAULT_ITEMS_PER_PAGE = 10;
@@ -116,6 +119,8 @@ export default class UserProfileTable extends Vue {
   private loading = false;
   private request!: PagingRequest;
 
+  private items: UserProfile[] = [];
+  private total = 0;
 
   private searchTimeout?: number | null = null;
 
@@ -137,14 +142,6 @@ export default class UserProfileTable extends Vue {
     return this.editDialog.items ? this.editDialog.items[0] : null;
   }
 
-  get items() {
-    return UserProfilesModule.profiles?.data || [];
-  }
-
-  get total() {
-    return UserProfilesModule.profiles?.total || 0;
-  }
-
   @Watch("options")
   private onOptionsChanged() {
     this.fetchData();
@@ -158,8 +155,12 @@ export default class UserProfileTable extends Vue {
     this.request = request;
 
     this.loading = true;
-    UserProfilesModule.load(request)
-        .catch((e) => console.log("Error fetching user profiles " + e))
+    userProfileService.fetchAll(request)
+        .then(page => {
+          this.items = page.data;
+          this.total = page.total;
+        })
+        .catch((e) => EventBus.$emit("error", e))
         .finally(() => {
           this.loading = false;
         });
@@ -167,9 +168,9 @@ export default class UserProfileTable extends Vue {
 
   private deleteConfirm() {
     this.loading = true;
-    UserProfilesModule.remove(this.deleteDialog.items!)
+    userProfileService.delete(this.deleteDialog.items!)
         .then(() => this.fetchUserProfiles(this.request))
-        .catch((e) => console.error(e))
+        .catch((e) => EventBus.$emit("error", e))
         .finally(() => {
           this.loading = false;
         });
@@ -184,9 +185,9 @@ export default class UserProfileTable extends Vue {
   private saveProfile() {
     this.closeEditDialog();
     this.loading = true;
-    UserProfilesModule.save(this.editDialog.items![0])
+    userProfileService.save(this.editDialog.items![0])
         .then(() => this.fetchUserProfiles(this.request))
-        .catch((e) => console.error(e))
+        .catch((e) => EventBus.$emit("error", e))
         .finally(() => {
           this.loading = false;
         });

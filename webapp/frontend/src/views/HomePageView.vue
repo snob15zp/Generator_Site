@@ -15,7 +15,7 @@ import UserProfileDetails from "@/components/UserProfileDetails.vue";
 @Component({
   components: {UserProfileDetails, UserProfileInfo, UserProfileTable}
 })
-export default class Home extends Vue {
+export default class HomePageView extends Vue {
 
   get canManageProfiles() {
     return UserModule.canManageProfiles;

@@ -1,13 +1,13 @@
 import Vue from "vue";
 import VueRouter, { RouteConfig } from "vue-router";
-import Login from "../views/Login.vue";
-import Home from "../views/Home.vue";
-import Profile from "../views/Profile.vue";
-import NotFound from "../views/NotFound.vue";
+import LoginView from "../views/LoginView.vue";
+import HomePageView from "../views/HomePageView.vue";
+import Profile from "../views/ProfileView.vue";
+import NotFoundView from "../views/NotFoundView.vue";
 import UserModule, {MANAGE_PROFILES} from "@/store/modules/user";
 import i18n from "@/i18n";
-import ResetPassword from "@/views/ResetPassword.vue";
-import ForgetPassword from "@/views/ForgetPassword.vue";
+import ResetPasswordView from "@/views/ResetPasswordView.vue";
+import ForgetPasswordView from "@/views/ForgetPasswordView.vue";
 import FirmwareView from "@/views/FirmwareView.vue";
 
 Vue.use(VueRouter);
@@ -16,7 +16,7 @@ const routes: Array<RouteConfig> = [
   {
     path: "/",
     name: "home",
-    component: Home,
+    component: HomePageView,
     meta: {
       icon: "mdi-account-multiple",
       navigation: true,
@@ -51,7 +51,7 @@ const routes: Array<RouteConfig> = [
   {
     path: "/login",
     name: "login",
-    component: Login,
+    component: LoginView,
     meta: {
       navigation: false,
       title: i18n.t("page.login")
@@ -60,7 +60,7 @@ const routes: Array<RouteConfig> = [
   {
     path: "/reset-password/:hash",
     name: "reset-password",
-    component: ResetPassword,
+    component: ResetPasswordView,
     meta: {
       navigation: false,
       title: i18n.t("page.reset-password")
@@ -69,7 +69,7 @@ const routes: Array<RouteConfig> = [
   {
     path: "/forget-password",
     name: "forget-password",
-    component: ForgetPassword,
+    component: ForgetPasswordView,
     meta: {
       navigation: false,
       title: i18n.t("page.forget-password")
@@ -78,7 +78,7 @@ const routes: Array<RouteConfig> = [
   {
     path: "/404",
     name: "404",
-    component: NotFound,
+    component: NotFoundView,
     meta: {
       navigation: false,
       title: i18n.t("page.not-found")

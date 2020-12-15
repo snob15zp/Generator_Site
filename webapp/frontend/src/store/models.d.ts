@@ -128,6 +128,7 @@ export interface Firmware {
   hash: string;
   createdAt: Date;
   device: string;
+  name: string;
 }
 
 export interface FirmwareJson {
@@ -135,4 +136,14 @@ export interface FirmwareJson {
   hash: string;
   createdAt: string;
   device: string;
+  name: string;
+}
+
+export interface ErrorJson {
+  message: string;
+  status: number;
+}
+
+export interface ErrorResponseJson {
+  errors: ErrorJson;
 }

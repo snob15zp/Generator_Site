@@ -4,19 +4,15 @@
 namespace App\Http\Controllers;
 
 use App\Http\Dto\Firmware;
-use App\Http\Resources\FirmwareResource;
-use App\Http\Resources\ProgramResource;
-use App\Models\Folder;
-use App\Models\Program;
 use App\Models\UserPrivileges;
 use DateTime;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use SimpleXMLElement;
-use Vinkla\Hashids\Facades\Hashids;
 
 class FirmwareController extends Controller
 {
@@ -27,7 +23,7 @@ class FirmwareController extends Controller
         $this->firmwarePath = env('FIRMWARE_PATH');
     }
 
-    public function getAll(Request $request)
+    public function getAll(Request $request): JsonResponse
     {
         if ($request->user()->cannot(UserPrivileges::MANAGE_FIRMWARE)) {
             $this->raiseError(403, "Resource not available");
@@ -36,16 +32,21 @@ class FirmwareController extends Controller
         return $this->respondWithResource(JsonResource::collection($firmwares));
     }
 
-    public function download(Request $request, $hash)
+    public function download($hash)
     {
         $firmware = $this->findByHash($hash);
         if ($firmware == null) {
             $this->raiseError(404, "File not found");
         }
-        return Storage::download($firmware->name);
+        return Storage::download($this->firmwarePath . '/' . $firmware->getFileName());
     }
 
-    public function create(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws ValidationException
+     */
+    public function create(Request $request): JsonResponse
     {
         if ($request->user()->cannot(UserPrivileges::MANAGE_FIRMWARE)) {
             $this->raiseError(403, "Resource not available");
@@ -60,7 +61,9 @@ class FirmwareController extends Controller
         try {
             $firmware = $this->parse($uploadedFile->get());
             $fileExists = $this->findByHash($firmware->hash) != null;
+            Log::info("fileExists " . $fileExists);
             if (!$fileExists) {
+                Log::info("Upload");
                 $uploadedFile->storeAs($this->firmwarePath, $firmware->getFileName());
                 return $this->respondWithResource(new JsonResource($firmware));
             }
@@ -70,11 +73,17 @@ class FirmwareController extends Controller
         }
 
         if ($fileExists) {
+            Log::info("Raise error");
             $this->raiseError(422, "File already exists");
         }
     }
 
-    public function delete(Request $request, $hash)
+    /**
+     * @param Request $request
+     * @param $hash
+     * @return JsonResponse
+     */
+    public function delete(Request $request, $hash): JsonResponse
     {
         if ($request->user()->cannot(UserPrivileges::MANAGE_FIRMWARE)) {
             $this->raiseError(403, "Resource not available");
@@ -83,14 +92,15 @@ class FirmwareController extends Controller
         try {
             $firmware = $this->findByHash($hash);
             Storage::delete($this->firmwarePath . '/' . $firmware->getFileName());
-            return $this->respondWithMessage('Firmware deleted');
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             $this->raiseError(500, "Cannot to delete firmware");
         }
+
+        return $this->respondWithMessage('Firmware deleted');
     }
 
-    private function findByHash(string $hash): Firmware
+    private function findByHash(string $hash): ?Firmware
     {
         $firmwares = $this->load();
         return collect($firmwares)->first(function ($value, $key) use ($hash) {
@@ -102,13 +112,11 @@ class FirmwareController extends Controller
     {
         $files = Storage::files($this->firmwarePath);
         $firmware = [];
-        $errors = [];
         foreach ($files as $file) {
             try {
                 $firmware[] = $this->parse(Storage::get($file));
             } catch (\Exception $e) {
                 Log::error($e->getMessage());
-                $errors[] = "$file is not parsable";
             }
         }
 

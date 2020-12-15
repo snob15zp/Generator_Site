@@ -33,7 +33,15 @@
     </v-navigation-drawer>
 
     <v-main>
-      <v-container fill-height class="justify-center align-start" pa-0>
+      <v-alert
+          :value="alert"
+          :type="alertType"
+          dismissible
+          transition="scale-transition"
+          border="right"
+          class="ml-2 mr-2 mt-2">{{ alertMessage }}
+      </v-alert>
+      <v-container fill-height class="justify-center align-start pa-0">
         <router-view/>
       </v-container>
     </v-main>
@@ -44,6 +52,7 @@
 import {Component, Vue} from "vue-property-decorator";
 import LocaleSwitcher from "@/components/LocaleSwitcher.vue";
 import UserModule from "./store/modules/user";
+import {EventBus} from "@/utils/event-bus";
 
 @Component({
   components: {LocaleSwitcher},
@@ -51,6 +60,10 @@ import UserModule from "./store/modules/user";
 export default class App extends Vue {
   private drawer = null;
   private selected = 0;
+
+  private alert = false
+  private alertMessage: string | null = null;
+  private alertType: string | null = null;
 
   get isAuthorized() {
     return UserModule.isAuthorized;
@@ -66,6 +79,15 @@ export default class App extends Vue {
 
   get routers() {
     return this.$router.options.routes?.filter(config => config.meta?.navigation)
+  }
+
+  mounted() {
+    EventBus.$on("error", (error: Error) => {
+      this.alertType = 'error';
+      this.alertMessage = error.message;
+      this.alert = true;
+      setTimeout(() => this.alert = false, 5000);
+    });
   }
 
   logout() {

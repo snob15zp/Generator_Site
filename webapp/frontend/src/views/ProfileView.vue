@@ -10,6 +10,6 @@ import UserProfileDetails from "@/components/UserProfileDetails.vue";
 @Component({
   components: {UserProfileDetails}
 })
-export default class Profiles extends Vue {
+export default class ProfileView extends Vue {
 }
 </script>

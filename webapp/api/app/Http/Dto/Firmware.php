@@ -19,17 +19,22 @@ class Firmware
         $this->hash = $hash;
     }
 
-    public function getFileName()
+    public function getFileName(): string
     {
         return $this->version . '-' . $this->createdAt->getTimestamp() . '.bf';
     }
 
-    public function toArray() {
+    public function toArray(): array {
         return [
+            'name' => $this->getFileName(),
             'version' => $this->version,
             'createdAt' => $this->createdAt->format(DATE_ATOM),
             'device' => $this->device,
             'hash' => $this->hash
         ];
+    }
+
+    public function __toString(): string {
+        return $this->getFileName();
     }
 }
