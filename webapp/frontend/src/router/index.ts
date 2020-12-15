@@ -8,7 +8,7 @@ import UserModule, {MANAGE_PROFILES} from "@/store/modules/user";
 import i18n from "@/i18n";
 import ResetPassword from "@/views/ResetPassword.vue";
 import ForgetPassword from "@/views/ForgetPassword.vue";
-import Firmware from "@/views/Firmware.vue";
+import FirmwareView from "@/views/FirmwareView.vue";
 
 Vue.use(VueRouter);
 
@@ -28,7 +28,7 @@ const routes: Array<RouteConfig> = [
   {
     path: "/firmware",
     name: "firmware",
-    component: Firmware,
+    component: FirmwareView,
     meta: {
       icon: "mdi-memory",
       navigation: true,

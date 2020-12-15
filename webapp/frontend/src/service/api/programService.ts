@@ -13,7 +13,7 @@ import transformers from "./transformers";
 class ProgramService {
     async fetchFolders(userProfileId: string): Promise<Folder[]> {
         return new Promise<Folder[]>((resolve, reject) => {
-            api.get(`profiles/${userProfileId}/folders`)
+            api.get(`/profiles/${userProfileId}/folders`)
                 .then((response) => resolve(response.data.map((json: FolderJson) => transformers.folderFromJson(json))))
                 .catch((error) => reject(new Error(error)));
         });
@@ -29,7 +29,7 @@ class ProgramService {
 
     async saveFolder(userProfile: UserProfile, folder: Folder): Promise<Folder> {
         return new Promise<Folder>((resolve, reject) => {
-            api.post(`profiles/${userProfile.id}/folders`, transformers.folderToJson(folder))
+            api.post(`/profiles/${userProfile.id}/folders`, transformers.folderToJson(folder))
                 .then((response) => resolve(transformers.folderFromJson(response.data)))
                 .catch((error) => reject(new Error(error)));
         });

@@ -123,3 +123,16 @@ export interface SaveFolderRequest {
   userProfile: UserProfile;
 }
 
+export interface Firmware {
+  version: string;
+  hash: string;
+  createdAt: Date;
+  device: string;
+}
+
+export interface FirmwareJson {
+  version: string;
+  hash: string;
+  createdAt: string;
+  device: string;
+}

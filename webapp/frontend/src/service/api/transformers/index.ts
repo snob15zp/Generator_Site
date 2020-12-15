@@ -1,5 +1,5 @@
 import moment from "moment";
-import { UserJson, User, UserProfileJson, UserProfile, FolderJson, Folder, Program, ProgramJson } from "@/store/models";
+import { UserJson, User, UserProfileJson, UserProfile, FolderJson, Folder, Program, ProgramJson, FirmwareJson, Firmware } from "@/store/models";
 
 function userProfileFromJson(json: UserProfileJson): UserProfile {
     return {
@@ -36,7 +36,7 @@ function userFromJson(json: UserJson): User {
     } as User;
 }
 
-function programFronJson(json: ProgramJson): Program {
+function programFromJson(json: ProgramJson): Program {
     return {
         id: json.id,
         name: json.name
@@ -56,7 +56,16 @@ function folderToJson(folder: Folder): FolderJson {
     return {
         "id": folder.id,
         "name": folder.name,
-        "expires_in": Math.ceil((folder.expiredAt.getTime() - (new Date()).getTime())/1000)
+        "expires_in": Math.ceil((folder.expiredAt.getTime() - (new Date()).getTime()) / 1000)
+    }
+}
+
+function firmwareFromJson(json: FirmwareJson): Firmware {
+    return {
+        hash: json.hash,
+        version: json.version,
+        device: json.device,
+        createdAt: moment(json.createdAt).toDate()
     }
 }
 
@@ -65,6 +74,7 @@ export default {
     userProfileFromJson,
     userProfileToJson,
     folderFromJson,
-    programFromJson: programFronJson,
-    folderToJson
+    programFromJson,
+    folderToJson,
+    firmwareFromJson
 }
