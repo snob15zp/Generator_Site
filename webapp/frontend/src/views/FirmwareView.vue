@@ -72,13 +72,18 @@
       <v-overlay :absolute="true" :value="loading"/>
       <v-data-table
           v-model="selected"
-          item-key="hash"
+          item-key="version"
           :headers="headers"
           :single-select="false"
           :items="items"
           show-select
           disable-pagination
           hide-default-footer >
+        <template v-slot:[`item.version`]="{ item }"><span class="text-subtitle-2">{{ item.version }}</span></template>
+        <template v-slot:[`item.files`]="{ item }">
+          CPU <span class="grey--text">(ver: {{ item.cpu.version }}, device: {{item.cpu.device}})</span><br/>
+          FPGA
+        </template>
         <template v-slot:[`item.createdAt`]="{ item }">{{ $d(item.createdAt) }}</template>
         <template v-slot:[`item.actions`]="{ item }">
           <v-btn icon small :loading="downloadInProgress">
@@ -132,7 +137,7 @@ export default class FirmwareView extends Vue {
   private get headers() {
     return [
       {text: "Version", value: "version"},
-      {text: "Device", value: "device"},
+      {text: "Files", value: "files"},
       {text: "Date", value: "createdAt"},
       {
         value: "actions",
@@ -173,18 +178,21 @@ export default class FirmwareView extends Vue {
 
   private submit() {
     this.uploadInProgress = true;
-    firmwareService.upload(this.version, this.cpuFileInput, this.fpgaFileInput, (process) => this.progress = process)
+    firmwareService.upload(this.version!, this.cpuFileInput!, this.fpgaFileInput!, (process) => this.progress = process)
       .then(() => {
         this.cancel();
         this.fetchData();
       })
       .catch(error => this.errorMessage = error)
-      .finally(() =>  this.uploadInProgress = false);
+      .finally(() =>  {
+        this.uploadInProgress = false
+        this.progress = 0;
+      });
   }
 
   private cancel() {
     this.uploadDialogShow = false;
-    this.form.reset();
+    this.form!.reset();
   }
 
   private deleteConfirm() {
@@ -208,11 +216,12 @@ export default class FirmwareView extends Vue {
   private onDownloadItem(item: Firmware) {
     this.file = new File([], item.name);
     this.downloadInProgress = true;
-    firmwareService.downloadFile(item.hash, (process) => this.progress = process)
+    firmwareService.downloadFile(item.version, (process) => this.progress = process)
         .then(blob => saveDownloadFile(blob, item.name))
         .catch(error => EventBus.$emit("error", error))
         .finally(() => {
           this.downloadInProgress = false;
+          this.progress = 0;
           this.file = null;
         });
   }

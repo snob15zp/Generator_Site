@@ -21,9 +21,9 @@ class FirmwareService {
         });
     }
 
-    async downloadFile(hash: string, onProgressCallback: (_: number) => void): Promise<Blob> {
+    async downloadFile(version: string, onProgressCallback: (_: number) => void): Promise<Blob> {
         return new Promise<Blob>((resolve, reject) => {
-            api.get(`/firmware/${hash}/download`, {
+            api.get(`/firmware/${version}/download`, {
                 onDownloadProgress: function (progressEvent) {
                     const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
                     console.log(percentCompleted);

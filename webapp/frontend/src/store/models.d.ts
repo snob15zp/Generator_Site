@@ -125,17 +125,38 @@ export interface SaveFolderRequest {
 
 export interface Firmware {
   version: string;
+  createdAt: Date;
+  cpu: CpuFirmware;
+  fgpa: FgpaFirmware;
+}
+
+export interface CpuFirmware {
+  version: string;
   hash: string;
   createdAt: Date;
   device: string;
   name: string;
 }
 
+export interface FgpaFirmware {
+  name: string;
+}
+
 export interface FirmwareJson {
   version: string;
-  hash: string;
+  createdAt: string;
+  cpu: CpuFirmwareJson;
+  fgpa: FgpaFirmwareJson;
+}
+
+export interface CpuFirmwareJson {
+  version: string;
   createdAt: string;
   device: string;
+  name: string;
+}
+
+export interface FgpaFirmwareJson {
   name: string;
 }
 

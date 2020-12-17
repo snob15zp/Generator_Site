@@ -1,5 +1,18 @@
 import moment from "moment";
-import { UserJson, User, UserProfileJson, UserProfile, FolderJson, Folder, Program, ProgramJson, FirmwareJson, Firmware } from "@/store/models";
+import {
+    UserJson,
+    User,
+    UserProfileJson,
+    UserProfile,
+    FolderJson,
+    Folder,
+    Program,
+    ProgramJson,
+    FirmwareJson,
+    Firmware,
+    CpuFirmware,
+    FgpaFirmware
+} from "@/store/models";
 
 function userProfileFromJson(json: UserProfileJson): UserProfile {
     return {
@@ -62,11 +75,17 @@ function folderToJson(folder: Folder): FolderJson {
 
 function firmwareFromJson(json: FirmwareJson): Firmware {
     return {
-        name: json.name,
-        hash: json.hash,
         version: json.version,
-        device: json.device,
-        createdAt: moment(json.createdAt).toDate()
+        createdAt: moment(json.createdAt).toDate(),
+        cpu: {
+            name: json.cpu.name,
+            version: json.cpu.version,
+            createdAt: moment(json.cpu.createdAt).toDate(),
+            device: json.cpu.device,
+        } as CpuFirmware,
+        fgpa: {
+            name: json.fgpa.name
+        } as FgpaFirmware
     }
 }
 

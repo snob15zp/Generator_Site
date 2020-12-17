@@ -43,7 +43,7 @@ class Firmware
             'version' => $this->version,
             'createdAt' => $this->createdAt->format(DATE_ATOM),
             'cpu' => $this->cpu->toArray(),
-            'hash' => $this->fpga->toArray()
+            'fgpa' => $this->fpga->toArray()
         ];
     }
 }
