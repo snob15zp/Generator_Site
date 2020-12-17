@@ -6,35 +6,44 @@ use DateTime;
 
 class Firmware
 {
+    /**
+     * @var string
+     */
     public $version;
-    public $createdAt;
-    public $device;
-    public $hash;
 
-    public function __construct(string $version, DateTime $createdAt, string $device, string $hash)
+    /**
+     * @var DateTime
+     */
+    public $createdAt;
+
+    /**
+     * @var CpuFirmware
+     */
+    public $cpu;
+
+    /**
+     * @var FpgaFirmware
+     */
+    public $fpga;
+
+    public function getPath(): string
     {
-        $this->version = $version;
-        $this->createdAt = $createdAt;
-        $this->device = $device;
-        $this->hash = $hash;
+        return env('FIRMWARE_PATH') . '/' . $this->version;
     }
 
-    public function getFileName(): string
-    {
-        return $this->version . '-' . $this->createdAt->getTimestamp() . '.bf';
+    public function getFiles(): array {
+        return [
+            CpuFirmware::FILE_NAME => storage_path('app/' . $this->getPath() . '/' . CpuFirmware::FILE_NAME),
+            FpgaFirmware::FILE_NAME => storage_path('app/' . $this->getPath() . '/' . FpgaFirmware::FILE_NAME)
+        ];
     }
 
     public function toArray(): array {
         return [
-            'name' => $this->getFileName(),
             'version' => $this->version,
             'createdAt' => $this->createdAt->format(DATE_ATOM),
-            'device' => $this->device,
-            'hash' => $this->hash
+            'cpu' => $this->cpu->toArray(),
+            'hash' => $this->fpga->toArray()
         ];
-    }
-
-    public function __toString(): string {
-        return $this->getFileName();
     }
 }

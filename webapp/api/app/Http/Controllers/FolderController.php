@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\UserPrivileges;
 use App\Models\UserProfile;
 use DateTime;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -17,7 +18,7 @@ use Vinkla\Hashids\Facades\Hashids;
 
 class FolderController extends Controller
 {
-    public function getAllByUserProfileId(Request $request, $userProfileId)
+    public function getAllByUserProfileId(Request $request, $userProfileId): JsonResponse
     {
         $user = $this->verifyUser($userProfileId);
         if ($request->user()->cannot(UserPrivileges::VIEW_PROGRAMS, $user)) {
@@ -26,7 +27,7 @@ class FolderController extends Controller
         return $this->respondWithResource(FolderResource::collection($user->folders));
     }
 
-    public function create(Request $request, $userProfileId)
+    public function create(Request $request, $userProfileId): JsonResponse
     {
         if ($request->user()->cannot(UserPrivileges::MANAGE_PROGRAMS)) {
             $this->raiseError(403, "Resource not available");
@@ -65,7 +66,7 @@ class FolderController extends Controller
         return $this->respondWithResource(new FolderResource($folder));
     }
 
-    public function delete(Request $request, $id)
+    public function delete(Request $request, $id): JsonResponse
     {
         if ($request->user()->cannot(UserPrivileges::MANAGE_PROGRAMS)) {
             $this->raiseError(403, "Resource not available");

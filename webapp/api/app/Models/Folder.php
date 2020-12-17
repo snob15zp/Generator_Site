@@ -31,6 +31,6 @@ class Folder extends Model
 
     public static function getFolderPath($name, $userId)
     {
-        return env('PROGRAMS_PATH') . '/' . $userId . '/' . $name;
+        return env('PROGRAM_PATH') . '/' . $userId . '/' . $name;
     }
 }

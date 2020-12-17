@@ -29,10 +29,11 @@ $router->group(['prefix' => 'programs'], function () use ($router) {
 });
 
 $router->group(['prefix' => 'firmware'], function () use ($router) {
-    $router->get('/', ['middleware' => 'auth', 'uses' => 'FirmwareController@getAll']);
+    $router->get('/', 'FirmwareController@getAll');
+    $router->get('/{version}/download', 'FirmwareController@download');
+
     $router->post('/', ['middleware' => 'auth', 'uses' => 'FirmwareController@create']);
     $router->delete('/{hash}', ['middleware' => 'auth', 'uses' => 'FirmwareController@delete']);
-    $router->get('/{hash}/download', 'FirmwareController@download');
 });
 
 $router->group(['prefix' => 'profiles'], function () use ($router) {
