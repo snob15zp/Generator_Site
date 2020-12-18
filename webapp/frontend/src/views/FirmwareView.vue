@@ -15,46 +15,47 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="uploadDialogShow" max-width="500px">
-      <v-form v-model="valid" @submit.prevent="submit" :disabled="uploadInProgress" ref="form">
+    <v-dialog v-model="uploadForm.uploadDialogShow" max-width="500px">
+      <v-form v-model="uploadForm.valid" @submit.prevent="submit" :disabled="uploadForm.uploadInProgress" ref="form">
         <v-card>
           <v-card-title>Upload new version</v-card-title>
-          <v-progress-linear :value="progress" v-if="uploadInProgress"/>
+          <v-progress-linear :value="uploadForm.progress" v-if="uploadForm.uploadInProgress"/>
           <v-divider/>
           <v-card-text>
-             <div v-if="errorMessage" class="error--text mb-4">
-              {{ errorMessage }}
+            <div v-if="uploadForm.errorMessage" class="error--text mb-4">
+              {{ uploadForm.errorMessage }}
             </div>
             <v-text-field
-              class="ml-2 mr-1"
-              hint="For example 2.1.0"
-              persistent-hint
-              v-model="version"
-              :rules="versionRules"
-              label="Version" />
-              <v-file-input
-                dense
-                required
-                :rules="fileRules"
-                v-model="cpuFileInput"
-                label="CPU"
-                class="mt-6" />
+                class="ml-2 mr-1"
+                hint="For example 2.1.0"
+                persistent-hint
+                v-model="uploadForm.version"
+                :rules="uploadForm.versionRules"
+                label="Version"/>
             <v-file-input
                 dense
                 required
-                :rules="fileRules"
-                v-model="fpgaFileInput"
+                :rules="uploadForm.fileRules"
+                v-model="uploadForm.cpuFileInput"
+                label="CPU"
+                class="mt-6"/>
+            <v-file-input
+                dense
+                required
+                :rules="uploadForm.fileRules"
+                v-model="uploadForm.fpgaFileInput"
                 label="FPGA"
-                class="mt-4" />
+                class="mt-4"/>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn color="primary" text @click="cancel()">{{ $t("form.cancel") }}</v-btn>
-            <v-btn 
-                color="primary" 
+            <v-btn
+                color="primary"
                 text
                 type="submit"
-                :disabled="!valid || uploadInProgress">{{ $t("form.save") }}</v-btn>
+                :disabled="!uploadForm.valid || uploadForm.uploadInProgress">{{ $t("form.save") }}
+            </v-btn>
           </v-card-actions>
         </v-card>
       </v-form>
@@ -64,7 +65,7 @@
       <v-card-title>
         Releases
         <v-spacer/>
-        <v-btn color="primary" @click="uploadDialogShow = true">Upload
+        <v-btn color="primary" @click="uploadForm.show()">Upload
           <v-icon right>mdi-upload</v-icon>
         </v-btn>
       </v-card-title>
@@ -74,15 +75,18 @@
           v-model="selected"
           item-key="version"
           :headers="headers"
-          :single-select="false"
+          :loading="loading"
           :items="items"
-          show-select
           disable-pagination
-          hide-default-footer >
+          hide-default-footer>
         <template v-slot:[`item.version`]="{ item }"><span class="text-subtitle-2">{{ item.version }}</span></template>
         <template v-slot:[`item.files`]="{ item }">
-          CPU <span class="grey--text">(ver: {{ item.cpu.version }}, device: {{item.cpu.device}})</span><br/>
-          FPGA
+          <div class="text-caption font-weight-light">
+            {{ item.cpu.name }} <span class="grey--text">(ver: {{
+              item.cpu.version
+            }}, device: {{ item.cpu.device }})</span><br/>
+            {{ item.fpga.name }}
+          </div>
         </template>
         <template v-slot:[`item.createdAt`]="{ item }">{{ $d(item.createdAt) }}</template>
         <template v-slot:[`item.actions`]="{ item }">
@@ -100,12 +104,15 @@
 
 
 <script lang="ts">
-import {Component, Vue, Watch, Ref} from "vue-property-decorator";
+import {Component, Ref, Vue, Watch} from "vue-property-decorator";
 import {DataOptions} from "vuetify";
 import firmwareService from "@/service/api/firmwareService";
 import {Firmware} from "@/store/models";
 import saveDownloadFile from "@/utils/download-file";
 import {EventBus} from "@/utils/event-bus";
+import {FormRef} from "@/forms/types";
+import {FirmwareUploadForm} from "@/forms/FirmwareUploadForm";
+
 
 @Component
 export default class FirmwareView extends Vue {
@@ -114,21 +121,14 @@ export default class FirmwareView extends Vue {
 
   private items: Firmware[] = [];
   private selected: Firmware[] = [];
-  
+
   // Delete
   private deleteDialogShow = false;
   private firmware: Firmware | null = null;
 
   // Upload
-   @Ref() readonly form: (Vue & { reset: () => void }) | undefined;
-  private uploadDialogShow = false;
-  private version: string | null = null;
-  private cpuFileInput: any | null = null;
-  private fpgaFileInput: any | null = null;
-  private uploadInProgress = false;
-  private valid = false;
-  private errorMessage: string | null = null;
-  private progress = 0;
+  @Ref() readonly form: FormRef;
+  private uploadForm = new FirmwareUploadForm();
 
   // Download 
   private downloadInProgress = false;
@@ -146,12 +146,6 @@ export default class FirmwareView extends Vue {
       },
     ];
   }
-
-  private fileRules = [(v: string | null) => !!v || "File is required"];
-  private versionRules = [
-    (v: string | null) => !!v || "Version is required",
-    (v: string) => /^\d+\.\d+.\d+$/.test(v) || "Version is not valid"
-  ];
 
   mounted() {
     this.fetchData();
@@ -177,22 +171,26 @@ export default class FirmwareView extends Vue {
   }
 
   private submit() {
-    this.uploadInProgress = true;
-    firmwareService.upload(this.version!, this.cpuFileInput!, this.fpgaFileInput!, (process) => this.progress = process)
-      .then(() => {
-        this.cancel();
-        this.fetchData();
-      })
-      .catch(error => this.errorMessage = error)
-      .finally(() =>  {
-        this.uploadInProgress = false
-        this.progress = 0;
-      });
+    this.uploadForm.uploadInProgress = true;
+    firmwareService.upload(
+        this.uploadForm.version!,
+        this.uploadForm.cpuFileInput!,
+        this.uploadForm.fpgaFileInput!,
+        (process) => this.uploadForm.progress = process)
+        .then(() => {
+          this.cancel();
+          this.fetchData();
+        })
+        .catch(error => this.uploadForm.errorMessage = error)
+        .finally(() => {
+          this.uploadForm.reset();
+        });
   }
 
   private cancel() {
-    this.uploadDialogShow = false;
-    this.form!.reset();
+    this.form?.reset();
+    this.uploadForm.reset();
+    this.uploadForm.hide();
   }
 
   private deleteConfirm() {
@@ -200,7 +198,7 @@ export default class FirmwareView extends Vue {
     this.closeDelete();
 
     if (!this.firmware) return;
-    firmwareService.delete(this.firmware.hash)
+    firmwareService.delete(this.firmware.version)
         .then(() => this.fetchData())
         .catch(error => EventBus.$emit("error", error))
         .finally(() => {
@@ -214,14 +212,13 @@ export default class FirmwareView extends Vue {
   }
 
   private onDownloadItem(item: Firmware) {
-    this.file = new File([], item.name);
+    this.file = new File([], item.version);
     this.downloadInProgress = true;
-    firmwareService.downloadFile(item.version, (process) => this.progress = process)
-        .then(blob => saveDownloadFile(blob, item.name))
+    firmwareService.downloadFile(item.version)
+        .then(blob => saveDownloadFile(blob, "firmware_v" + item.version.replaceAll('.', '-') + ".zip"))
         .catch(error => EventBus.$emit("error", error))
         .finally(() => {
           this.downloadInProgress = false;
-          this.progress = 0;
           this.file = null;
         });
   }

@@ -127,7 +127,7 @@ export interface Firmware {
   version: string;
   createdAt: Date;
   cpu: CpuFirmware;
-  fgpa: FgpaFirmware;
+  fpga: FpgaFirmware;
 }
 
 export interface CpuFirmware {
@@ -138,7 +138,7 @@ export interface CpuFirmware {
   name: string;
 }
 
-export interface FgpaFirmware {
+export interface FpgaFirmware {
   name: string;
 }
 
@@ -146,7 +146,7 @@ export interface FirmwareJson {
   version: string;
   createdAt: string;
   cpu: CpuFirmwareJson;
-  fgpa: FgpaFirmwareJson;
+  fpga: FpgaFirmwareJson;
 }
 
 export interface CpuFirmwareJson {
@@ -156,7 +156,7 @@ export interface CpuFirmwareJson {
   name: string;
 }
 
-export interface FgpaFirmwareJson {
+export interface FpgaFirmwareJson {
   name: string;
 }
 

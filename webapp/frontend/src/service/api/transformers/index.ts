@@ -11,7 +11,7 @@ import {
     FirmwareJson,
     Firmware,
     CpuFirmware,
-    FgpaFirmware
+    FpgaFirmware
 } from "@/store/models";
 
 function userProfileFromJson(json: UserProfileJson): UserProfile {
@@ -83,9 +83,9 @@ function firmwareFromJson(json: FirmwareJson): Firmware {
             createdAt: moment(json.cpu.createdAt).toDate(),
             device: json.cpu.device,
         } as CpuFirmware,
-        fgpa: {
-            name: json.fgpa.name
-        } as FgpaFirmware
+        fpga: {
+            name: json.fpga.name
+        } as FpgaFirmware
     }
 }
 

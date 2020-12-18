@@ -33,7 +33,7 @@ $router->group(['prefix' => 'firmware'], function () use ($router) {
     $router->get('/{version}/download', 'FirmwareController@download');
 
     $router->post('/', ['middleware' => 'auth', 'uses' => 'FirmwareController@create']);
-    $router->delete('/{hash}', ['middleware' => 'auth', 'uses' => 'FirmwareController@delete']);
+    $router->delete('/{version}', ['middleware' => 'auth', 'uses' => 'FirmwareController@delete']);
 });
 
 $router->group(['prefix' => 'profiles'], function () use ($router) {

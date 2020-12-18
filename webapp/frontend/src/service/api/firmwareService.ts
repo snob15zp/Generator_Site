@@ -13,24 +13,25 @@ class FirmwareService {
         });
     }
 
-    async delete(hash: string): Promise<void> {
+    async delete(version: string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            api.delete(`/firmware/${hash}`)
+            api.delete(`/firmware/${version}`)
                 .then(() => resolve())
                 .catch(error => reject(new Error(apiErrorMapper(error))));
         });
     }
 
-    async downloadFile(version: string, onProgressCallback: (_: number) => void): Promise<Blob> {
+    async downloadFile(version: string, onProgressCallback: ((_: number) => void) | null = null): Promise<Blob> {
         return new Promise<Blob>((resolve, reject) => {
             api.get(`/firmware/${version}/download`, {
+                responseType: "arraybuffer",
                 onDownloadProgress: function (progressEvent) {
                     const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
                     console.log(percentCompleted);
-                    onProgressCallback(percentCompleted);
+                    onProgressCallback?.call(this, percentCompleted);
                 }
             })
-                .then(response => resolve(new Blob([response.data], {type: 'application/octet-stream'})))
+                .then(response => resolve(new Blob([response.data], {type: 'application/zip'})))
                 .catch(error => reject(new Error(apiErrorMapper(error))))
         })
     }

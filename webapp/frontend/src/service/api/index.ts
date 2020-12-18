@@ -25,21 +25,24 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use((response) => response, (error) => {
     const originalRequest = error.config;
     if (error.response.status === 401) {
-        if (!originalRequest._retry) {
-            originalRequest._retry = true;
-            return axios.put('/users/refresh', null, {headers: {'Authorization': `Bearer ${UserModule.token}`}})
-                .then(response => {
-                    if (response.status === 200) {
-                        UserModule.setToken(response.data.token);
-                        return axios(originalRequest);
-                    }
-                }).catch(error => {
-                    if (error.response.status === 401) {
-                        UserModule.reset();
-                        router.push("/login");
-                    }
-                })
-        }
+        UserModule.reset();
+        router.push("/login");
+
+        // if (!originalRequest._retry) {
+        //     originalRequest._retry = true;
+        //     return axios.put('/users/refresh', null, {headers: {'Authorization': `Bearer ${UserModule.token}`}})
+        //         .then(response => {
+        //             if (response.status === 200) {
+        //                 UserModule.setToken(response.data.token);
+        //                 return axios(originalRequest);
+        //             }
+        //         }).catch(error => {
+        //             if (error.response.status === 401) {
+        //                 UserModule.reset();
+        //                 return router.push("/login");
+        //             }
+        //         })
+        // }
     }
 
 

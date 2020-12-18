@@ -13,7 +13,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use SimpleXMLElement;
@@ -39,12 +38,14 @@ class FirmwareController extends Controller
         if ($firmware == null) {
             $this->raiseError(404, "Version not found");
         }
+        $zipFile = null;
         try {
             $zipFile = $this->makeZipWithFiles($firmware);
-            return response()->download($zipFile, $firmware->version . '.zip', array(
-                //'Content-Length: ' . filesize($zipFile),
-                'Content-Type: application/zip'
-            ));
+            Log::info(file_exists($zipFile));
+            return response()->download($zipFile, 'firmware_v' . str_replace('.', '-', $firmware->version) . '.zip', [
+                'Content-Length' => filesize($zipFile),
+                'Content-Type' => 'application/zip'
+            ])->deleteFileAfterSend();
         } catch (Exception $e) {
             $this->raiseError(500, $e->getMessage());
         }
@@ -69,11 +70,13 @@ class FirmwareController extends Controller
 
         try {
             $path = $this->firmwarePath . '/' . $request->input('version');
+            $cpuUpload = $request->file('cpu');
+            $fpgaUpload = $request->file('fpga');
 
             $firmware = new Firmware();
             $firmware->version = $request->input('version');
             $firmware->createdAt = new DateTime();
-            $firmware->cpu = $this->parse($request->file('cpu')->getContent());
+            $firmware->cpu = $this->parse($cpuUpload->getContent(), $cpuUpload->getFilename());
             $firmware->fpga = new FpgaFirmware();
 
             if (Storage::exists($path)) {
@@ -93,18 +96,18 @@ class FirmwareController extends Controller
 
     /**
      * @param Request $request
-     * @param $hash
+     * @param $version
      * @return JsonResponse
      */
-    public function delete(Request $request, $hash): JsonResponse
+    public function delete(Request $request, $version): JsonResponse
     {
         if ($request->user()->cannot(UserPrivileges::MANAGE_FIRMWARE)) {
             $this->raiseError(403, "Resource not available");
         }
 
         try {
-            $firmware = $this->findByHash($hash);
-            Storage::delete($this->firmwarePath . '/' . $firmware->getFileName());
+            $firmware = $this->findByVersion($version);
+            Storage::deleteDirectory($firmware->getPath());
         } catch (Exception $e) {
             Log::error($e->getMessage());
             $this->raiseError(500, "Cannot to delete firmware");
@@ -157,8 +160,8 @@ class FirmwareController extends Controller
     private function makeZipWithFiles(Firmware $firmware): string
     {
         $zip = new \ZipArchive();
-        $tempFile = tmpfile();
-        $tempFileUri = stream_get_meta_data($tempFile)['uri'];
+        $tempFileUri = $firmware->getFullPath() . '/' . $firmware->version . '.zip';
+        Log::info($tempFileUri);
         if ($zip->open($tempFileUri, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
             // Add File in ZipArchive
             foreach ($firmware->getFiles() as $name => $file) {
@@ -174,11 +177,12 @@ class FirmwareController extends Controller
         return $tempFileUri;
     }
 
-    private function parse(string $xml): CpuFirmware
+    private function parse(string $xml, string $fileName): CpuFirmware
     {
         $element = new SimpleXMLElement($xml);
 
         return new CpuFirmware(
+            $fileName,
             (string)$element->fw->version,
             DateTime::createFromFormat('d/m/Y h:i:s A', (string)$element->fw->date),
             (string)$element->fw->device

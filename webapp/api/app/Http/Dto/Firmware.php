@@ -31,6 +31,11 @@ class Firmware
         return env('FIRMWARE_PATH') . '/' . $this->version;
     }
 
+    public function getFullPath(): string
+    {
+        return storage_path('app/' . $this->getPath());
+    }
+
     public function getFiles(): array {
         return [
             CpuFirmware::FILE_NAME => storage_path('app/' . $this->getPath() . '/' . CpuFirmware::FILE_NAME),
@@ -43,7 +48,7 @@ class Firmware
             'version' => $this->version,
             'createdAt' => $this->createdAt->format(DATE_ATOM),
             'cpu' => $this->cpu->toArray(),
-            'fgpa' => $this->fpga->toArray()
+            'fpga' => $this->fpga->toArray()
         ];
     }
 }

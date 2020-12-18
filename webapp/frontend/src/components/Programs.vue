@@ -103,7 +103,8 @@ export default class Programs extends Vue {
   private file: File | null = null;
 
   private observer = new ResizeObserver((entries) => {
-    const height = Math.max(entries[0].contentBoxSize[0].blockSize - 80, 300);
+    console.log("resize")
+    const height = Math.max(entries[0].contentBoxSize[0].blockSize - 90, 300);
     Array.from(document.getElementsByClassName("p-list") as HTMLCollectionOf<HTMLElement>).forEach((el) => {
       el.style.height = height + "px";
     });
