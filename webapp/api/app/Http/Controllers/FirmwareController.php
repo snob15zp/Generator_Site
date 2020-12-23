@@ -3,20 +3,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Dto\CpuFirmware;
-use App\Http\Dto\Firmware;
-use App\Http\Dto\FpgaFirmware;
+use App\Http\Resources\FirmwareResource;
+use App\Models\Firmware;
+use App\Models\FirmwareFiles;
 use App\Models\UserPrivileges;
 use DateTime;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
-use SimpleXMLElement;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Vinkla\Hashids\Facades\Hashids;
 
 class FirmwareController extends Controller
 {
@@ -27,9 +28,38 @@ class FirmwareController extends Controller
         $this->firmwarePath = env('FIRMWARE_PATH');
     }
 
-    public function getAll(): JsonResponse
+    public function getAll(Request $request): JsonResponse
     {
-        return $this->respondWithResource(JsonResource::collection($this->load()));
+        if ($request->user() == null || $request->user()->cannot(UserPrivileges::MANAGE_FIRMWARE)) {
+            $firmwares = Firmware::where('active', true)->get();
+        } else {
+            $firmwares = Firmware::all();
+        }
+        return $this->respondWithResource(FirmwareResource::collection($firmwares));
+    }
+
+    public function update(Request $request, $id): JsonResponse
+    {
+        if ($request->user()->cannot(UserPrivileges::MANAGE_FIRMWARE)) {
+            $this->raiseError(403, "Resource not available");
+        }
+
+        $firmware = Firmware::where('id', Hashids::decode($id))->first();
+        if ($firmware == null) {
+            $this->raiseError(404, "Firmware not found");
+        }
+
+        $this->validate($request, [
+            'version' => 'nullable|regex:/^\d+\.\d+\.\d+$/',
+            'active' => 'nullable|boolean',
+        ]);
+
+        $fields = collect($request->only(['version', 'active']))->filter(function ($item) {
+            return $item !== null;
+        })->toArray();
+
+        $firmware->update($fields);
+        return $this->respondWithResource(new FirmwareResource($firmware));
     }
 
     public function download($version): BinaryFileResponse
@@ -68,29 +98,36 @@ class FirmwareController extends Controller
             'fpga' => 'required|file'
         ]);
 
+        $version = $request->input('version');
+        $firmware = Firmware::where('version', $version)->first();
+        if ($firmware != null) {
+            $this->raiseError(422, "Version $version is already uploaded");
+        }
+
+        $files = [
+            $request->file('cpu'),
+            $request->file('fpga')
+        ];
+        $directory = Firmware::getPath($version);
+
+        $this->storeOnDisk($directory, $files);
+
         try {
-            $path = $this->firmwarePath . '/' . $request->input('version');
-            $cpuUpload = $request->file('cpu');
-            $fpgaUpload = $request->file('fpga');
-
-            $firmware = new Firmware();
-            $firmware->version = $request->input('version');
-            $firmware->createdAt = new DateTime();
-            $firmware->cpu = $this->parse($cpuUpload->getContent(), $cpuUpload->getFilename());
-            $firmware->fpga = new FpgaFirmware();
-
-            if (Storage::exists($path)) {
-                Storage::deleteDirectory($path);
-            }
-            Storage::makeDirectory($path);
-
-            $request->file('cpu')->storeAs($path, $firmware->cpu->getFileName());
-            $request->file('fpga')->storeAs($path, $firmware->fpga->getFileName());
-
-            return $this->respondWithResource(new JsonResource($firmware));
+            DB::beginTransaction();
+            $firmware = Firmware::create(['version' => $request->input('version'), 'active' => true]);
+            $firmware->files()->saveMany(collect($files)->map(function ($file) use ($directory) {
+                $name = $file->getClientOriginalName();
+                return new FirmwareFiles([
+                    'file_name' => $name,
+                    'hash' => hash_file("sha256", storage_path('app/' . $directory . '/' . $name))
+                ]);
+            }));
+            DB::commit();
+            return $this->respondWithResource(new FirmwareResource($firmware));
         } catch (Exception  $e) {
+            DB::rollBack();
             Log::error($e->getMessage());
-            $this->raiseError(500, "Cannot to upload firmware");
+            $this->raiseError(500, "Cannot to create firmware");
         }
     }
 
@@ -116,6 +153,28 @@ class FirmwareController extends Controller
         return $this->respondWithMessage('Firmware deleted');
     }
 
+    /**
+     * @param string $directory
+     * @param UploadedFile[] $files
+     */
+    private function storeOnDisk(string $directory, array $files)
+    {
+        try {
+            if (Storage::exists($directory)) {
+                Storage::deleteDirectory($directory);
+            }
+            Storage::makeDirectory($directory);
+
+            foreach ($files as $file) {
+                $file->storeAs($directory, $file->getClientOriginalName());
+            }
+        } catch (Exception  $e) {
+            Log::error($e->getMessage());
+            $this->raiseError(500, "Cannot to store firmware");
+        }
+    }
+
+
     private function findByVersion(string $version): ?Firmware
     {
         $firmwares = $this->load();
@@ -139,8 +198,8 @@ class FirmwareController extends Controller
                 $firmware = new Firmware();
                 $firmware->version = basename($dir);
                 $firmware->createdAt = new DateTime('@' . Storage::lastModified($dir));
-                $firmware->cpu = $this->parse(Storage::get($cpuFile));
-                $firmware->fpga = new FpgaFirmware();
+                $firmware->cpu = new FirmwareFile();
+                $firmware->fpga = new FirmwareFile();
 
                 $firmwares[] = $firmware;
 
@@ -164,7 +223,7 @@ class FirmwareController extends Controller
         Log::info($tempFileUri);
         if ($zip->open($tempFileUri, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
             // Add File in ZipArchive
-            foreach ($firmware->getFiles() as $name => $file) {
+            foreach (Storage::files($firmware->getPath()) as $name => $file) {
                 if (!$zip->addFile($file, $name)) {
                     throw new Exception('Could not add file to ZIP: ' . $file);
                 }
@@ -177,15 +236,15 @@ class FirmwareController extends Controller
         return $tempFileUri;
     }
 
-    private function parse(string $xml, string $fileName): CpuFirmware
-    {
-        $element = new SimpleXMLElement($xml);
-
-        return new CpuFirmware(
-            $fileName,
-            (string)$element->fw->version,
-            DateTime::createFromFormat('d/m/Y h:i:s A', (string)$element->fw->date),
-            (string)$element->fw->device
-        );
-    }
+//    private function parse(string $xml, string $fileName): CpuFirmware
+//    {
+//        $element = new SimpleXMLElement($xml);
+//
+//        return new CpuFirmware(
+//            $fileName,
+//            (string)$element->fw->version,
+//            DateTime::createFromFormat('d/m/Y h:i:s A', (string)$element->fw->date),
+//            (string)$element->fw->device
+//        );
+//    }
 }

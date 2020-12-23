@@ -35,6 +35,13 @@ class FirmwareService {
                 .catch(error => reject(new Error(apiErrorMapper(error))))
         })
     }
+    async updateStatus(firmwareId: string, active: boolean): Promise<Firmware> {
+        return new Promise<Firmware>((resolve, reject) => {
+            api.put(`/firmware/${firmwareId}`, {active: active})
+                .then((response) => resolve(transformers.firmwareFromJson(response.data)))
+                .catch((error) => reject(new Error(apiErrorMapper(error))))
+        });
+    }
 
     async upload(version: string, cpuFile: File, fpgaFile: File, onProgressCallback: (_: number) => void): Promise<void> {
         return new Promise((resolve, reject) => {

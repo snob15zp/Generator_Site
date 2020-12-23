@@ -24,6 +24,7 @@ export class FirmwareUploadForm {
     }
 
     reset() {
+        this.errorMessage = null;
         this.uploadInProgress = false;
         this.progress = 0;
     }

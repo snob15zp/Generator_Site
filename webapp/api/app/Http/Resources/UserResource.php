@@ -2,9 +2,16 @@
 
 namespace App\Http\Resources;
 
+use App\Models\UserProfile;
+use App\Models\UserRole;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Vinkla\Hashids\Facades\Hashids;
 
+/**
+ * @property integer id
+ * @property UserRole role
+ * @property UserProfile profile
+ */
 class UserResource extends JsonResource
 {
     private $token;
@@ -15,7 +22,7 @@ class UserResource extends JsonResource
         $this->token = $token;
     }
 
-    public function toArray($request)
+    public function toArray($request): array
     {
         return [
             'id' => Hashids::encode($this->id),

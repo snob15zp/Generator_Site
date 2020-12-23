@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class UserRole
+ * @property array privileges
  * @package App\Models
  */
 class UserRole extends Model
@@ -19,12 +21,12 @@ class UserRole extends Model
 
     protected $primaryKey = 'id';
 
-    public function privileges()
+    public function privileges(): HasMany
     {
         return $this->hasMany('\App\Models\UserPrivileges');
     }
 
-    public function users()
+    public function users(): HasMany
     {
         return $this->hasMany('\App\Models\User');
     }

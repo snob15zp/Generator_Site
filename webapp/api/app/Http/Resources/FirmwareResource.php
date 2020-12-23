@@ -2,23 +2,27 @@
 
 namespace App\Http\Resources;
 
+use App\Models\FirmwareFiles;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Vinkla\Hashids\Facades\Hashids;
 
 /**
  * @property integer id
- * @property string name
- * @property mixed expires_in
+ * @property string version
  * @property mixed created_at
+ * @property FirmwareFiles[] files
+ * @property mixed active
+ * @method files()
  */
-class FolderResource extends JsonResource
+class FirmwareResource extends JsonResource
 {
     public function toArray($request): array
     {
         return [
             'id' => Hashids::encode($this->id),
-            'name' => $this->name,
-            'expires_in' => $this->expires_in,
+            'active' => $this->active,
+            'version' => $this->version,
+            'files' => FirmwareFilesResource::collection($this->files),
             'created_at' => $this->created_at
         ];
     }

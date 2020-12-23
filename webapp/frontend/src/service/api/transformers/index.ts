@@ -10,8 +10,8 @@ import {
     ProgramJson,
     FirmwareJson,
     Firmware,
-    CpuFirmware,
-    FpgaFirmware
+    FirmwareFiles,
+    FirmwareFilesJson
 } from "@/store/models";
 
 function userProfileFromJson(json: UserProfileJson): UserProfile {
@@ -75,18 +75,16 @@ function folderToJson(folder: Folder): FolderJson {
 
 function firmwareFromJson(json: FirmwareJson): Firmware {
     return {
+        id: json.id,
+        active: Boolean(json.active),
         version: json.version,
         createdAt: moment(json.createdAt).toDate(),
-        cpu: {
-            name: json.cpu.name,
-            version: json.cpu.version,
-            createdAt: moment(json.cpu.createdAt).toDate(),
-            device: json.cpu.device,
-        } as CpuFirmware,
-        fpga: {
-            name: json.fpga.name
-        } as FpgaFirmware
-    }
+        files: json.files.map($fileJson => {
+            return {
+                fileName: $fileJson.name
+            };
+        })
+    } as Firmware;
 }
 
 export default {
