@@ -82,18 +82,25 @@
         <template v-slot:[`item.version`]="{ item }"><span class="text-subtitle-2">{{ item.version }}</span></template>
         <template v-slot:[`item.files`]="{ item }">
           <div class="text-caption font-weight-light">
-            {{ item.cpu.name }} <span class="grey--text">(ver: {{
-              item.cpu.version
-            }}, device: {{ item.cpu.device }})</span><br/>
-            {{ item.fpga.name }}
+            <div v-for="file in item.files" :key="file.fileName">{{ file.fileName }}</div>
           </div>
         </template>
         <template v-slot:[`item.createdAt`]="{ item }">{{ $d(item.createdAt) }}</template>
+        <template v-slot:[`item.active`]="{ item }">
+          <v-btn icon
+                 :color="item.active ? 'primary':''"
+                 :loading="loadingFirmwareId === item.id"
+                 @click="onActiveStatusChange(item)">
+            <v-icon v-if="item.active">mdi-check</v-icon>
+            <v-icon v-else>mdi-close</v-icon>
+          </v-btn>
+          <v-btn-toggle/>
+        </template>
         <template v-slot:[`item.actions`]="{ item }">
-          <v-btn icon small :loading="downloadInProgress">
+          <v-btn icon small :loading="downloadInProgress" :disabled="loadingFirmwareId === item.id">
             <v-icon small @click="onDownloadItem(item)">mdi-download</v-icon>
           </v-btn>
-          <v-btn icon small>
+          <v-btn icon small :disabled="loadingFirmwareId === item.id">
             <v-icon small @click="onDeleteItem(item)">mdi-delete</v-icon>
           </v-btn>
         </template>
@@ -134,11 +141,14 @@ export default class FirmwareView extends Vue {
   private downloadInProgress = false;
   private file: File | null = null;
 
+  private loadingFirmwareId: string | null = null;
+
   private get headers() {
     return [
       {text: "Version", value: "version"},
       {text: "Files", value: "files"},
       {text: "Date", value: "createdAt"},
+      {text: "Active", value: "active"},
       {
         value: "actions",
         sortable: false,
@@ -162,12 +172,22 @@ export default class FirmwareView extends Vue {
     firmwareService
         .getAll()
         .then((data: Firmware[]) => (this.items = data))
-        .catch((error: Error) => console.log(error))
+        .catch(e => EventBus.$emit("error", e))
         .finally(() => (this.loading = false));
   }
 
   private closeDelete() {
     this.deleteDialogShow = false;
+  }
+
+  private onActiveStatusChange(firmware: Firmware) {
+    this.loadingFirmwareId = firmware.id;
+    firmwareService.updateStatus(firmware.id, !firmware.active)
+        .then(() => firmware.active = !firmware.active)
+        .catch(e => EventBus.$emit("error", e))
+        .finally(() => {
+          this.loadingFirmwareId = null;
+        });
   }
 
   private submit() {

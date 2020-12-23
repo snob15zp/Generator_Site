@@ -33,6 +33,7 @@ $router->group(['prefix' => 'firmware'], function () use ($router) {
     $router->get('/{version}/download', 'FirmwareController@download');
 
     $router->post('/', ['middleware' => 'auth', 'uses' => 'FirmwareController@create']);
+    $router->put('/{id}', ['middleware' => 'auth', 'uses' => 'FirmwareController@update']);
     $router->delete('/{version}', ['middleware' => 'auth', 'uses' => 'FirmwareController@delete']);
 });
 
