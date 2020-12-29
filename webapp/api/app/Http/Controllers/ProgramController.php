@@ -46,7 +46,8 @@ class ProgramController extends Controller
         $this->verifyUserPrivileges($request);
 
         $this->validate($request, [
-            'program' => 'required|file'
+            'programs' => 'required|array',
+            'programs.*' => 'required|file'
         ]);
 
         $folder = Folder::query()->whereKey(Hashids::decode($folderId))->first();
@@ -59,15 +60,19 @@ class ProgramController extends Controller
                 Storage::makeDirectory($folderFileName);
             }
             DB::beginTransaction();
-            $name = 'program_' . date("YmdHis") . '.txt';
-            $path = $request->file('program')->storeAs($folder->path(), $name);
-            $program = $folder->programs()->create([
-                'name' => $name,
-                'hash' => crc32(Storage::disk('local')->path($path)),
-                'active' => true
-            ]);
+            $programFiles = $request->file('programs');
+            $programs = [];
+            collect($programFiles)->each(function ($program) use ($folder) {
+                $name = $program->getClientOriginalName();
+                $path = $program->storeAs($folder->path(), $name);
+                $programs[] = $folder->programs()->create([
+                    'name' => $name,
+                    'hash' => crc32(Storage::disk('local')->path($path)),
+                    'active' => true
+                ]);
+            });
             DB::commit();
-            return $this->respondWithResource(new ProgramResource($program));
+            return $this->respondWithResource(ProgramResource::collection($programs));
         } catch (\Exception  $e) {
             DB::rollBack();
             Log::error($e->getMessage());
@@ -93,7 +98,8 @@ class ProgramController extends Controller
         return $this->respondWithMessage('Program deleted');
     }
 
-    private function verifyUserPrivileges(Request $request) {
+    private function verifyUserPrivileges(Request $request)
+    {
         if ($request->user()->cannot(UserPrivileges::MANAGE_PROGRAMS)) {
             $this->raiseError(403, "Resource not available");
         }

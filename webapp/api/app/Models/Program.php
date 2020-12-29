@@ -5,6 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property Folder folder
+ * @property string name
+ */
 class Program extends Model
 {
     protected $table = 'program';

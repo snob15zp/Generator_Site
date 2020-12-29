@@ -64,14 +64,13 @@ class FirmwareController extends Controller
 
     public function download($version): BinaryFileResponse
     {
-        $firmware = $this->findByVersion($version);
+        $firmware = Firmware::where('version', $version)->first();
         if ($firmware == null) {
-            $this->raiseError(404, "Version not found");
+            $this->raiseError(404, "Firmware not found");
         }
         $zipFile = null;
         try {
             $zipFile = $this->makeZipWithFiles($firmware);
-            Log::info(file_exists($zipFile));
             return response()->download($zipFile, 'firmware_v' . str_replace('.', '-', $firmware->version) . '.zip', [
                 'Content-Length' => filesize($zipFile),
                 'Content-Type' => 'application/zip'
@@ -142,10 +141,19 @@ class FirmwareController extends Controller
             $this->raiseError(403, "Resource not available");
         }
 
+        $firmware = Firmware::where('version', $version)->first();
+        if ($firmware == null) {
+            $this->raiseError(404, "Firmware not found");
+        }
+
         try {
-            $firmware = $this->findByVersion($version);
-            Storage::deleteDirectory($firmware->getPath());
+            DB::beginTransaction();
+            $firmware->files()->delete();
+            $firmware->delete();
+            Storage::deleteDirectory($firmware->path());
+            DB::commit();
         } catch (Exception $e) {
+            DB::rollBack();
             Log::error($e->getMessage());
             $this->raiseError(500, "Cannot to delete firmware");
         }
@@ -174,43 +182,6 @@ class FirmwareController extends Controller
         }
     }
 
-
-    private function findByVersion(string $version): ?Firmware
-    {
-        $firmwares = $this->load();
-        return collect($firmwares)->first(function ($value) use ($version) {
-            return $value->version == $version;
-        });
-    }
-
-    private function load(): array
-    {
-        $directories = Storage::directories($this->firmwarePath);
-        $firmwares = [];
-        foreach ($directories as $dir) {
-            try {
-                $cpuFile = $dir . '/' . CpuFirmware::FILE_NAME;
-                $fpgaFile = $dir . '/' . FpgaFirmware::FILE_NAME;
-                if (!Storage::exists($cpuFile) || !Storage::exists($fpgaFile)) {
-                    continue;
-                }
-
-                $firmware = new Firmware();
-                $firmware->version = basename($dir);
-                $firmware->createdAt = new DateTime('@' . Storage::lastModified($dir));
-                $firmware->cpu = new FirmwareFile();
-                $firmware->fpga = new FirmwareFile();
-
-                $firmwares[] = $firmware;
-
-            } catch (Exception $e) {
-                Log::error($e->getMessage());
-            }
-        }
-
-        return $firmwares;
-    }
-
     /**
      * @param Firmware $firmware
      * @return string
@@ -219,13 +190,15 @@ class FirmwareController extends Controller
     private function makeZipWithFiles(Firmware $firmware): string
     {
         $zip = new \ZipArchive();
-        $tempFileUri = $firmware->getFullPath() . '/' . $firmware->version . '.zip';
-        Log::info($tempFileUri);
+        $path = storage_path('app/' . $firmware->path());
+        $tempFileUri = $path . '/' . $firmware->version . '.zip';
         if ($zip->open($tempFileUri, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
             // Add File in ZipArchive
-            foreach (Storage::files($firmware->getPath()) as $name => $file) {
-                if (!$zip->addFile($file, $name)) {
-                    throw new Exception('Could not add file to ZIP: ' . $file);
+            foreach ($firmware->files as $file) {
+                $fileName = $path . '/' . $file->file_name;
+                Log::info("Add $fileName");
+                if (!$zip->addFile($fileName, $file->file_name)) {
+                    throw new Exception('Could not add file to ZIP: ' . $file->file_name);
                 }
             }
             // Close ZipArchive

@@ -39,15 +39,38 @@ class ProgramService {
     async uploadFile(fileRequest: UploadFileRequest): Promise<Program> {
         return new Promise((resolve, reject) => {
             const formaData = new FormData();
-            formaData.append("program", fileRequest.file);
+            fileRequest.files.forEach((file, idx) => formaData.append(`programs[]`, file))
             api.post(`/folders/${fileRequest.folder.id}/programs`, formaData, {
                 onUploadProgress: function (progressEvent) {
+                    console.log(progressEvent);
                     const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
                     fileRequest.onProgressCallback(percentCompleted);
                 }
             })
                 .then((response) => resolve(transformers.programFromJson(response.data)))
                 .catch((error) => reject(new Error(apiErrorMapper(error))));
+        });
+    }
+
+    async downloadFolder(folderId: string, onProgressCallback: (_: number) => void): Promise<Blob> {
+        return new Promise<Blob>((resolve, reject) => {
+            api.get(`/folders/${folderId}/download`, {
+                responseType: "arraybuffer",
+                onDownloadProgress: function (progressEvent) {
+                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    console.log(percentCompleted);
+                    onProgressCallback?.call(this, percentCompleted);
+                }
+            })
+                .then(response => resolve(new Blob([response.data], {type: 'application/zip'})))
+                .catch(error => {
+                    let json = "";
+                    (new Uint8Array(error.response.data)).forEach(function (byte: number) {
+                        json += String.fromCharCode(byte);
+                    });
+                    error.response.data = JSON.parse(json);
+                    reject(new Error(apiErrorMapper(error)));
+                })
         });
     }
 

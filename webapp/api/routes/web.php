@@ -19,6 +19,8 @@ $router->group(['prefix' => 'users'], function () use ($router) {
 
 $router->group(['prefix' => 'folders'], function () use ($router) {
     $router->delete('/{id}', ['middleware' => 'auth', 'uses' => 'FolderController@delete']);
+    $router->get('/{id}/download', ['middleware' => 'auth', 'uses' => 'FolderController@download']);
+
     $router->post('/{folderId}/programs', ['middleware' => 'auth', 'uses' => 'ProgramController@create']);
     $router->get('/{folderId}/programs', ['middleware' => 'auth', 'uses' => 'ProgramController@getAll']);
 });

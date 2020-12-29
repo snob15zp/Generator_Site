@@ -108,7 +108,7 @@ export interface Folder {
 }
 
 export interface UploadFileRequest {
-    file: File;
+    files: File[];
     folder: Folder;
     onProgressCallback: (_: number) => void;
 }

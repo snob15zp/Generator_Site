@@ -32,7 +32,14 @@ class FirmwareService {
                 }
             })
                 .then(response => resolve(new Blob([response.data], {type: 'application/zip'})))
-                .catch(error => reject(new Error(apiErrorMapper(error))))
+                .catch(error => {
+                    let json = "";
+                    (new Uint8Array(error.response.data)).forEach(function (byte: number) {
+                        json += String.fromCharCode(byte);
+                    });
+                    error.response.data = JSON.parse(json);
+                    reject(new Error(apiErrorMapper(error)));
+                })
         })
     }
     async updateStatus(firmwareId: string, active: boolean): Promise<Firmware> {

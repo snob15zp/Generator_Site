@@ -7,12 +7,28 @@
                     :disabled="uploadInProgress || isFoldersEmpty"
                     outlined
                     dense
+                    multiple
                     placeholder="Select your file"
                     v-model="fileInput"
                     class="mr-4"
-                    style="height: 40px"
-      ></v-file-input>
+                    style="height: 40px">
+        <template v-slot:selection="{ index, text }">
+          <v-chip
+              v-if="index < 2"
+              dark
+              label
+              small>
+            {{ text }}
+          </v-chip>
+          <span
+              v-else-if="index === 2"
+              class="overline grey--text text--darken-3 mx-2">
+        +{{ files.length - 2 }} File(s)
+          </span>
+        </template>
+      </v-file-input>
       <v-btn color="primary" v-if="canManagePrograms" @click="uploadFile"
+             :loading="uploadInProgress"
              :disabled="fileInput == null || uploadInProgress">Upload
         <v-icon right>mdi-upload</v-icon>
       </v-btn>
@@ -38,8 +54,14 @@
                   {{ folder.expiredAt | expiredAtInterval }}
                 </v-list-item-subtitle>
               </v-list-item-content>
-              <v-list-item-action v-if="folders[selected].hash === folder.hash">
-                <v-icon>mdi-chevron-right</v-icon>
+              <v-list-item-action>
+                <v-btn
+                    icon
+                    @click="downloadFolder(folder)"
+                    :disabled="isExpired(folder.expiredAt)"
+                    :loading="downloadFolderId===folder.id">
+                  <v-icon>mdi-download</v-icon>
+                </v-btn>
               </v-list-item-action>
             </v-list-item>
           </v-list-item-group>
@@ -97,6 +119,7 @@ export default class Programs extends Vue {
   private fileInput: any | null = null;
   private folder: Folder | null = null;
 
+  private downloadFolderId: string | null = null;
   private uploadInProgress = false;
   private progress = 0;
   private snackbar = false;
@@ -119,7 +142,7 @@ export default class Programs extends Vue {
   }
 
   get isDownloadDisabled() {
-    return isExpired(this.folders[this.selected].expiredAt) && !this.canManagePrograms;
+    return this.folder ? isExpired(this.folder!!.expiredAt) && !this.canManagePrograms : true;
   }
 
   mounted() {
@@ -128,6 +151,7 @@ export default class Programs extends Vue {
 
   @Watch("selected")
   private onSelectedChanged() {
+    console.log("Selected = " + this.selected);
     this.folder = this.folders[this.selected];
     this.onFolderChanged(this.folder);
   }
@@ -135,7 +159,7 @@ export default class Programs extends Vue {
   @Watch("folders")
   private onFoldersChanged() {
     if (!this.isFoldersEmpty) {
-      this.folder = this.folders[this.selected];
+      this.selected = 0;
     }
   }
 
@@ -152,11 +176,11 @@ export default class Programs extends Vue {
   }
 
   private uploadFile() {
-    this.snackbar = true;
+    //this.snackbar = true;
     this.uploadInProgress = true;
     this.file = this.fileInput;
     programService.uploadFile({
-      file: this.fileInput,
+      files: this.fileInput,
       folder: this.folder,
       onProgressCallback: (progress) => this.progress = progress
     } as UploadFileRequest)
@@ -164,7 +188,18 @@ export default class Programs extends Vue {
           this.snackbar = false;
           this.uploadInProgress = false;
           this.fileInput = null;
+          this.progress = 0;
           this.onFolderChanged(this.folder!);
+        });
+  }
+
+  private downloadFolder(folder) {
+    this.downloadFolderId = folder.id;
+    programService.downloadFolder(folder.id, (progress) => this.progress = progress)
+        .then(blob => saveDownloadFile(blob, folder.name))
+        .finally(() => {
+          this.progress = 0;
+          this.downloadFolderId = null;
         });
   }
 
@@ -176,7 +211,10 @@ export default class Programs extends Vue {
       onProgressCallback: (process) => this.progress = process
     })
         .then(blob => saveDownloadFile(blob, program.name))
-        .finally(() => this.snackbar = false)
+        .finally(() => {
+          this.snackbar = false;
+          this.progress = 0;
+        });
   }
 
   private isExpired(date: Date) {

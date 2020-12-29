@@ -56,6 +56,9 @@
     "general_error": "An error has occurred. Operation could not complete."
   },
   "$vuetify": {
+    "fileInput": {
+      "counter": "{0} files"
+    },
     "dataIterator": {
       "noResultsText": "No matching records found",
       "loadingText": "Loading items..."

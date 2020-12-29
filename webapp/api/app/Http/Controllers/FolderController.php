@@ -6,14 +6,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\FolderResource;
 use App\Models\Folder;
-use App\Models\User;
 use App\Models\UserPrivileges;
 use App\Models\UserProfile;
 use DateTime;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Vinkla\Hashids\Facades\Hashids;
 
 class FolderController extends Controller
@@ -86,6 +87,58 @@ class FolderController extends Controller
             Storage::deleteDirectory($folderFileName);
         }
         return $this->respondWithMessage('Folder deleted');
+    }
+
+    public function download(Request $request, $id): BinaryFileResponse
+    {
+        $folder = Folder::query()->whereKey(Hashids::decode($id))->first();
+        if ($folder == null) {
+            $this->raiseError(404, 'Folder not found');
+        }
+
+        if ($request->user()->cannot(UserPrivileges::VIEW_PROGRAMS, $folder->user)) {
+            $this->raiseError(403, "Resource not available");
+        }
+
+        $zipFile = null;
+        try {
+            $zipFile = $this->makeZipWithFiles($folder);
+            return response()->download($zipFile, $folder->name . '.zip', [
+                'Content-Length' => filesize($zipFile),
+                'Content-Type' => 'application/zip'
+            ])->deleteFileAfterSend();
+        } catch (Exception $e) {
+            $this->raiseError(500, $e->getMessage());
+        }
+    }
+
+    /**
+     * @param Folder $folder
+     * @return string
+     * @throws Exception
+     */
+    private function makeZipWithFiles(Folder $folder): string
+    {
+        $zip = new \ZipArchive();
+        $path = storage_path('app/' . $folder->path());
+        $tempFileUri = $path . '/' . $folder->name . '.zip';
+        if ($zip->open($tempFileUri, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+            // Add File in ZipArchive
+            foreach ($folder->programs as $program) {
+                $fileName = $path . '/' . $program->name;
+                Log::info("Add $fileName");
+                if (file_exists($fileName)) {
+                    if (!$zip->addFile($fileName, $program->name)) {
+                        throw new Exception('Could not add file to ZIP: ' . $program->name);
+                    }
+                }
+            }
+            // Close ZipArchive
+            $zip->close();
+        } else {
+            throw new Exception('Could not open ZIP file.');
+        }
+        return $tempFileUri;
     }
 
     private function verifyUser($userProfileId)

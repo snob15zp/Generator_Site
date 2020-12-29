@@ -141,7 +141,7 @@ export default class FirmwareView extends Vue {
   private downloadInProgress = false;
   private file: File | null = null;
 
-  private loadingFirmwareId = null;
+  private loadingFirmwareId: string | null = null;
 
   private get headers() {
     return [

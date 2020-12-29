@@ -6,11 +6,13 @@ use App\Http\Resources\UserResource;
 use App\Models\ResetPassword;
 use App\Models\User;
 use App\Notifications\ForgetPasswordNotification;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use JWTAuth;
 
 
@@ -18,10 +20,10 @@ class UserController extends Controller
 {
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     * @throws \Illuminate\Validation\ValidationException
+     * @return JsonResponse
+     * @throws ValidationException
      */
-    public function login(Request $request)
+    public function login(Request $request): JsonResponse
     {
         $this->validate($request, [
             'login' => 'required|string',
@@ -37,25 +39,25 @@ class UserController extends Controller
         return $this->respondWithResource(new UserResource($user, $token));
     }
 
-    public function refresh()
+    public function refresh(): JsonResponse
     {
         try {
             return response()->json(['token' => auth()->refresh()]);
         } catch (\Exception $e) {
-            return $this->raiseError(401, 'Invalid token');
+            $this->raiseError(401, 'Invalid token');
         }
     }
 
     /**
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function logout()
+    public function logout(): JsonResponse
     {
         auth()->logout();
         return $this->respondWithMessage();
     }
 
-    public function forgetPassword(Request $request)
+    public function forgetPassword(Request $request): JsonResponse
     {
         $user = User::query()->where('login', $request->input('login'))->first();
         if ($user == null) {
@@ -72,7 +74,7 @@ class UserController extends Controller
         return $this->respondWithMessage("OK");
     }
 
-    public function resetPassword(Request $request)
+    public function resetPassword(Request $request): JsonResponse
     {
         $hash = base64_decode($request->input('hash'));
         $resetPassword = ResetPassword::query()->where('hash', $hash)->first();
