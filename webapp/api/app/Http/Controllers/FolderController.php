@@ -6,16 +6,23 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\FolderResource;
 use App\Models\Folder;
+use App\Models\User;
 use App\Models\UserPrivileges;
 use App\Models\UserProfile;
+use App\Utils\Files;
+use Carbon\Carbon;
 use DateTime;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Vinkla\Hashids\Facades\Hashids;
+
+use function App\Utils\makeZipWithFiles;
 
 class FolderController extends Controller
 {
@@ -89,7 +96,48 @@ class FolderController extends Controller
         return $this->respondWithMessage('Folder deleted');
     }
 
-    public function download(Request $request, $id): BinaryFileResponse
+    public function download(Request $request, $id, $hash = null): BinaryFileResponse
+    {
+        $folder = Folder::query()->whereKey(Hashids::decode($id))->first();
+        if ($folder == null) {
+            $this->raiseError(404, 'Folder not found');
+        }
+
+        if ($hash != null && $request->user() == null) {
+            try {
+                $decrypted = Crypt::decrypt(base64_decode($hash));
+                list($userId, $expiredAt) = explode(":", $decrypted);
+                if ($expiredAt <  Carbon::now()->timestamp) {
+                    throw new Exception();
+                }
+                $user = User::find($userId);
+            } catch (Exception $e) {
+                $this->raiseError(422, "Request is not valid");
+            }
+        } else {
+            $user = $request->user();
+        }
+
+        if ($user->cannot(UserPrivileges::VIEW_PROGRAMS, $folder->user)) {
+            $this->raiseError(403, "Resource not available");
+        }
+
+        try {
+            $path = storage_path('app/' . $folder->path());
+            $files = collect($folder->programs)->map(function ($program) {
+                return $program->name;
+            })->toArray();
+            $zipFile = Files::makeZipWithFiles($folder->name, $path, $files);
+            return response()->download($zipFile, $folder->name . '.zip', [
+                'Content-Length' => filesize($zipFile),
+                'Content-Type' => 'application/zip'
+            ])->deleteFileAfterSend();
+        } catch (Exception $e) {
+            $this->raiseError(500, $e->getMessage());
+        }
+    }
+
+    public function prepareDownload(Request $request, string $id): string
     {
         $folder = Folder::query()->whereKey(Hashids::decode($id))->first();
         if ($folder == null) {
@@ -100,45 +148,8 @@ class FolderController extends Controller
             $this->raiseError(403, "Resource not available");
         }
 
-        $zipFile = null;
-        try {
-            $zipFile = $this->makeZipWithFiles($folder);
-            return response()->download($zipFile, $folder->name . '.zip', [
-                'Content-Length' => filesize($zipFile),
-                'Content-Type' => 'application/zip'
-            ])->deleteFileAfterSend();
-        } catch (Exception $e) {
-            $this->raiseError(500, $e->getMessage());
-        }
-    }
-
-    /**
-     * @param Folder $folder
-     * @return string
-     * @throws Exception
-     */
-    private function makeZipWithFiles(Folder $folder): string
-    {
-        $zip = new \ZipArchive();
-        $path = storage_path('app/' . $folder->path());
-        $tempFileUri = $path . '/' . $folder->name . '.zip';
-        if ($zip->open($tempFileUri, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
-            // Add File in ZipArchive
-            foreach ($folder->programs as $program) {
-                $fileName = $path . '/' . $program->name;
-                Log::info("Add $fileName");
-                if (file_exists($fileName)) {
-                    if (!$zip->addFile($fileName, $program->name)) {
-                        throw new Exception('Could not add file to ZIP: ' . $program->name);
-                    }
-                }
-            }
-            // Close ZipArchive
-            $zip->close();
-        } else {
-            throw new Exception('Could not open ZIP file.');
-        }
-        return $tempFileUri;
+        $params = $request->user()->id . ':' . Carbon::now()->addMinutes(30)->timestamp;
+        return "/folders/$id/download/" . base64_encode(Crypt::encrypt($params));
     }
 
     private function verifyUser($userProfileId)

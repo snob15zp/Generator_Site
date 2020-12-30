@@ -7,6 +7,7 @@ use App\Http\Resources\FirmwareResource;
 use App\Models\Firmware;
 use App\Models\FirmwareFiles;
 use App\Models\UserPrivileges;
+use App\Utils\Files;
 use DateTime;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -18,6 +19,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Vinkla\Hashids\Facades\Hashids;
+
+use function App\Utils\makeZipWithFiles;
 
 class FirmwareController extends Controller
 {
@@ -68,9 +71,13 @@ class FirmwareController extends Controller
         if ($firmware == null) {
             $this->raiseError(404, "Firmware not found");
         }
-        $zipFile = null;
+
         try {
-            $zipFile = $this->makeZipWithFiles($firmware);
+            $path = storage_path('app/' . $firmware->path());
+            $files = collect($firmware->files)->map(function($file){
+                return $file->file_name;
+            })->toArray();
+            $zipFile = Files::makeZipWithFiles($firmware->version, $path, $files);
             return response()->download($zipFile, 'firmware_v' . str_replace('.', '-', $firmware->version) . '.zip', [
                 'Content-Length' => filesize($zipFile),
                 'Content-Type' => 'application/zip'
@@ -180,33 +187,6 @@ class FirmwareController extends Controller
             Log::error($e->getMessage());
             $this->raiseError(500, "Cannot to store firmware");
         }
-    }
-
-    /**
-     * @param Firmware $firmware
-     * @return string
-     * @throws Exception
-     */
-    private function makeZipWithFiles(Firmware $firmware): string
-    {
-        $zip = new \ZipArchive();
-        $path = storage_path('app/' . $firmware->path());
-        $tempFileUri = $path . '/' . $firmware->version . '.zip';
-        if ($zip->open($tempFileUri, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
-            // Add File in ZipArchive
-            foreach ($firmware->files as $file) {
-                $fileName = $path . '/' . $file->file_name;
-                Log::info("Add $fileName");
-                if (!$zip->addFile($fileName, $file->file_name)) {
-                    throw new Exception('Could not add file to ZIP: ' . $file->file_name);
-                }
-            }
-            // Close ZipArchive
-            $zip->close();
-        } else {
-            throw new Exception('Could not open ZIP file.');
-        }
-        return $tempFileUri;
     }
 
 //    private function parse(string $xml, string $fileName): CpuFirmware
