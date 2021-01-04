@@ -16,7 +16,7 @@ class CreateFirmwareFilesTable extends Migration
         Schema::create('firmware_files', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('firmware_id');
-            $table->string('hash')->unique()->nullable(false);
+            $table->string('hash')->nullable(false);
             $table->string('file_name');
             $table->timestamps();
             $table->foreign('firmware_id')->references('id')->on('firmware');

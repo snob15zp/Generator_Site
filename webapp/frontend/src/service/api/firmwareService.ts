@@ -42,6 +42,7 @@ class FirmwareService {
                 })
         })
     }
+
     async updateStatus(firmwareId: string, active: boolean): Promise<Firmware> {
         return new Promise<Firmware>((resolve, reject) => {
             api.put(`/firmware/${firmwareId}`, {active: active})

@@ -34,6 +34,7 @@ $router->group(['prefix' => 'programs'], function () use ($router) {
 
 $router->group(['prefix' => 'firmware'], function () use ($router) {
     $router->get('/', 'FirmwareController@getAll');
+    $router->get('/latest', 'FirmwareController@getLatest');
     $router->get('/{version}/download', 'FirmwareController@download');
 
     $router->post('/', ['middleware' => 'auth', 'uses' => 'FirmwareController@create']);
