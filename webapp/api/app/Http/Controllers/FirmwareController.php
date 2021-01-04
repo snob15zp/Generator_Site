@@ -8,7 +8,6 @@ use App\Models\Firmware;
 use App\Models\FirmwareFiles;
 use App\Models\UserPrivileges;
 use App\Utils\Files;
-use DateTime;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,7 +18,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Vinkla\Hashids\Facades\Hashids;
-
 use function App\Utils\makeZipWithFiles;
 
 class FirmwareController extends Controller
@@ -39,6 +37,18 @@ class FirmwareController extends Controller
             $firmwares = Firmware::all();
         }
         return $this->respondWithResource(FirmwareResource::collection($firmwares));
+    }
+
+    public function getLatest(): JsonResponse
+    {
+        $firmwares = collect(Firmware::where('active', 1)->get())->sortBy(function ($firmware) {
+            return intval(str_replace(".", "", $firmware->version));
+        });
+
+        if ($firmwares->count() == 0) {
+            $this->raiseError(404, "Firmware not found");
+        }
+        return $this->respondWithResource(new FirmwareResource($firmwares[0]));
     }
 
     public function update(Request $request, $id): JsonResponse
@@ -74,7 +84,7 @@ class FirmwareController extends Controller
 
         try {
             $path = storage_path('app/' . $firmware->path());
-            $files = collect($firmware->files)->map(function($file){
+            $files = collect($firmware->files)->map(function ($file) {
                 return $file->file_name;
             })->toArray();
             $zipFile = Files::makeZipWithFiles($firmware->version, $path, $files);
@@ -129,7 +139,7 @@ class FirmwareController extends Controller
             return $this->respondWithResource(new FirmwareResource($firmware));
         } catch (Exception  $e) {
             DB::rollBack();
-            Log::error($e->getMessage());
+            Log::error($e);
             $this->raiseError(500, "Cannot to create firmware");
         }
     }

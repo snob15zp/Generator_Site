@@ -213,9 +213,13 @@ export default class FirmwareView extends Vue {
           this.cancel();
           this.fetchData();
         })
-        .catch(error => this.uploadForm.errorMessage = error)
+        .catch(error => {
+          console.log(error);
+          this.uploadForm.errorMessage = error;
+        })
         .finally(() => {
-          this.uploadForm.reset();
+          this.uploadForm.progress = 0;
+          this.uploadForm.uploadInProgress = false;
         });
   }
 
