@@ -38,9 +38,9 @@ class ProgramService {
 
     async uploadFile(fileRequest: UploadFileRequest): Promise<Program> {
         return new Promise((resolve, reject) => {
-            const formaData = new FormData();
-            fileRequest.files.forEach((file, idx) => formaData.append(`programs[]`, file))
-            api.post(`/folders/${fileRequest.folder.id}/programs`, formaData, {
+            const formData = new FormData();
+            fileRequest.files.forEach((file, idx) => formData.append(`programs[]`, file))
+            api.post(`/folders/${fileRequest.folder.id}/programs`, formData, {
                 onUploadProgress: function (progressEvent) {
                     console.log(progressEvent);
                     const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);

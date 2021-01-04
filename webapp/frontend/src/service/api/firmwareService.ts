@@ -50,12 +50,11 @@ class FirmwareService {
         });
     }
 
-    async upload(version: string, cpuFile: File, fpgaFile: File, onProgressCallback: (_: number) => void): Promise<void> {
+    async upload(version: string, files: File[], onProgressCallback: (_: number) => void): Promise<void> {
         return new Promise((resolve, reject) => {
             const formData = new FormData();
             formData.append("version", version);
-            formData.append("cpu", cpuFile);
-            formData.append("fpga", fpgaFile);
+            files.forEach((file, idx) => formData.append(`files[]`, file))
             api.post(`/firmware`, formData, {
                 onUploadProgress: function (progressEvent) {
                     const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);

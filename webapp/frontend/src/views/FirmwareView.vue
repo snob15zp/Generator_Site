@@ -34,18 +34,31 @@
                 label="Version"/>
             <v-file-input
                 dense
+                multiple
+                accept=".bf,.rbf"
+                placeholder="Select your files"
                 required
                 :rules="uploadForm.fileRules"
-                v-model="uploadForm.cpuFileInput"
-                label="CPU"
-                class="mt-6"/>
-            <v-file-input
-                dense
-                required
-                :rules="uploadForm.fileRules"
-                v-model="uploadForm.fpgaFileInput"
-                label="FPGA"
-                class="mt-4"/>
+                v-model="uploadForm.files"
+                class="mt-6">
+                <template v-slot:selection="{ index, text }">
+                  <v-chip
+                    v-if="index < 4"
+                    color="accent"
+                    dark
+                    label
+                    small
+                  >
+                    {{ text }}
+                  </v-chip>
+                  <span
+                    v-else-if="index === 4"
+                    class="overline grey--text text--darken-3 mx-2"
+                  >
+                    +{{ files.length - 4 }} File(s)
+                  </span>
+                </template>
+            </v-file-input>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
@@ -194,8 +207,7 @@ export default class FirmwareView extends Vue {
     this.uploadForm.uploadInProgress = true;
     firmwareService.upload(
         this.uploadForm.version!,
-        this.uploadForm.cpuFileInput!,
-        this.uploadForm.fpgaFileInput!,
+        this.uploadForm.files!,
         (process) => this.uploadForm.progress = process)
         .then(() => {
           this.cancel();

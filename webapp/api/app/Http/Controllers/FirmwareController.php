@@ -100,8 +100,8 @@ class FirmwareController extends Controller
 
         $this->validate($request, [
             'version' => 'required|regex:/^\d+\.\d+\.\d+$/',
-            'cpu' => 'required|file',
-            'fpga' => 'required|file'
+            'files' => 'required|array',
+            'files.*' => 'required|file'
         ]);
 
         $version = $request->input('version');
@@ -110,10 +110,7 @@ class FirmwareController extends Controller
             $this->raiseError(422, "Version $version is already uploaded");
         }
 
-        $files = [
-            $request->file('cpu'),
-            $request->file('fpga')
-        ];
+        $files = $request->file('files');
         $directory = Firmware::getPath($version);
 
         $this->storeOnDisk($directory, $files);

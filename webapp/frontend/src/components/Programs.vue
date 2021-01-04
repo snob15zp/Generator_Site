@@ -193,9 +193,9 @@ export default class Programs extends Vue {
         });
   }
 
-  private downloadFolder(folder) {
+  private downloadFolder(folder: Folder) {
     this.downloadFolderId = folder.id;
-    programService.downloadFolder(folder.id, (progress) => this.progress = progress)
+    programService.downloadFolder(folder.id!!, (progress) => this.progress = progress)
         .then(blob => saveDownloadFile(blob, folder.name))
         .finally(() => {
           this.progress = 0;
