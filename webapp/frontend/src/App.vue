@@ -32,7 +32,7 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-main>
+    <v-main class="overflow-y-auto" :style="{height: windowHeight}">
       <v-alert
           :value="alert"
           :type="alertType"
@@ -41,7 +41,7 @@
           border="right"
           class="ml-2 mr-2 mt-2">{{ alertMessage }}
       </v-alert>
-      <v-container fill-height class="justify-center align-start pa-0">
+      <v-container class="justify-center align-start pa-0">
         <router-view/>
       </v-container>
     </v-main>
@@ -75,6 +75,10 @@ export default class App extends Vue {
 
   get userName() {
     return UserModule.userName;
+  }
+
+  get windowHeight() {
+    return window.innerHeight + 'px';
   }
 
   get routers() {

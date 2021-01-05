@@ -42,14 +42,14 @@ class UserTableSeeder extends Seeder
 
                 $folderFactory = new FolderFactory();
                 $folders = $folderFactory
-                    ->count(10)
+                    ->count(20)
                     ->make();
 
                 $user->folders()->saveMany($folders);
 
                 $folders->each(function ($folder) use ($user) {
                     $programs = (new ProgramFactory())
-                        ->count(10)
+                        ->count(1000)
                         ->make();
                     $folder->programs()->saveMany($programs);
                 });

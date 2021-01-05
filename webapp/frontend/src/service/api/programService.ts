@@ -28,9 +28,9 @@ class ProgramService {
         });
     }
 
-    async saveFolder(userProfile: UserProfile, folder: Folder): Promise<Folder> {
+    async saveFolder(userProfileId: string, folder: Folder): Promise<Folder> {
         return new Promise<Folder>((resolve, reject) => {
-            api.post(`/profiles/${userProfile.id}/folders`, transformers.folderToJson(folder))
+            api.post(`/profiles/${userProfileId}/folders`, transformers.folderToJson(folder))
                 .then((response) => resolve(transformers.folderFromJson(response.data)))
                 .catch((error) => reject(new Error(apiErrorMapper(error))));
         });

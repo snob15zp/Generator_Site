@@ -3,46 +3,17 @@
     <v-card-title class="headline">
       Programs
       <v-spacer/>
-      <v-file-input v-if="canManagePrograms"
-                    :disabled="uploadInProgress || isFoldersEmpty"
-                    outlined
-                    dense
-                    multiple
-                    placeholder="Select your file"
-                    v-model="fileInput"
-                    class="mr-4"
-                    style="height: 40px">
-        <template v-slot:selection="{ index, text }">
-          <v-chip
-              v-if="index < 2"
-              dark
-              label
-              small>
-            {{ text }}
-          </v-chip>
-          <span
-              v-else-if="index === 2"
-              class="overline grey--text text--darken-3 mx-2">
-        +{{ files.length - 2 }} File(s)
-          </span>
-        </template>
-      </v-file-input>
-      <v-btn color="primary" v-if="canManagePrograms" @click="uploadFile"
-             :loading="uploadInProgress"
-             :disabled="fileInput == null || uploadInProgress">Upload
-        <v-icon right>mdi-upload</v-icon>
-      </v-btn>
-      <v-btn color="primary" @click="createFolder" v-if="canManagePrograms" class="ml-2">
+      <v-btn color="primary" @click="openCreateFolderDialog" v-if="canManagePrograms" class="ml-2">
         New folder
         <v-icon right>mdi-folder-plus</v-icon>
       </v-btn>
     </v-card-title>
-    <v-divider/>
-    <v-layout row class="row--dense">
-      <v-col cols="12" md="6">
-        <v-list class="overflow-y-auto p-list" nav>
+    <v-divider horizontal/>
+    <v-row dense justify="space-between">
+      <v-col cols="4">
+        <v-list class="overflow-y-auto" nav :height="listHeight">
           <v-list-item-group active-class="primary--text" v-model="selected">
-            <v-list-item v-for="folder in folders" :key="folder.hash">
+            <v-list-item v-for="folder in folders" :key="folder.id">
               <v-list-item-avatar>
                 <v-icon>
                   mdi-folder
@@ -54,52 +25,119 @@
                   {{ folder.expiredAt | expiredAtInterval }}
                 </v-list-item-subtitle>
               </v-list-item-content>
-              <v-list-item-action>
-                <v-btn
-                    icon
-                    @click="downloadFolder(folder)"
-                    :disabled="isExpired(folder.expiredAt)"
-                    :loading="downloadFolderId===folder.id">
-                  <v-icon>mdi-download</v-icon>
-                </v-btn>
-              </v-list-item-action>
             </v-list-item>
           </v-list-item-group>
         </v-list>
       </v-col>
-      <v-col cols="12" md="6">
-        <v-list class="overflow-y-auto p-list" nav dense>
-          <v-list-item v-for="file in files" :key="file.hash">
-            <v-list-item-content>
-              <span v-if="isDownloadDisabled" style="color: rgba(0,0,0,.6);">{{ file.name }}</span>
-              <a @click="downloadFile(file)" href="#" v-else>{{ file.name }}</a>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
+      <v-divider vertical></v-divider>
+      <v-col class="d-flex">
+        <v-card
+          v-if="folder"
+          :key="folder.id"
+          :disabled="filesLoading"
+          class="mx-auto"
+          flat
+          style="width:100%">
+          <v-card-title>
+            {{ folder.name }}
+            <v-btn
+                icon
+                @click="downloadFolder(folder)"
+                :disabled="isExpired(folder.expiredAt)"
+                :loading="downloadFolderId===folder.id">
+              <v-icon>mdi-download</v-icon>
+            </v-btn>
+          </v-card-title>
+            <v-card-subtitle>Total programs: {{ files.length }}</v-card-subtitle>
+          <v-card-text>
+            <v-row v-if="canManagePrograms" class="mt-2">
+              <v-file-input 
+                      :disabled="uploadInProgress || isFoldersEmpty"
+                      outlined
+                      dense
+                      multiple
+                      placeholder="Select your file"
+                      v-model="fileInput"
+                      class="mr-4"
+                      style="height: 40px">
+                <template v-slot:selection="{ index, text }">
+                  <v-chip
+                      v-if="index < 2"
+                      dark
+                      label
+                      small>
+                    {{ text }}
+                  </v-chip>
+                  <span
+                      v-else-if="index === 2"
+                      class="overline grey--text text--darken-3 mx-2">
+                    +{{ fileInput.length - 2 }} File(s)
+                  </span>
+                </template>
+              </v-file-input>
+              <v-btn icon @click="uploadFile"
+                    :loading="uploadInProgress"
+                    :disabled="fileInput == null || uploadInProgress">
+                <v-icon>mdi-upload</v-icon>
+              </v-btn>
+            </v-row>
+          </v-card-text>
+          <v-divider />
+          <v-row class="overflow-y-auto ma-2" :style="{height: (listHeight - 150) + 'px'}">
+            <v-col cols="3" v-for="file in files" :key="file.id" class="text-truncate">
+              <small>{{ file.name }}</small>
+            </v-col>
+          </v-row>
+        </v-card>
       </v-col>
-    </v-layout>
+    </v-row>
 
-    <v-snackbar v-model="snackbar" :timeout="-1">
-      <v-container>
-        <v-row v-if="file">
-          {{ file.name }}
-        </v-row>
-        <v-row>
-          <v-progress-linear :value="progress"/>
-        </v-row>
-      </v-container>
-    </v-snackbar>
+    <v-dialog v-model="isCreateDialogShow" max-width="500px">
+      <v-card>
+        <v-card-title class="headline">Create Folder</v-card-title>
+        <v-divider></v-divider>
+        <v-card-text class="mt-4">
+          <v-menu
+              ref="menuRef"
+              v-model="menu"
+              :close-on-content-click="false"
+              transition="scale-transition"
+              offset-y
+              min-width="290px"
+          >
+            <template v-slot:activator="{ on, attrs }">
+              <v-text-field v-model="expiredAt" label="Expired Date" v-bind="attrs" v-on="on" readonly/>
+            </template>
+            <v-date-picker
+                ref="pickerRef"
+                no-title
+                v-model="expiredAt"
+                :locale="$i18n.locale"
+                :min="$options.filters.formatDate(new Date())"
+                @change="save"
+            />
+          </v-menu>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="createFolderClose">{{ $t("form.cancel") }}</v-btn>
+          <v-btn color="blue darken-1" text @click="createFolderConfirm">{{ $t("form.ok") }}</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 
 <script lang="ts">
 import {Component, Emit, Prop, Ref, Vue, Watch} from "vue-property-decorator";
-import {Folder, Program, UploadFileRequest} from "@/store/models";
+import {Folder, Program, UploadFileRequest, UserProfile} from "@/store/models";
 import {expiredAtInterval, isExpired} from "@/utils/dateUtils";
 import {ResizeObserver} from "@juggle/resize-observer";
 import UserModule from "@/store/modules/user";
 import programService from "@/service/api/programService";
 import saveDownloadFile from "@/utils/download-file";
+import {EventBus} from "@/utils/event-bus";
+import moment from "moment";
 
 @Component({
   filters: {
@@ -109,32 +147,43 @@ import saveDownloadFile from "@/utils/download-file";
   }
 })
 export default class Programs extends Vue {
-  @Prop({default: false}) readonly loading!: boolean;
-  @Prop() readonly folders!: Folder[];
-  @Prop({default: () => []}) readonly files!: Program[];
+  @Prop({default: null}) readonly userProfileId!: string;
 
   @Ref() readonly container: Vue | undefined;
+  @Ref() readonly menuRef: (Vue & { save: (date: string) => void }) | undefined;
 
-  private selected = 0;
+  private folders: Folder[] = [];
+  private files: Program[] = [];
+  
+  private filesLoading = false;
+  private foldersLoading = false;
+
+  private selected: number | null = null;
   private fileInput: any | null = null;
   private folder: Folder | null = null;
 
   private downloadFolderId: string | null = null;
   private uploadInProgress = false;
   private progress = 0;
-  private snackbar = false;
   private file: File | null = null;
+
+  private listHeight = this.getHeight();
+
+  private menu = false;
+  private isCreateDialogShow = false;
+  private expiredAt: string | null = null;
 
   private observer = new ResizeObserver((entries) => {
     console.log("resize")
-    const height = Math.max(entries[0].contentBoxSize[0].blockSize - 90, 300);
-    Array.from(document.getElementsByClassName("p-list") as HTMLCollectionOf<HTMLElement>).forEach((el) => {
-      el.style.height = height + "px";
-    });
+    this.listHeight = this.getHeight();
   });
 
+  get loading() {
+    return this.foldersLoading || this.filesLoading;
+  }
+
   get isFoldersEmpty() {
-    return this.folders.length === 0;
+    return this.folders?.length === 0;
   }
 
   get canManagePrograms() {
@@ -147,32 +196,29 @@ export default class Programs extends Vue {
 
   mounted() {
     this.observer.observe(this.container!.$el);
+    this.fetchFolders();
   }
 
   @Watch("selected")
   private onSelectedChanged() {
-    console.log("Selected = " + this.selected);
+    if(this.selected == null) return;
+    if(this.folders[this.selected].id == this.folder?.id) return;
+
     this.folder = this.folders[this.selected];
+    this.files = [];
     this.onFolderChanged(this.folder);
   }
 
-  @Watch("folders")
-  private onFoldersChanged() {
-    if (!this.isFoldersEmpty) {
-      this.selected = 0;
-    }
-  }
 
-
-  @Emit()
-  onFolderChanged(folder: Folder) {
+  private onFolderChanged(folder: Folder) {
     this.folder = folder;
+    this.fileInput = null;
+    this.fetchPrograms(folder);
     return folder;
   }
 
-  @Emit()
-  createFolder() {
-    return;
+  private getHeight() {
+    return Math.max(window.innerHeight - 490, 450);
   }
 
   private uploadFile() {
@@ -185,11 +231,35 @@ export default class Programs extends Vue {
       onProgressCallback: (progress) => this.progress = progress
     } as UploadFileRequest)
         .finally(() => {
-          this.snackbar = false;
           this.uploadInProgress = false;
           this.fileInput = null;
           this.progress = 0;
           this.onFolderChanged(this.folder!);
+        });
+  }
+
+  private fetchPrograms(folder: Folder) {
+    this.filesLoading = true;
+    programService.fetchPrograms(folder)
+        .then(programs => this.files = programs)
+        .catch((e) => EventBus.$emit("error", e))
+        .finally(() => {
+          this.filesLoading = false;
+        });
+  }
+
+  private fetchFolders() {
+    this.foldersLoading = true;
+    programService.fetchFolders(this.userProfileId)
+        .then((folders) => {
+          this.folders = folders;
+          if (this.folders && this.folders.length > 0) {
+            this.selected = 0;
+          }
+        })
+        .catch((e) => EventBus.$emit("error", e))
+        .finally(() => {
+          this.foldersLoading = false;
         });
   }
 
@@ -204,7 +274,6 @@ export default class Programs extends Vue {
   }
 
   private downloadFile(program: Program) {
-    this.snackbar = true;
     this.file = new File([], program.name);
     programService.downloadFile({
       program: program,
@@ -212,13 +281,38 @@ export default class Programs extends Vue {
     })
         .then(blob => saveDownloadFile(blob, program.name))
         .finally(() => {
-          this.snackbar = false;
           this.progress = 0;
         });
   }
 
   private isExpired(date: Date) {
     return isExpired(date);
+  }
+
+  private openCreateFolderDialog() {
+    this.isCreateDialogShow = true;
+  }
+
+  private createFolderClose() {
+    this.expiredAt = null;
+    this.isCreateDialogShow = false;
+  }
+
+  private createFolderConfirm() {
+    const date = moment(this.expiredAt);
+    const folder = {
+      id: null,
+      name: date.format("DD-MM-YY"),
+      expiredAt: date.toDate()
+    } as Folder;
+    programService.saveFolder(this.userProfileId, folder)
+        .then(() => this.fetchFolders())
+        .catch((e) => EventBus.$emit("error", e))
+        .finally(() => this.createFolderClose());
+  }
+
+  private save(date: string) {
+    this.menuRef!.save(date);
   }
 }
 </script>
