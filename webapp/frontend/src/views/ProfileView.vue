@@ -1,5 +1,5 @@
 <template>
-  <v-layout fill-height column class="user-profile col-md-12 col-lg-9">
+  <v-layout class="user-profile pl-4 pr-4">
     <UserProfileDetails :user-profile-id="$route.params.id"/>
   </v-layout>
 </template>

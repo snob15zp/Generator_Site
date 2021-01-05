@@ -51,7 +51,7 @@
             <v-card-subtitle>Total programs: {{ files.length }}</v-card-subtitle>
           <v-card-text>
             <v-row v-if="canManagePrograms" class="mt-2">
-              <v-file-input 
+              <v-file-input
                       :disabled="uploadInProgress || isFoldersEmpty"
                       outlined
                       dense
@@ -83,7 +83,7 @@
             </v-row>
           </v-card-text>
           <v-divider />
-          <v-row class="overflow-y-auto ma-2" :style="{height: (listHeight - 150) + 'px'}">
+          <v-row dense class="overflow-y-auto ma-2" :style="{'max-height': (listHeight - 150) + 'px'}">
             <v-col cols="3" v-for="file in files" :key="file.id" class="text-truncate">
               <small>{{ file.name }}</small>
             </v-col>
@@ -154,7 +154,7 @@ export default class Programs extends Vue {
 
   private folders: Folder[] = [];
   private files: Program[] = [];
-  
+
   private filesLoading = false;
   private foldersLoading = false;
 

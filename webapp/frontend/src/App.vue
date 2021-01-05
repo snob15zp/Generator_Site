@@ -1,8 +1,7 @@
 <template>
   <v-app>
-    <v-app-bar app v-if="isAuthorized" dark color="primary" style="left: 0 !important;">
+    <v-app-bar app flat color="primary" dark v-if="isAuthorized" class="v-bar--underline">
       <v-app-bar-nav-icon @click="drawer = !drawer" v-if="$vuetify.breakpoint.mdAndDown"></v-app-bar-nav-icon>
-      <v-toolbar-title>Generator</v-toolbar-title>
       <v-spacer/>
       <v-btn text>
         <v-icon left>mdi-account</v-icon>
@@ -16,11 +15,12 @@
     <v-navigation-drawer
         v-if="isAuthorized && canManageProfiles"
         v-model="drawer"
-        absolute
-        app
-        class="pt-16"
-    >
-      <v-list nav dense>
+        floating
+        app>
+      <v-app-bar flat color="primary" dark class="v-bar--underline" style="height: 64px">
+        <v-toolbar-title>Generator</v-toolbar-title>
+      </v-app-bar>
+      <v-list nav dense class="mt-2">
         <v-list-item-group active-class="primary--text" v-model="selected">
           <v-list-item v-for="route in routers" :key="route.path" :to="route.path" link>
             <v-list-item-icon @click="route.push(route.path)">
@@ -32,7 +32,7 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-main class="overflow-y-auto" :style="{height: windowHeight}">
+    <v-main>
       <v-alert
           :value="alert"
           :type="alertType"
@@ -42,7 +42,9 @@
           class="ml-2 mr-2 mt-2">{{ alertMessage }}
       </v-alert>
       <v-container class="justify-center align-start pa-0">
-        <router-view/>
+        <v-layout fill-height fluid>
+          <router-view/>
+        </v-layout>
       </v-container>
     </v-main>
   </v-app>
@@ -106,6 +108,13 @@ export default class App extends Vue {
 @import "~vuetify/src/styles/main.sass";
 
 #app {
+
+  .v-bar--underline {
+    border-bottom-style: solid !important;
+    border-bottom-width: 1px !important;
+    border-bottom-color: rgba(0, 0, 0, .12) !important;
+  }
+
   background: map-get($grey, lighten-4);
 }
 </style>

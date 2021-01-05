@@ -1,5 +1,5 @@
 <template>
-  <v-layout fill-height column class="user-profile">
+  <v-layout column align-top justify-center>
     <user-profile-info :user-profile="userProfile" :loading="profileLoading"/>
     <programs :user-profile-id="userProfileId" class="flex-column fill-height mt-8 mb-8" />
   </v-layout>

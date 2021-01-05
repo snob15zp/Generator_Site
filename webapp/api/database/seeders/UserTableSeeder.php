@@ -49,7 +49,7 @@ class UserTableSeeder extends Seeder
 
                 $folders->each(function ($folder) use ($user) {
                     $programs = (new ProgramFactory())
-                        ->count(1000)
+                        ->count(100)
                         ->make();
                     $folder->programs()->saveMany($programs);
                 });
