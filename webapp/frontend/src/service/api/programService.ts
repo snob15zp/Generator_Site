@@ -74,6 +74,22 @@ class ProgramService {
         });
     }
 
+    async importPrograms(folderId: string): Promise<string> {
+        return new Promise<string>(((resolve, reject) => {
+            api.get(`/folders/${folderId}/download-link`)
+                .then(response => resolve(response.data))
+                .catch(error => reject(new Error(apiErrorMapper(error))));
+        }));
+    }
+
+    async deleteFolder(folderId: string): Promise<void> {
+        return new Promise<void>(((resolve, reject) => {
+            api.delete(`/folders/${folderId}`)
+                .then(() => resolve())
+                .catch(error => reject(new Error(apiErrorMapper(error))));
+        }));
+    }
+
     async downloadFile(request: DownloadFileRequest): Promise<Blob> {
         return new Promise<Blob>((resolve, reject) => {
             api.get(`/programs/${request.program.id}/download`, {

@@ -3,7 +3,11 @@
     <v-card-title class="headline">
       Programs
       <v-spacer/>
-      <v-btn color="primary" @click="openCreateFolderDialog" v-if="canManagePrograms" class="ml-2">
+      <v-btn
+          color="primary"
+          @click="openCreateFolderDialog"
+          :disabled="foldersLoading"
+          v-if="canManagePrograms" class="ml-2">
         New folder
         <v-icon right>mdi-folder-plus</v-icon>
       </v-btn>
@@ -32,34 +36,73 @@
       <v-divider vertical></v-divider>
       <v-col class="d-flex">
         <v-card
-          v-if="folder"
-          :key="folder.id"
-          :disabled="filesLoading"
-          class="mx-auto"
-          flat
-          style="width:100%">
+            v-if="folder"
+            :key="folder.id"
+            :disabled="filesLoading"
+            class="mx-auto"
+            flat
+            style="width:100%">
           <v-card-title>
             {{ folder.name }}
-            <v-btn
-                icon
-                @click="downloadFolder(folder)"
-                :disabled="isExpired(folder.expiredAt)"
-                :loading="downloadFolderId===folder.id">
-              <v-icon>mdi-download</v-icon>
-            </v-btn>
           </v-card-title>
-            <v-card-subtitle>Total programs: {{ files.length }}</v-card-subtitle>
-          <v-card-text>
-            <v-row v-if="canManagePrograms" class="mt-2">
+          <v-card-subtitle>
+            <v-btn v-if="canManagePrograms" class="mr-2"
+                   @click="downloadFolder(folder)"
+                   :disabled="isExpired(folder.expiredAt)"
+                   :loading="downloadFolderId===folder.id"
+                   outlined
+                   small
+                   text>
+              download
+              <v-icon right dark small>mdi-archive-arrow-down-outline</v-icon>
+            </v-btn>
+            <v-btn
+                @click="importToDevice(folder)"
+                :disabled="isExpired(folder.expiredAt)"
+                :loading="importFolderId===folder.id"
+                outlined
+                small
+                text>
+              Import to device
+              <v-icon right dark small>mdi-import</v-icon>
+            </v-btn>
+            <v-btn
+                v-if="canManagePrograms"
+                class="ml-2"
+                @click="deleteFolder(folder)"
+                :loading="deletingFolderId===folder.id"
+                outlined
+                small
+                text>
+              Delete
+              <v-icon right dark small>mdi-delete</v-icon>
+            </v-btn>
+            <v-btn-toggle v-if="canManagePrograms" class="ml-2" v-model="toggle">
+              <v-btn
+                  :disabled="uploadInProgress"
+                  :color="isUploadDialogShow?'primary':''"
+                  @click="showUploadForm()"
+                  outlined
+                  small
+                  text>
+                Upload programs
+                <v-icon right dark small :color="isUploadDialogShow?'primary':''">mdi-upload</v-icon>
+              </v-btn>
+            </v-btn-toggle>
+          </v-card-subtitle>
+          <v-expand-transition>
+            <v-layout row v-show="isUploadDialogShow" class="pl-4 pr-6">
               <v-file-input
-                      :disabled="uploadInProgress || isFoldersEmpty"
-                      outlined
-                      dense
-                      multiple
-                      placeholder="Select your file"
-                      v-model="fileInput"
-                      class="mr-4"
-                      style="height: 40px">
+                  v-if="canManagePrograms"
+                  :disabled="uploadInProgress || isFoldersEmpty"
+                  accept=".txt"
+                  outlined
+                  dense
+                  multiple
+                  placeholder="Select your file"
+                  v-model="fileInput"
+                  class="mr-4 ml-4"
+                  style="height: 40px">
                 <template v-slot:selection="{ index, text }">
                   <v-chip
                       v-if="index < 2"
@@ -75,19 +118,24 @@
                   </span>
                 </template>
               </v-file-input>
-              <v-btn icon @click="uploadFile"
-                    :loading="uploadInProgress"
-                    :disabled="fileInput == null || uploadInProgress">
+              <v-btn @click="uploadFile"
+                     color="primary"
+                     :loading="uploadInProgress"
+                     :disabled="fileInput == null || uploadInProgress">
+                Upload
                 <v-icon>mdi-upload</v-icon>
               </v-btn>
+            </v-layout>
+          </v-expand-transition>
+          <v-card-text>
+            <h4 class="pl-1">Total programs: {{ files.length }}</h4>
+            <v-divider/>
+            <v-row dense class="overflow-y-auto ma-2" :style="{'max-height': (listHeight - 150) + 'px'}">
+              <v-col cols="3" v-for="file in files" :key="file.id" class="text-truncate">
+                <small>{{ file.name }}</small>
+              </v-col>
             </v-row>
           </v-card-text>
-          <v-divider />
-          <v-row dense class="overflow-y-auto ma-2" :style="{'max-height': (listHeight - 150) + 'px'}">
-            <v-col cols="3" v-for="file in files" :key="file.id" class="text-truncate">
-              <small>{{ file.name }}</small>
-            </v-col>
-          </v-row>
         </v-card>
       </v-col>
     </v-row>
@@ -122,6 +170,21 @@
           <v-spacer></v-spacer>
           <v-btn color="blue darken-1" text @click="createFolderClose">{{ $t("form.cancel") }}</v-btn>
           <v-btn color="blue darken-1" text @click="createFolderConfirm">{{ $t("form.ok") }}</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="deleteDialogShow" max-width="500px">
+      <v-card>
+        <v-card-title class="headline">Delete folder</v-card-title>
+        <v-divider></v-divider>
+        <v-card-text class="mt-4">
+          {{ deleteDialogMessage }}
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="closeDelete">{{ $t("form.cancel") }}</v-btn>
+          <v-btn color="blue darken-1" text @click="deleteConfirm">{{ $t("form.ok") }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -163,6 +226,7 @@ export default class Programs extends Vue {
   private folder: Folder | null = null;
 
   private downloadFolderId: string | null = null;
+  private importFolderId: string | null = null;
   private uploadInProgress = false;
   private progress = 0;
   private file: File | null = null;
@@ -172,6 +236,13 @@ export default class Programs extends Vue {
   private menu = false;
   private isCreateDialogShow = false;
   private expiredAt: string | null = null;
+
+  private isUploadDialogShow = false;
+  private toggle = -1;
+
+  private deletingFolderId: string | null = null;
+  private deleteDialogMessage: string | null = null;
+  private deleteDialogShow = false;
 
   private observer = new ResizeObserver((entries) => {
     console.log("resize")
@@ -201,14 +272,17 @@ export default class Programs extends Vue {
 
   @Watch("selected")
   private onSelectedChanged() {
-    if(this.selected == null) return;
-    if(this.folders[this.selected].id == this.folder?.id) return;
+    if (this.selected == null) return;
+    if (this.folders[this.selected].id == this.folder?.id) return;
 
     this.folder = this.folders[this.selected];
     this.files = [];
     this.onFolderChanged(this.folder);
   }
 
+  private showUploadForm() {
+    this.isUploadDialogShow = !this.isUploadDialogShow;
+  }
 
   private onFolderChanged(folder: Folder) {
     this.folder = folder;
@@ -232,7 +306,9 @@ export default class Programs extends Vue {
     } as UploadFileRequest)
         .finally(() => {
           this.uploadInProgress = false;
+          this.isUploadDialogShow = false;
           this.fileInput = null;
+          this.toggle = -1;
           this.progress = 0;
           this.onFolderChanged(this.folder!);
         });
@@ -255,12 +331,30 @@ export default class Programs extends Vue {
           this.folders = folders;
           if (this.folders && this.folders.length > 0) {
             this.selected = 0;
+          } else {
+            this.selected = null;
+            this.files = [];
+            this.folder = null;
+            this.filesLoading = false;
           }
         })
         .catch((e) => EventBus.$emit("error", e))
         .finally(() => {
           this.foldersLoading = false;
         });
+  }
+
+  private importToDevice(folder: Folder) {
+    this.importFolderId = folder.id;
+    programService.importPrograms(folder.id!)
+        .then(url => {
+          console.log(url);
+          window.open(`generator://${location.host}/generator` + url);
+        })
+        .catch((e) => EventBus.$emit("error", e))
+        .finally(() => {
+          this.importFolderId = null;
+        })
   }
 
   private downloadFolder(folder: Folder) {
@@ -299,6 +393,8 @@ export default class Programs extends Vue {
   }
 
   private createFolderConfirm() {
+    this.isCreateDialogShow = false;
+    this.foldersLoading = true;
     const date = moment(this.expiredAt);
     const folder = {
       id: null,
@@ -313,6 +409,31 @@ export default class Programs extends Vue {
 
   private save(date: string) {
     this.menuRef!.save(date);
+  }
+
+  private deleteFolder(folder: Folder) {
+    this.deletingFolderId = folder.id;
+    this.deleteDialogMessage = `Are you sure you want to delete the folder ${folder.name}?`;
+    this.deleteDialogShow = true;
+  }
+
+  private closeDelete() {
+    this.deletingFolderId = null;
+    this.deleteDialogShow = false;
+    this.deleteDialogMessage = null;
+  }
+
+  private deleteConfirm() {
+    this.deleteDialogShow = false;
+    this.deleteDialogMessage = null;
+    this.filesLoading = true;
+    this.selected = null;
+    programService.deleteFolder(this.deletingFolderId!)
+        .then(() => this.fetchFolders())
+        .catch((e) => EventBus.$emit("error", e))
+        .finally(() => {
+          this.deletingFolderId = null;
+        });
   }
 }
 </script>
