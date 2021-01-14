@@ -147,6 +147,24 @@ export interface FirmwareFilesJson {
     name: string;
 }
 
+export interface SoftwareJson {
+    id: string;
+    active: boolean;
+    version: string;
+    createdAt: string;
+    file: string;
+    fileUrl: string;
+}
+
+export interface Software {
+    id: string;
+    active: boolean;
+    version: string;
+    createdAt: Date;
+    file: string;
+    fileUrl: string;
+}
+
 export interface ErrorJson {
     message: string;
     status: number;

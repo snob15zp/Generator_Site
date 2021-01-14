@@ -4,7 +4,8 @@
     "home": "Users",
     "login": "Sigh In",
     "user-profile": "User Profiles",
-    "firmware": "Firmware"
+    "firmware": "Firmware",
+    "software": "Software"
   },
   "login-form": {
     "title": "Sign In",

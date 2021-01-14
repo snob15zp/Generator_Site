@@ -1,7 +1,8 @@
 <template>
   <v-app>
     <v-app-bar app flat color="primary" dark v-if="isAuthorized" class="v-bar--underline">
-      <v-app-bar-nav-icon @click="drawer = !drawer" v-if="$vuetify.breakpoint.mdAndDown"></v-app-bar-nav-icon>
+      <v-app-bar-nav-icon @click="drawer = !drawer" v-if="$vuetify.breakpoint.mdAndDown && canManageProfiles"></v-app-bar-nav-icon>
+      <v-toolbar-title v-if="isAuthorized && !canManageProfiles">Generator</v-toolbar-title>
       <v-spacer/>
       <v-btn text>
         <v-icon left>mdi-account</v-icon>

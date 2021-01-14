@@ -6,7 +6,17 @@ return [
     'connections' => [
         'local' => [
             'driver' => 'local',
-            'path' => storage_path('files'),
+            'path' => storage_path('app'),
+            'permissions' => [
+                'file' => [
+                    'public' => 0664,
+                    'private' => 0600,
+                ],
+                'dir' => [
+                    'public' => 0775,
+                    'private' => 0700,
+                ],
+            ],
             // 'visibility' => 'public',
             // 'pirate'     => false,
             // 'eventable'  => true,

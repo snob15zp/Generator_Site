@@ -1,7 +1,7 @@
 <template>
   <v-layout column align-top justify-center>
     <user-profile-info :user-profile="userProfile" :loading="profileLoading"/>
-    <programs :user-profile-id="userProfileId" class="flex-column fill-height mt-8 mb-8" />
+    <programs :user-profile-id="userProfile.id" class="flex-column fill-height mt-8 mb-8" v-if="userProfile"/>
   </v-layout>
 </template>
 

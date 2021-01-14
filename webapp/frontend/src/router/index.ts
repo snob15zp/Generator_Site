@@ -9,6 +9,7 @@ import i18n from "@/i18n";
 import ResetPasswordView from "@/views/ResetPasswordView.vue";
 import ForgetPasswordView from "@/views/ForgetPasswordView.vue";
 import FirmwareView from "@/views/FirmwareView.vue";
+import SoftwareView from "@/views/SoftwareView.vue";
 
 Vue.use(VueRouter);
 
@@ -37,7 +38,18 @@ const routes: Array<RouteConfig> = [
       title: i18n.t("page.firmware")
     }
   },
-
+  {
+    path: "/software",
+    name: "software",
+    component: SoftwareView,
+    meta: {
+      icon: "mdi-laptop",
+      navigation: true,
+      requiresAuth: true,
+      requiresPermissions: [MANAGE_PROFILES],
+      title: i18n.t("page.software")
+    }
+  },
   {
     path: "/profile/:id",
     name: "user-profile",

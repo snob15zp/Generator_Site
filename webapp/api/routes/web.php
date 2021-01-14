@@ -42,6 +42,16 @@ $router->group(['prefix' => 'firmware'], function () use ($router) {
     $router->delete('/{version}', ['middleware' => 'auth', 'uses' => 'FirmwareController@delete']);
 });
 
+$router->group(['prefix' => 'software'], function () use ($router) {
+    $router->get('/', 'SoftwareController@getAll');
+    $router->get('/latest', 'SoftwareController@getLatest');
+    $router->get('/{version}/download', 'SoftwareController@download');
+
+    $router->post('/', ['middleware' => 'auth', 'uses' => 'SoftwareController@create']);
+    $router->put('/{id}', ['middleware' => 'auth', 'uses' => 'SoftwareController@update']);
+    $router->delete('/{version}', ['middleware' => 'auth', 'uses' => 'SoftwareController@delete']);
+});
+
 $router->group(['prefix' => 'profiles'], function () use ($router) {
     $router->post('/', ['middleware' => 'auth', 'uses' => 'UserProfileController@create']);
     $router->put('/{id}', ['middleware' => 'auth', 'uses' => 'UserProfileController@update']);

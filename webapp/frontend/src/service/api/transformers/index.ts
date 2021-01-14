@@ -10,8 +10,8 @@ import {
     ProgramJson,
     FirmwareJson,
     Firmware,
-    FirmwareFiles,
-    FirmwareFilesJson
+    Software,
+    SoftwareJson
 } from "@/store/models";
 
 function userProfileFromJson(json: UserProfileJson): UserProfile {
@@ -87,6 +87,17 @@ function firmwareFromJson(json: FirmwareJson): Firmware {
     } as Firmware;
 }
 
+function softwareFromJson(json: SoftwareJson): Software {
+    return {
+        id: json.id,
+        active: Boolean(json.active),
+        version: json.version,
+        createdAt: moment(json.createdAt).toDate(),
+        file: json.file,
+        fileUrl: json.fileUrl
+    } as Software;
+}
+
 export default {
     userFromJson,
     userProfileFromJson,
@@ -94,5 +105,6 @@ export default {
     folderFromJson,
     programFromJson,
     folderToJson,
-    firmwareFromJson
+    firmwareFromJson,
+    softwareFromJson
 }
