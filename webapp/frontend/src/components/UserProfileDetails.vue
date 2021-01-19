@@ -1,7 +1,11 @@
 <template>
   <v-layout column align-top justify-center>
-    <user-profile-info :user-profile="userProfile" :loading="profileLoading"/>
+    <user-profile-info :user-profile="userProfile" :loading="profileLoading" v-if="userProfile"/>
     <programs :user-profile-id="userProfile.id" class="flex-column fill-height mt-8 mb-8" v-if="userProfile"/>
+     <v-card outlined class="mt-8" v-else-if="!profileLoading">
+       <v-card-title>No data</v-card-title>
+       <v-card-text><p class="justify-start text--secondary" style="font-size:1.2em">There is no user with the given id</p></v-card-text>
+    </v-card>
   </v-layout>
 </template>
 

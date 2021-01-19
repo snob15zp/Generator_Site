@@ -347,9 +347,9 @@ export default class Programs extends Vue {
   private importToDevice(folder: Folder) {
     this.importFolderId = folder.id;
     programService.importPrograms(folder.id!)
-        .then(url => {
-          console.log(url);
-          window.open(`generator://${location.host}/generator` + url);
+        .then(hash => {
+          const route = this.$router.resolve({path: `/import-programs/${folder.id}/${hash}`});
+          window.open(route.href, '_blank');
         })
         .catch((e) => EventBus.$emit("error", e))
         .finally(() => {

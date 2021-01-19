@@ -149,7 +149,7 @@ class FolderController extends Controller
         }
 
         $params = $request->user()->id . ':' . Carbon::now()->addMinutes(30)->timestamp;
-        return "/folders/$id/download/" . base64_encode(Crypt::encrypt($params));
+        return base64_encode(Crypt::encrypt($params));
     }
 
     private function verifyUser($userProfileId)

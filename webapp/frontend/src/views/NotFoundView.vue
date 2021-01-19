@@ -1,7 +1,7 @@
 <template>
-  <v-app class="not-found">
-    <v-container fill-height fluid class="justify-center">
-      <v-sheet>
+  <v-container class="not-found">
+      <v-card outlined class="mt-8 mb-8 pa-12">
+        <v-card-text>
         <h1 class="v-heading text-h1 text-sm-h1 mb-6">404</h1>
         <h2
           class="v-heading text-h3 text-sm-h3 mb-8"
@@ -11,9 +11,9 @@
           class="justify-start text--secondary"
           v-html="$t('not-found.message', ['/'])"
         ></p>
-      </v-sheet>
-    </v-container>
-  </v-app>
+        </v-card-text>
+      </v-card>
+  </v-container>
 </template>
 
 <script lang="ts">

@@ -1,8 +1,8 @@
 <template>
   <v-app>
     <v-app-bar app flat color="primary" dark v-if="isAuthorized" class="v-bar--underline">
-      <v-app-bar-nav-icon @click="drawer = !drawer" v-if="$vuetify.breakpoint.mdAndDown && canManageProfiles"></v-app-bar-nav-icon>
-      <v-toolbar-title v-if="isAuthorized && !canManageProfiles">Generator</v-toolbar-title>
+      <v-app-bar-nav-icon @click="drawer = !drawer" v-if="$vuetify.breakpoint.mdAndDown && showNavigation"></v-app-bar-nav-icon>
+      <v-toolbar-title v-if="!showNavigation">Generator</v-toolbar-title>
       <v-spacer/>
       <v-btn text>
         <v-icon left>mdi-account</v-icon>
@@ -14,7 +14,7 @@
     </v-app-bar>
 
     <v-navigation-drawer
-        v-if="isAuthorized && canManageProfiles"
+        v-if="isAuthorized && showNavigation"
         v-model="drawer"
         floating
         app>
@@ -72,8 +72,8 @@ export default class App extends Vue {
     return UserModule.isAuthorized;
   }
 
-  get canManageProfiles() {
-    return UserModule.canManageProfiles;
+  get showNavigation() {
+    return UserModule.canManageProfiles && this.$route.meta.requiresAuth;
   }
 
   get userName() {

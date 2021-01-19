@@ -10,6 +10,7 @@ import ResetPasswordView from "@/views/ResetPasswordView.vue";
 import ForgetPasswordView from "@/views/ForgetPasswordView.vue";
 import FirmwareView from "@/views/FirmwareView.vue";
 import SoftwareView from "@/views/SoftwareView.vue";
+import ImportProgramsView from "@/views/ImportProgramsView.vue";
 
 Vue.use(VueRouter);
 
@@ -94,6 +95,15 @@ const routes: Array<RouteConfig> = [
     meta: {
       navigation: false,
       title: i18n.t("page.not-found")
+    }
+  },
+   {
+    path: "/import-programs/:id/:hash",
+    name: "import-programs",
+    component: ImportProgramsView,
+    meta: {
+      navigation: false,
+      title: "Import programs"
     }
   },
   {
