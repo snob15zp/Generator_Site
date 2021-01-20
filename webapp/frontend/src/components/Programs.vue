@@ -58,7 +58,7 @@
             </v-btn>
             <v-btn
                 @click="importToDevice(folder)"
-                :disabled="isExpired(folder.expiredAt)"
+                :disabled="!canManagePrograms && isExpired(folder.expiredAt)"
                 :loading="importFolderId===folder.id"
                 outlined
                 small

@@ -31,24 +31,28 @@ class FirmwareController extends Controller
 
     public function getAll(Request $request): JsonResponse
     {
-        if ($request->user() == null || $request->user()->cannot(UserPrivileges::MANAGE_FIRMWARE)) {
-            $firmwares = Firmware::where('active', true)->get();
-        } else {
-            $firmwares = Firmware::all();
-        }
+        // if ($request->user() == null || $request->user()->cannot(UserPrivileges::MANAGE_FIRMWARE)) {
+        //     $firmwares = Firmware::where('active', true)->get();
+        // } else {
+        //     $firmwares = Firmware::all();
+        // }
+        $firmwares = Firmware::all();
         return $this->respondWithResource(FirmwareResource::collection($firmwares));
     }
 
     public function getLatest(): JsonResponse
     {
-        $firmwares = collect(Firmware::where('active', 1)->get())->sortBy(function ($firmware) {
+        $firmwares = collect(Firmware::all())->sortByDesc(function ($firmware) {
             return intval(str_replace(".", "", $firmware->version));
         });
 
         if ($firmwares->count() == 0) {
             $this->raiseError(404, "Firmware not found");
         }
-        return $this->respondWithResource(new FirmwareResource($firmwares[0]));
+        $forceUpdateFirmware = $firmwares->firstWhere('active', 1);
+        $firmware = $forceUpdateFirmware != null ? $forceUpdateFirmware : $firmwares->first();
+
+        return $this->respondWithResource(new FirmwareResource($firmware));
     }
 
     public function update(Request $request, $id): JsonResponse
@@ -70,6 +74,10 @@ class FirmwareController extends Controller
         $fields = collect($request->only(['version', 'active']))->filter(function ($item) {
             return $item !== null;
         })->toArray();
+
+        if (array_key_exists('active', $fields) && $fields['active']) {
+            Firmware::where('active', 1)->update(['active'=>0]);
+        }
 
         $firmware->update($fields);
         return $this->respondWithResource(new FirmwareResource($firmware));
@@ -110,6 +118,7 @@ class FirmwareController extends Controller
 
         $this->validate($request, [
             'version' => 'required|regex:/^\d+\.\d+\.\d+$/',
+            'active' => 'nullable|boolean',
             'files' => 'required|array',
             'files.*' => 'required|file'
         ]);
@@ -127,7 +136,11 @@ class FirmwareController extends Controller
 
         try {
             DB::beginTransaction();
-            $firmware = Firmware::create(['version' => $request->input('version'), 'active' => true]);
+            $firmware = Firmware::create([
+                'version' => $request->input('version'),
+                'active' => $request->input('active', false)
+            ]);
+            
             $firmware->files()->saveMany(collect($files)->map(function ($file) use ($directory) {
                 $name = $file->getClientOriginalName();
                 return new FirmwareFiles([
