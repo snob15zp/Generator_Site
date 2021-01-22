@@ -8,7 +8,7 @@
 Hello {{$user->profile->name}}!
 
 
-You can go to [here]({{config('app.url').'reset-password\/'. base64_encode($resetPassword->hash)}}) to log into your account.
+You can go to [here]({{config('app.url').'reset-password\/'. base64_encode($resetPassword->hash)}}) to login into your account.
 This link will be expired at {{$resetPassword->expired_at->format('Y-m-d')}}
 
 
