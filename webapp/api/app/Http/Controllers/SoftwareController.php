@@ -44,7 +44,7 @@ class SoftwareController extends Controller
 
     public function getLatest(): JsonResponse
     {
-        $softwares = collect(Software::where('active', 1)->get())->sortBy(function ($firmware) {
+        $softwares = collect(Software::where('active', 1)->get())->sortByDesc(function ($firmware) {
             return intval(str_replace(".", "", $firmware->version));
         });
 

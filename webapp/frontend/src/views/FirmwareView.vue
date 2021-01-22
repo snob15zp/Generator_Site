@@ -99,16 +99,6 @@
           </div>
         </template>
         <template v-slot:[`item.createdAt`]="{ item }">{{ $d(item.createdAt) }}</template>
-        <template v-slot:[`item.active`]="{ item }">
-          <v-btn icon
-                 :color="item.active ? 'primary':''"
-                 :loading="loadingFirmwareId === item.id"
-                 @click="onActiveStatusChange(item)">
-            <v-icon v-if="item.active">mdi-check</v-icon>
-            <v-icon v-else>mdi-close</v-icon>
-          </v-btn>
-          <v-btn-toggle/>
-        </template>
         <template v-slot:[`item.actions`]="{ item }">
           <v-btn icon small :loading="downloadInProgress" :disabled="loadingFirmwareId === item.id">
             <v-icon small @click="onDownloadItem(item)">mdi-download</v-icon>
@@ -116,6 +106,13 @@
           <v-btn icon small :disabled="loadingFirmwareId === item.id">
             <v-icon small @click="onDeleteItem(item)">mdi-delete</v-icon>
           </v-btn>
+        </template>
+        <template v-slot:[`item.forceUpdate`]="{ item }">
+          <v-switch 
+            inset 
+            :loading="loadingFirmwareId == item.id"
+            v-model="item.active"
+            @change="onActiveStatusChange(item)"/>
         </template>
       </v-data-table>
     </v-card>
@@ -161,7 +158,7 @@ export default class FirmwareView extends Vue {
       {text: "Version", value: "version"},
       {text: "Files", value: "files"},
       {text: "Date", value: "createdAt"},
-      {text: "Active", value: "active"},
+      {text: "Force Update", value: "forceUpdate"},
       {
         value: "actions",
         sortable: false,
@@ -195,9 +192,16 @@ export default class FirmwareView extends Vue {
 
   private onActiveStatusChange(firmware: Firmware) {
     this.loadingFirmwareId = firmware.id;
-    firmwareService.updateStatus(firmware.id, !firmware.active)
-        .then(() => firmware.active = !firmware.active)
-        .catch(e => EventBus.$emit("error", e))
+    firmwareService.updateStatus(firmware.id, firmware.active)
+        .then(() => {
+          this.items.forEach(item => {
+            if(item.id != firmware.id) item.active = false;
+          });
+        })
+        .catch(e => {
+          firmware.active = !firmware.active;
+          EventBus.$emit("error", e);
+        })
         .finally(() => {
           this.loadingFirmwareId = null;
         });
