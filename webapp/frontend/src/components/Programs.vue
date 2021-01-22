@@ -48,7 +48,6 @@
           <v-card-subtitle>
             <v-btn v-if="canManagePrograms" class="mr-2"
                    @click="downloadFolder(folder)"
-                   :disabled="isExpired(folder.expiredAt)"
                    :loading="downloadFolderId===folder.id"
                    outlined
                    small

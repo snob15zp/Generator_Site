@@ -126,8 +126,15 @@ class FolderController extends Controller
             $path = storage_path('app/' . $folder->path());
             $files = collect($folder->programs)->map(function ($program) {
                 return $program->name;
-            })->toArray();
-            $zipFile = Files::makeZipWithFiles($folder->name, $path, $files);
+            });
+
+            $listOfFiles = $files->map(function ($file) {
+                return str_pad($file, 22);
+            })->join('');
+            Storage::put($folder->path() . '/' . env("PROGRAM_LIST_FILE"), $listOfFiles);
+            $files->add(env("PROGRAM_LIST_FILE"));
+
+            $zipFile = Files::makeZipWithFiles($folder->name, $path, $files->all());
             return response()->download($zipFile, $folder->name . '.zip', [
                 'Content-Length' => filesize($zipFile),
                 'Content-Type' => 'application/zip'

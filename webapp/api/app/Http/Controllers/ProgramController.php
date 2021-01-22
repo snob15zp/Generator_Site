@@ -13,7 +13,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Tymon\JWTAuth\Providers\Auth\Illuminate;
 use Vinkla\Hashids\Facades\Hashids;
+use Illuminate\Support\Collection;
 
 class ProgramController extends Controller
 {
@@ -24,7 +26,8 @@ class ProgramController extends Controller
             $this->raiseError(403, "Resource not available");
         }
 
-        return $this->respondWithResource(ProgramResource::collection($folder->programs));
+        $programs = $this->synhronizeWithDisk($folder, $folder->programs);
+        return $this->respondWithResource(ProgramResource::collection($programs));
     }
 
     public function download(Request $request, $id)
@@ -96,6 +99,22 @@ class ProgramController extends Controller
 
         $program->delete();
         return $this->respondWithMessage('Program deleted');
+    }
+
+    private function synhronizeWithDisk(Folder $folder, Collection $programs): Collection
+    {
+        $existsPrograms = collect($programs)->filter(function ($program) use ($folder) {
+            return Storage::exists($folder->path() . '/' . $program->name);
+        });
+
+        $notExistsProgramIds = collect($programs)->filter(function ($program) use ($folder) {
+            return !Storage::exists($folder->path() . '/' . $program->name);
+        })->map(function ($program) {
+            return $program->id;
+        });
+        Program::whereIn('id', $notExistsProgramIds)->delete();
+
+        return $existsPrograms;
     }
 
     private function verifyUserPrivileges(Request $request)
