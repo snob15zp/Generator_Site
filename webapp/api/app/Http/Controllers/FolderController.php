@@ -130,7 +130,7 @@ class FolderController extends Controller
 
             $listOfFiles = $files->map(function ($file) {
                 return str_pad($file, 22);
-            })->join('');
+            })->join("\n");
             Storage::put($folder->path() . '/' . env("PROGRAM_LIST_FILE"), $listOfFiles);
             $files->add(env("PROGRAM_LIST_FILE"));
 
