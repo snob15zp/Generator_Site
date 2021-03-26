@@ -2,13 +2,13 @@
   "en": "English",
   "page": {
     "home": "Users",
-    "login": "Sigh In",
+    "login": "Log in",
     "user-profile": "User Profiles",
     "firmware": "Firmware",
     "software": "Software"
   },
   "login-form": {
-    "title": "Sign In",
+    "title": "Log in to InHealion",
     "email": "Email",
     "password": "Password",
     "login-action": "Login",
@@ -22,7 +22,8 @@
     "error-field-too-short": "The {0} is too short. Minimun length is {1}.",
     "error-field-too-long": "The {0} is too long. Maximum length is {1}.",
     "error-email-invalid": "The E-mail is invalid.",
-    "error-date-invalid": "The date is invalid."
+    "error-date-invalid": "The date is invalid.",
+    "error-password-not-same": "Passwords must be identical"
   },
   "user-profile": {
     "title": "Users",
@@ -42,7 +43,9 @@
     "field-email": "E-mail",
     "field-date-of-birthday": "Date of birthday",
     "field-address": "Address",
-    "field-phone-number": "Phone number"
+    "field-phone-number": "Phone number",
+    "field-password": "Password",
+    "field-password-confirm": "Confirm Password"
   },
   "not-found": {
     "title": "Something's wrong here&#8230;",

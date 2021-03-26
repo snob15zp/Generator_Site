@@ -10,14 +10,15 @@ export class FormValidationHelper {
     this.errors = errors;
   }
 
-  private validationErrors(...args: any[]): { [key: string]: string } {
+  validationErrors(...args: any[]): { [key: string]: string } {
     return {
       ...this.errors,
       required: i18n.t("form.error-field-required", args).toString(),
       minLength: i18n.t("form.error-field-too-short", args).toString(),
       maxLength: i18n.t("form.error-field-too-long", args).toString(),
       email: i18n.t("form.error-email-invalid", args).toString(),
-      date: i18n.t("form.error-date-invalid", args).toString()
+      date: i18n.t("form.error-date-invalid", args).toString(),
+      sameAs: i18n.t("form.error-password-not-same").toString()
     };
   }
 

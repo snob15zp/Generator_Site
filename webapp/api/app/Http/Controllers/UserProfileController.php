@@ -114,7 +114,6 @@ class UserProfileController extends Controller
         if ($profile == null) {
             $this->raiseError(404, 'Profile not found');
         }
-
         if ($request->user()->cannot(UserPrivileges::VIEW_PROFILE, $profile)) {
             $this->raiseError(403, 'Operation is restricted');
         }
@@ -124,10 +123,16 @@ class UserProfileController extends Controller
             'surname' => 'required|max:40',
             'address' => 'required|max:200',
             'phone_number' => 'required|max:255',
-            'date_of_birth' => 'date_format:Y-m-d'
+            'date_of_birth' => 'date_format:Y-m-d',
+            'password' => 'min:8'
         ]);
 
         $profile->update($request->only(['name', 'surname', 'address', 'phone_number', 'date_of_birth']));
+        if ($request->has('password')) {
+            $profile->user()->update([
+                "password" => Hash::make($request->input('password'))
+            ]);
+        }
 
         return $this->respondWithResource(new UserProfileResource($profile));
     }
@@ -144,7 +149,8 @@ class UserProfileController extends Controller
             'address' => 'required|max:255',
             'phone_number' => 'required|max:255',
             'date_of_birth' => 'date_format:Y-m-d',
-            'role' => 'nullable|in:' . UserRole::ROLE_ADMIN . ',' . UserRole::ROLE_USER
+            'role' => 'nullable|in:' . UserRole::ROLE_ADMIN . ',' . UserRole::ROLE_USER,
+            'password' => 'min:8'
         ]);
 
         $role = UserRole::query()->where('name', $request->input('role', UserRole::ROLE_USER))->first();
@@ -152,19 +158,20 @@ class UserProfileController extends Controller
 
         $user = new User([
             'login' => $profile->email,
-            'password' => null
+            'password' => $request->has('password') ? Hash::make($request->input('password')) : null
         ]);
         $user->role()->associate($role);
         $user->save();
-
-        $resetPassword = ResetPassword::create([
-            'login' => $profile->email,
-            'hash' => Hash::make(Str::random(12)),
-            'expired_at' => (new DateTime())->modify('+7 day')
-        ]);
-
         $user->profile()->save($profile);
-        Notification::route('mail', $profile->email)->notify(new UserCreateNotification($user, $resetPassword));
+
+        if (!$request->has('password')) {
+            $resetPassword = ResetPassword::create([
+                'login' => $profile->email,
+                'hash' => Hash::make(Str::random(12)),
+                'expired_at' => (new DateTime())->modify('+7 day')
+            ]);
+            Notification::route('mail', $profile->email)->notify(new UserCreateNotification($user, $resetPassword));
+        }
         return $this->respondWithResource(new UserProfileResource($profile));
     }
 
@@ -181,7 +188,8 @@ class UserProfileController extends Controller
         return $this->respondWithResource(new UserProfileResource($profile));
     }
 
-    public function getByUserId(Request $request, $id) {
+    public function getByUserId(Request $request, $id)
+    {
         $user = User::query()->whereKey(Hashids::decode($id))->first();
         if ($user == null) {
             $this->raiseError(404, "User not found");

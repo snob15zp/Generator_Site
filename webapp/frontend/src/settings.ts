@@ -1,3 +1,3 @@
 export const settings = {
-    apiUrl: '/api'
+    apiUrl: process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:8080/api'
 }

@@ -1,6 +1,7 @@
 <template>
   <div class="login-form justify-center">
     <v-card elevation="4" width="25rem" class="mx-auto my-12" :loading="inProgress">
+      <!-- <v-row justify="center"><img src="@/assets/logo.png"/></v-row> -->
       <v-card-title>
         <v-row justify="center">{{ $t("login-form.title") }}</v-row>
       </v-card-title>

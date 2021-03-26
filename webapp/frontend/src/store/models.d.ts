@@ -16,6 +16,7 @@ export interface UserProfileJson {
     email: string;
     created_at: string;
     updated_at?: string;
+    password?: string;
 }
 
 export interface Link {
@@ -93,6 +94,7 @@ export interface UserProfile {
     email: string;
     createdAt?: Date;
     updatedAt?: Date;
+    password?: string;
 }
 
 export interface Program {

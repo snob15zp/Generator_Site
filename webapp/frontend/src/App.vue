@@ -2,7 +2,9 @@
   <v-app>
     <v-app-bar app flat color="primary" dark v-if="isAuthorized" class="v-bar--underline">
       <v-app-bar-nav-icon @click="drawer = !drawer" v-if="$vuetify.breakpoint.mdAndDown && showNavigation"></v-app-bar-nav-icon>
-      <v-toolbar-title v-if="!showNavigation">Generator</v-toolbar-title>
+      <v-toolbar-title v-if="!showNavigation">
+        Generator
+      </v-toolbar-title>
       <v-spacer/>
       <v-btn text>
         <v-icon left>mdi-account</v-icon>
