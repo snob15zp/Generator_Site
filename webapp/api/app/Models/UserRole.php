@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Class UserRole
  * @property array privileges
+ * @property string $name
  * @package App\Models
  */
 class UserRole extends Model

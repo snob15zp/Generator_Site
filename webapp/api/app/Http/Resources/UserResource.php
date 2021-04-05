@@ -28,7 +28,8 @@ class UserResource extends JsonResource
             'id' => Hashids::encode($this->id),
             'privileges' => UserPrivilegesResource::collection($this->role->privileges),
             'profile' => new UserProfileResource($this->profile),
-            'token' => $this->token
+            'token' => $this->token,
+            'role' => $this->role->name
         ];
     }
 }

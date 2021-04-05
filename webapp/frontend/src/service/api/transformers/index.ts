@@ -46,7 +46,8 @@ function userFromJson(json: UserJson): User {
         name: json.profile.name,
         profile: userProfileFromJson(json.profile),
         privileges: json.privileges,
-        token: json.token
+        token: json.token,
+        role: json.role
     } as User;
 }
 

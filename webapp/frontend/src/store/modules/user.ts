@@ -37,6 +37,12 @@ class UserModule extends VuexModule {
         return this.user ? this.user.name : null;
     }
 
+    get userRole() {
+        const role = this.user ? this.user.role;
+
+        return this.user ? this.user.role : "Guest";
+    }
+
     get token() {
         return this.user ? this.user.token : null;
     }

@@ -6,10 +6,10 @@
         Generator
       </v-toolbar-title>
       <v-spacer/>
-      <v-btn text>
-        <v-icon left>mdi-account</v-icon>
-        {{ userName }}
-      </v-btn>
+      <div class="pa-4 d-flex">
+        <v-icon class="ma-2" x-large>mdi-account</v-icon>        
+        <div class="mt-1">{{ userName }}<small class="d-flex">{{ userRole }}</small></div>
+      </div>
       <v-btn icon @click="logout">
         <v-icon>mdi-logout</v-icon>
       </v-btn>
@@ -80,6 +80,10 @@ export default class App extends Vue {
 
   get userName() {
     return UserModule.userName;
+  }
+
+   get userRole() {
+    return UserModule.userRole;
   }
 
   get windowHeight() {
