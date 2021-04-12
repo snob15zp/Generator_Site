@@ -1,13 +1,16 @@
 <template>
   <v-app>
     <v-app-bar app flat color="#1e1a1a" dark v-if="isAuthorized" class="v-bar--underline">
-      <v-app-bar-nav-icon @click="drawer = !drawer" v-if="$vuetify.breakpoint.mdAndDown && showNavigation"></v-app-bar-nav-icon>
+      <v-app-bar-nav-icon
+          @click="drawer = !drawer"
+          v-if="$vuetify.breakpoint.mdAndDown && showNavigation"></v-app-bar-nav-icon>
       <v-toolbar-title v-if="!showNavigation" class="site-title">
-        <img src="@/assets/logo-small.png"/><span>InHealion</span>
+        <img src="@/assets/logo-small.png" alt="logo"/>
+        <span>InHealion</span>
       </v-toolbar-title>
       <v-spacer/>
       <div class="pa-4 d-flex">
-        <v-icon class="ma-2" x-large>mdi-account</v-icon>        
+        <v-icon class="ma-2" x-large>mdi-account</v-icon>
         <div class="mt-1">{{ userName }}<small class="d-flex">{{ userRole }}</small></div>
       </div>
       <v-btn icon color="primary" @click="logout">
@@ -21,7 +24,10 @@
         floating
         app>
       <v-app-bar flat color="#1e1a1a" dark class="v-bar--underline" style="height: 64px">
-        <v-toolbar-title class="site-title"><img src="@/assets/logo-small.png"/><span>InHealion</span></v-toolbar-title>
+        <v-toolbar-title class="site-title">
+          <img src="@/assets/logo-small.png" alt="logo"/>
+          <span>InHealion</span>
+        </v-toolbar-title>
       </v-app-bar>
       <v-list nav dense class="mt-2">
         <v-list-item-group active-class="primary--text" v-model="selected">
@@ -82,7 +88,7 @@ export default class App extends Vue {
     return UserModule.userName;
   }
 
-   get userRole() {
+  get userRole() {
     return UserModule.userRole;
   }
 

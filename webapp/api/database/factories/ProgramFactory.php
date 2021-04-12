@@ -25,6 +25,7 @@ class ProgramFactory extends Factory
         return [
             'name' => 'program_' . $this->faker->numberBetween(),
             'hash' => $this->faker->unique()->macAddress,
+            'is_encrypted' => false,
             'active' => true
         ];
     }

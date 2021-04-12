@@ -30,6 +30,7 @@ $router->group(['prefix' => 'folders'], function () use ($router) {
 $router->group(['prefix' => 'programs'], function () use ($router) {
     $router->get('/{id}/download', ['middleware' => 'auth', 'uses' => 'ProgramController@download']);
     $router->delete('/{id}', ['middleware' => 'auth', 'uses' => 'ProgramController@delete']);
+    $router->delete('/', ['middleware' => 'auth', 'uses' => 'ProgramController@deleteAll']);
 });
 
 $router->group(['prefix' => 'firmware'], function () use ($router) {

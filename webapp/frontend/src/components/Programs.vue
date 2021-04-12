@@ -46,7 +46,7 @@
             {{ folder.name }}
           </v-card-title>
           <v-card-subtitle>
-            <v-btn v-if="canManagePrograms" class="mr-2"
+            <v-btn v-if="canManagePrograms" class="mr-2 mt-1"
                    @click="downloadFolder(folder)"
                    :loading="downloadFolderId===folder.id"
                    outlined
@@ -56,6 +56,7 @@
               <v-icon right dark small>mdi-archive-arrow-down-outline</v-icon>
             </v-btn>
             <v-btn
+                class="mr-2  mt-1"
                 @click="importToDevice(folder)"
                 :disabled="!canManagePrograms && isExpired(folder.expiredAt)"
                 :loading="importFolderId===folder.id"
@@ -67,7 +68,7 @@
             </v-btn>
             <v-btn
                 v-if="canManagePrograms"
-                class="ml-2"
+                class="mr-2  mt-1"
                 @click="deleteFolder(folder)"
                 :loading="deletingFolderId===folder.id"
                 outlined
@@ -76,7 +77,7 @@
               Delete
               <v-icon right dark small>mdi-delete</v-icon>
             </v-btn>
-            <v-btn-toggle v-if="canManagePrograms" class="ml-2" v-model="toggle">
+            <v-btn-toggle v-if="canManagePrograms" v-model="toggle" class="mr-2 mt-1">
               <v-btn
                   :disabled="uploadInProgress"
                   :color="isUploadDialogShow?'primary':''"
@@ -133,16 +134,21 @@
                 <small v-if="canManagePrograms">Use SHIFT or CTRL with the mouse to select multiple items.</small>
               </div>
               <v-spacer/>
-              <v-btn v-if="canManagePrograms" icon x-small class="mr-2" :disabled="selectedPrograms.length === 0" @click="onDeletePrograms">
+              <v-btn
+                  v-if="canManagePrograms"
+                  icon x-small
+                  class="mr-2"
+                  :disabled="selectedPrograms.length === 0"
+                  @click="onDeletePrograms">
                 <v-icon>mdi-delete</v-icon>
               </v-btn>
             </v-toolbar>
             <v-divider/>
             <v-row dense class="overflow-y-auto ma-2" :style="{'max-height': (listHeight - 150) + 'px'}">
               <v-col cols="3" class="text-truncate"
-                v-for="file in files" :key="file.id" 
-                v-bind:class="{selected: isItemSelected(file)}"
-                @mousedown="onItemSelected(file, $event)" >
+                     v-for="file in files" :key="file.id"
+                     v-bind:class="{selected: isItemSelected(file)}"
+                     @mousedown="onItemSelected(file, $event)">
                 <small>{{ file.name }}</small>
               </v-col>
             </v-row>
@@ -185,6 +191,9 @@
       </v-card>
     </v-dialog>
 
+    <message-dialog ref="messageDialog" title="Delete"
+                    message="Are you sure you want to delete the selected programs?"/>
+
     <v-dialog v-model="deleteDialogShow" max-width="500px">
       <v-card>
         <v-card-title class="headline">Delete folder</v-card-title>
@@ -212,9 +221,10 @@ import programService from "@/service/api/programService";
 import saveDownloadFile from "@/utils/download-file";
 import {EventBus} from "@/utils/event-bus";
 import moment from "moment";
-import Dialog from "@c/components/dialogs/Dialog.vue";
+import MessageDialog from "@/components/dialogs/MessageDialog.vue";
 
 @Component({
+  components: {MessageDialog},
   filters: {
     expiredAtInterval: function (value: Date) {
       return expiredAtInterval(value);
@@ -226,6 +236,7 @@ export default class Programs extends Vue {
 
   @Ref() readonly container: Vue | undefined;
   @Ref() readonly menuRef: (Vue & { save: (date: string) => void }) | undefined;
+  @Ref() readonly messageDialog: MessageDialog | undefined;
 
   private folders: Folder[] = [];
   private files: Program[] = [];
@@ -303,24 +314,24 @@ export default class Programs extends Vue {
   }
 
   private onItemSelected(program: Program, event: MouseEvent) {
-    if(!this.canManagePrograms) return;
+    if (!this.canManagePrograms) return;
 
-    if(event.shiftKey) {
+    if (event.shiftKey) {
       const indexes = this.selectedPrograms.map(id => this.files.findIndex(f => f.id == id));
-      const currentIdx = this.files.indexOf(program);   
-      
+      const currentIdx = this.files.indexOf(program);
+
       const minIdx = Math.min.apply(null, indexes);
       const maxIdx = Math.max.apply(null, indexes);
-      console.log("Item selected " + currentIdx + ", " + minIdx + ", " + maxIdx);   
+      console.log("Item selected " + currentIdx + ", " + minIdx + ", " + maxIdx);
       let _i: number;
-      for(_i=currentIdx; _i<minIdx; _i++) {
+      for (_i = currentIdx; _i < minIdx; _i++) {
         this.selectProgram(this.files[_i]);
       }
 
-      for(_i=maxIdx+1; _i<=currentIdx; _i++) {
+      for (_i = maxIdx + 1; _i <= currentIdx; _i++) {
         this.selectProgram(this.files[_i]);
       }
-    } else if(event.ctrlKey || event.metaKey) {
+    } else if (event.ctrlKey || event.metaKey) {
       this.selectProgram(program);
     } else {
       this.selectedPrograms.length = 0;
@@ -328,16 +339,30 @@ export default class Programs extends Vue {
     }
   }
 
-  private selectProgram(program: Program){
-    if(this.selectedPrograms.find(id=> program.id == id) === undefined) {
+  private selectProgram(program: Program) {
+    if (this.selectedPrograms.find(id => program.id == id) === undefined) {
       this.selectedPrograms.push(program.id);
     }
   }
 
   private onDeletePrograms() {
-    const dialog = new Dialog();
-    dialog.show();
-    console.log("On delete");
+    this.messageDialog!.show()
+        .then((result) => {
+          if (result) {
+            this.filesLoading = true;
+            return programService.deletePrograms(this.selectedPrograms)
+          } else {
+            return;
+          }
+        })
+        .then(() => this.fetchPrograms(this.folder!))
+        .catch((e) => {
+          this.filesLoading = false;
+          e && EventBus.$emit("error", e);
+        })
+        .finally(() => {
+          this.selectedPrograms.length = 0
+        });
   }
 
   private onFolderChanged(folder: Folder) {
@@ -361,6 +386,8 @@ export default class Programs extends Vue {
       folder: this.folder,
       onProgressCallback: (progress) => this.progress = progress
     } as UploadFileRequest)
+        .then(() => this.onFolderChanged(this.folder!))
+        .catch((e) => EventBus.$emit("error", e))
         .finally(() => {
           this.uploadInProgress = false;
           this.isUploadDialogShow = false;
@@ -495,42 +522,42 @@ export default class Programs extends Vue {
 }
 </script>
 <style lang="scss">
-  @import "~vuetify/src/styles/main.sass";
+@import "~vuetify/src/styles/main.sass";
 
-  #programs {
-    -moz-user-select: -moz-none;
-    -khtml-user-select: none;
-    -webkit-user-select: none;
+#programs {
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
 
-    /*
-      Introduced in IE 10.
-      See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
-    */
-    -ms-user-select: none;
-    user-select: none;
+  /*
+    Introduced in IE 10.
+    See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+  */
+  -ms-user-select: none;
+  user-select: none;
 
-    .v-toolbar__content {
-      padding: 0 !important;
-    }
+  .v-toolbar__content {
+    padding: 0 !important;
+  }
 
-    .selected {
-      color: #197bac;
-      position: relative;
+  .selected {
+    color: #197bac;
+    position: relative;
 
-      &::before {
-        background: currentColor;
-        bottom: 2px;
-        content: "";
-        left: 0;
-        opacity: 0.12;
-        pointer-events: none;
-        position: absolute;
-        right: 4px;
-        box-sizing: border-box;
-        border-radius: 4px;
-        top: 2px;
-        transition: .3s cubic-bezier(.25,.8,.5,1);
-      }
+    &::before {
+      background: currentColor;
+      bottom: 2px;
+      content: "";
+      left: 0;
+      opacity: 0.12;
+      pointer-events: none;
+      position: absolute;
+      right: 4px;
+      box-sizing: border-box;
+      border-radius: 4px;
+      top: 2px;
+      transition: .3s cubic-bezier(.25, .8, .5, 1);
     }
   }
+}
 </style>

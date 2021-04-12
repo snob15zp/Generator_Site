@@ -5,14 +5,19 @@
     "login": "Log in",
     "user-profile": "User Profiles",
     "firmware": "Firmware",
-    "software": "Software"
+    "software": "Software",
+    "reset-password": "Reset password",
+    "forget-password": "Restore your password",
+    "not-found": "Page not found"
   },
   "login-form": {
     "title": "Log in to ",
     "email": "Email",
     "password": "Password",
     "login-action": "Login",
-    "forget-password": "Forget your password?"
+    "forget-password": "Forget your password?",
+    "email_required": "Email is required",
+    "password_required": "Password is required"
   },
   "form": {
     "ok": "Ok",

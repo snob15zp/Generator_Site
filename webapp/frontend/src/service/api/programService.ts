@@ -28,6 +28,15 @@ class ProgramService {
         });
     }
 
+    async deletePrograms(programIds: Array<string>): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            const query = programIds.map(id => `ids[]=${id}`).join('&');
+            api.delete(`/programs?${query}`)
+                .then(() => resolve())
+                .catch(error => reject(new Error(apiErrorMapper(error))))
+        });
+    }
+
     async saveFolder(userProfileId: string, folder: Folder): Promise<Folder> {
         return new Promise<Folder>((resolve, reject) => {
             api.post(`/profiles/${userProfileId}/folders`, transformers.folderToJson(folder))

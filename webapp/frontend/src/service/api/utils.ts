@@ -1,5 +1,5 @@
 import i18n from "@/i18n";
-import {ErrorReponse, ErrorResponseJson} from "@/store/models";
+import {ErrorResponseJson} from "@/store/models";
 import {AxiosError} from "axios";
 
 export const API_ERROR_CODES = {
@@ -8,7 +8,6 @@ export const API_ERROR_CODES = {
 };
 
 export function apiErrorMapper(error: AxiosError<ErrorResponseJson>): string {
-  console.log(error.response);
   return error.response?.data.errors.message || i18n.t("server-error.general_error") as string;
 
   // switch (error.code) {

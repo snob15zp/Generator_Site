@@ -35,7 +35,7 @@
             <v-file-input
                 dense
                 multiple
-                accept=".bf,.rbf"
+                accept=".bf,.rbf,.srec,.bin"
                 placeholder="Select your files"
                 required
                 :rules="uploadForm.fileRules"

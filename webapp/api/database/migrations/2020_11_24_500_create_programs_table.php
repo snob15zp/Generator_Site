@@ -17,7 +17,8 @@ class CreateProgramsTable extends Migration
             $table->id();
             $table->unsignedBigInteger('folder_id');
             $table->string('name');
-            $table->string('hash')->unique()->nullable(false);
+            $table->string('hash')->nullable(false);
+            $table->boolean('is_encrypted');
             $table->boolean('active');
             $table->timestamps();
             $table->foreign('folder_id')->references('id')->on('folder');

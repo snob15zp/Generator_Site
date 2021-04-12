@@ -47,12 +47,12 @@ class UserTableSeeder extends Seeder
 
                 $user->folders()->saveMany($folders);
 
-                $folders->each(function ($folder) use ($user) {
-                    $programs = (new ProgramFactory())
-                        ->count(100)
-                        ->make();
-                    $folder->programs()->saveMany($programs);
-                });
+//                $folders->each(function ($folder) use ($user) {
+//                    $programs = (new ProgramFactory())
+//                        ->count(100)
+//                        ->make();
+//                    $folder->programs()->saveMany($programs);
+//                });
             });
     }
 }
