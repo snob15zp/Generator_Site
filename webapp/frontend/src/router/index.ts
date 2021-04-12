@@ -119,7 +119,7 @@ const router = new VueRouter({
 
 router.beforeEach((to, from, next) => {
   console.log("Route to " + to.name);
-  window.document.title = (to.name ? to.name + " - " : "") + "Generator";
+  window.document.title = (to.meta.title ? to.meta.title + " - " : "") + "InHealion";
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (UserModule.isAuthorized) {
       next();

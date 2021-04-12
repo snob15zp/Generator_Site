@@ -8,11 +8,11 @@
     "software": "Software"
   },
   "login-form": {
-    "title": "Log in to InHealion",
+    "title": "Log in to ",
     "email": "Email",
     "password": "Password",
     "login-action": "Login",
-    "forget-password": "Forget your passwrod?"
+    "forget-password": "Forget your password?"
   },
   "form": {
     "ok": "Ok",
