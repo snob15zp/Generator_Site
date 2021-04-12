@@ -99,7 +99,7 @@ class FirmwareController extends Controller
             return response()->download($zipFile, 'firmware_v' . str_replace('.', '-', $firmware->version) . '.zip', [
                 'Content-Length' => filesize($zipFile),
                 'Content-Type' => 'application/zip'
-            ])->deleteFileAfterSend();
+            ]);
         } catch (Exception $e) {
             $this->raiseError(500, $e->getMessage());
         }
@@ -140,7 +140,7 @@ class FirmwareController extends Controller
                 'version' => $request->input('version'),
                 'active' => $request->input('active', false)
             ]);
-            
+
             $firmware->files()->saveMany(collect($files)->map(function ($file) use ($directory) {
                 $name = $file->getClientOriginalName();
                 return new FirmwareFiles([

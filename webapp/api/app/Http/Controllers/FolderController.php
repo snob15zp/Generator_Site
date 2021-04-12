@@ -122,8 +122,8 @@ class FolderController extends Controller
             $this->raiseError(403, "Resource not available");
         }
 
+        $path = storage_path('app/' . $folder->path());
         try {
-            $path = storage_path('app/' . $folder->path());
             $files = collect($folder->programs)->map(function ($program) {
                 return $program->name;
             });
@@ -138,7 +138,7 @@ class FolderController extends Controller
             return response()->download($zipFile, $folder->name . '.zip', [
                 'Content-Length' => filesize($zipFile),
                 'Content-Type' => 'application/zip'
-            ])->deleteFileAfterSend();
+            ]);
         } catch (Exception $e) {
             $this->raiseError(500, $e->getMessage());
         }

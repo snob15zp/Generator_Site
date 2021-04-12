@@ -17,6 +17,8 @@ class Files
     {
         $zip = new \ZipArchive();
         $tempFileUri = $path . '/' . $name . '.zip';
+        if (file_exists($tempFileUri)) unlink($tempFileUri);
+
         Log::info('Create zip archive: ' . $tempFileUri);
         if ($zip->open($tempFileUri, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
             // Add File in ZipArchive
