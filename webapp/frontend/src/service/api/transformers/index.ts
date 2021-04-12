@@ -36,6 +36,7 @@ function userProfileToJson(userProfile: UserProfile): UserProfileJson {
         "email": userProfile.email,
         "date_of_birth": userProfile.dateOfBirth ? moment(userProfile.dateOfBirth).format("YYYY-MM-DD") : null,
         "phone_number": userProfile.phoneNumber,
+        "password": userProfile.password
     } as UserProfileJson;
 }
 
@@ -45,7 +46,8 @@ function userFromJson(json: UserJson): User {
         name: json.profile.name,
         profile: userProfileFromJson(json.profile),
         privileges: json.privileges,
-        token: json.token
+        token: json.token,
+        role: json.role
     } as User;
 }
 

@@ -37,6 +37,15 @@ class UserModule extends VuexModule {
         return this.user ? this.user.name : null;
     }
 
+    get userRole() {
+        switch(this.user?.role) {
+            case "ROLE_ADMIN": return "Administrator";
+            case "ROLE_USER": return "User";
+            case "ROLE_GUEST": return "Guest";
+            default: return "Guest";
+        }
+    }
+
     get token() {
         return this.user ? this.user.token : null;
     }

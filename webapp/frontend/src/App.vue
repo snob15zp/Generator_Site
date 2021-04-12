@@ -1,14 +1,16 @@
 <template>
   <v-app>
-    <v-app-bar app flat color="primary" dark v-if="isAuthorized" class="v-bar--underline">
+    <v-app-bar app flat color="#1e1a1a" dark v-if="isAuthorized" class="v-bar--underline">
       <v-app-bar-nav-icon @click="drawer = !drawer" v-if="$vuetify.breakpoint.mdAndDown && showNavigation"></v-app-bar-nav-icon>
-      <v-toolbar-title v-if="!showNavigation">Generator</v-toolbar-title>
+      <v-toolbar-title v-if="!showNavigation" class="site-title">
+        <img src="@/assets/logo-small.png"/><span>InHealion</span>
+      </v-toolbar-title>
       <v-spacer/>
-      <v-btn text>
-        <v-icon left>mdi-account</v-icon>
-        {{ userName }}
-      </v-btn>
-      <v-btn icon @click="logout">
+      <div class="pa-4 d-flex">
+        <v-icon class="ma-2" x-large>mdi-account</v-icon>        
+        <div class="mt-1">{{ userName }}<small class="d-flex">{{ userRole }}</small></div>
+      </div>
+      <v-btn icon color="primary" @click="logout">
         <v-icon>mdi-logout</v-icon>
       </v-btn>
     </v-app-bar>
@@ -18,8 +20,8 @@
         v-model="drawer"
         floating
         app>
-      <v-app-bar flat color="primary" dark class="v-bar--underline" style="height: 64px">
-        <v-toolbar-title>Generator</v-toolbar-title>
+      <v-app-bar flat color="#1e1a1a" dark class="v-bar--underline" style="height: 64px">
+        <v-toolbar-title class="site-title"><img src="@/assets/logo-small.png"/><span>InHealion</span></v-toolbar-title>
       </v-app-bar>
       <v-list nav dense class="mt-2">
         <v-list-item-group active-class="primary--text" v-model="selected">
@@ -80,6 +82,10 @@ export default class App extends Vue {
     return UserModule.userName;
   }
 
+   get userRole() {
+    return UserModule.userRole;
+  }
+
   get windowHeight() {
     return window.innerHeight + 'px';
   }
@@ -117,5 +123,21 @@ export default class App extends Vue {
   }
 
   background: map-get($grey, lighten-4);
+
+  .site-title {
+    font-family: termina, sans-serif;
+    font-weight: 700;
+    font-style: normal;
+
+    span {
+      float: right;
+      padding-top: 6px;
+    }
+
+    img {
+      float: left;
+      margin-right: 12px;
+    }
+  }
 }
 </style>

@@ -9,6 +9,7 @@ import { FormValidator } from "./types";
 const validations = {
   userProfile: {
     name: { required, minLength: minLength(4), maxLength: maxLength(40) },
+    password: { minLength: minLength(8), maxLength: maxLength(128) },
     surname: { required, minLength: minLength(4), maxLength: maxLength(40) },
     email: { required, email },
     address: { required, minLength: minLength(4), maxLength: maxLength(200) },
@@ -23,6 +24,15 @@ const validations = {
         }
       }
     }
+  },
+  confirmPassword: {
+    sameAsPassword(repeatPassword: string, v: any): boolean {
+      if (!v.userProfile.password) {
+        return true;
+      } else {
+        return repeatPassword == v.userProfile.password;
+      }
+    }
   }
 };
 
@@ -32,7 +42,9 @@ export const fields = {
   email: i18n.t("user-profile.field-email").toString(),
   dateOfBirth: i18n.t("user-profile.field-date-of-birthday").toString(),
   address: i18n.t("user-profile.field-address").toString(),
-  phoneNumber: i18n.t("user-profile.field-phone-number").toString()
+  phoneNumber: i18n.t("user-profile.field-phone-number").toString(),
+  password: i18n.t("user-profile.field-password").toString(),
+  confirmPassword: i18n.t("user-profile.field-password-confirm").toString()
 };
 
 @Component({
@@ -47,5 +59,11 @@ export default class UserProfileFormValidator extends Vue implements FormValidat
 
   validateField(field: keyof UserProfile): string | string[] {
     return this.validationHelper.validate(this.$v.userProfile[field]!, this.fields[field]!);
+  }
+
+  validateConfirmPassword(): string | string[] {
+    const validator = this.$v.confirmPassword;
+    if (!validator.$dirty) return [];
+    return !validator.sameAsPassword ? this.validationHelper.validationErrors().sameAs : "";
   }
 }

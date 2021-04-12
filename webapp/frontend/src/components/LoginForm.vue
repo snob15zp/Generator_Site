@@ -1,8 +1,9 @@
 <template>
   <div class="login-form justify-center">
     <v-card elevation="4" width="25rem" class="mx-auto my-12" :loading="inProgress">
+      <v-row justify="center"><img src="@/assets/logo.png"/></v-row>
       <v-card-title>
-        <v-row justify="center">{{ $t("login-form.title") }}</v-row>
+        <v-row justify="center">{{ $t("login-form.title") }}<span class="title">InHealion</span></v-row>
       </v-card-title>
       <v-form v-model="valid" @submit.prevent="submit" :disabled="inProgress">
         <v-card-text>
@@ -77,4 +78,16 @@ export default class LoginForm extends Vue {
 }
 </script>
 
-<style lang="scss"></style>
+<style lang="scss">
+  .login-form {
+    .v-card__title {
+      color: #115293;
+    }
+    .title {
+      margin-left: 4px;
+      font-family: termina, sans-serif;
+      font-weight: 700;
+      font-style: normal;
+    }
+  }
+</style>

@@ -16,17 +16,11 @@
     </v-dialog>
 
     <v-dialog v-model="editDialog.show" max-width="500px">
-      <v-card>
-        <v-card-title>{{ editDialog.title }}</v-card-title>
-        <v-card-text>
-          <user-profile-form v-model="userProfile"/>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="closeEditDialog">{{ $t("form.cancel") }}</v-btn>
-          <v-btn color="blue darken-1" text @click="saveProfile">{{ $t("form.save") }}</v-btn>
-        </v-card-actions>
-      </v-card>
+      <user-profile-form 
+        v-model="userProfile" 
+        :title="editDialog.title" 
+        @save="saveProfile"
+        @cancel="closeEditDialog"/>
     </v-dialog>
     <v-card outlined class="mt-8 mb-8">
       <v-overlay
@@ -182,10 +176,10 @@ export default class UserProfileTable extends Vue {
     this.editDialog.show = false;
   }
 
-  private saveProfile() {
+  private saveProfile(userProfile: UserProfile) {
     this.closeEditDialog();
     this.loading = true;
-    userProfileService.save(this.editDialog.items![0])
+    userProfileService.save(userProfile)
         .then(() => this.fetchUserProfiles(this.request))
         .catch((e) => EventBus.$emit("error", e))
         .finally(() => {

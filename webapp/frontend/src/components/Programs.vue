@@ -126,11 +126,23 @@
               </v-btn>
             </v-layout>
           </v-expand-transition>
-          <v-card-text>
-            <h4 class="pl-1">Total programs: {{ files.length }}</h4>
+          <v-card-text id="programs">
+            <v-toolbar flat dense>
+              <div>
+                <h4>Total programs: {{ files.length }}</h4>
+                <small v-if="canManagePrograms">Use SHIFT or CTRL with the mouse to select multiple items.</small>
+              </div>
+              <v-spacer/>
+              <v-btn v-if="canManagePrograms" icon x-small class="mr-2" :disabled="selectedPrograms.length === 0" @click="onDeletePrograms">
+                <v-icon>mdi-delete</v-icon>
+              </v-btn>
+            </v-toolbar>
             <v-divider/>
             <v-row dense class="overflow-y-auto ma-2" :style="{'max-height': (listHeight - 150) + 'px'}">
-              <v-col cols="3" v-for="file in files" :key="file.id" class="text-truncate">
+              <v-col cols="3" class="text-truncate"
+                v-for="file in files" :key="file.id" 
+                v-bind:class="{selected: isItemSelected(file)}"
+                @mousedown="onItemSelected(file, $event)" >
                 <small>{{ file.name }}</small>
               </v-col>
             </v-row>
@@ -191,7 +203,7 @@
 </template>
 
 <script lang="ts">
-import {Component, Emit, Prop, Ref, Vue, Watch} from "vue-property-decorator";
+import {Component, Prop, Ref, Vue, Watch} from "vue-property-decorator";
 import {Folder, Program, UploadFileRequest, UserProfile} from "@/store/models";
 import {expiredAtInterval, isExpired} from "@/utils/dateUtils";
 import {ResizeObserver} from "@juggle/resize-observer";
@@ -200,6 +212,7 @@ import programService from "@/service/api/programService";
 import saveDownloadFile from "@/utils/download-file";
 import {EventBus} from "@/utils/event-bus";
 import moment from "moment";
+import Dialog from "@c/components/dialogs/Dialog.vue";
 
 @Component({
   filters: {
@@ -243,6 +256,8 @@ export default class Programs extends Vue {
   private deleteDialogMessage: string | null = null;
   private deleteDialogShow = false;
 
+  private selectedPrograms: string[] = [];
+
   private observer = new ResizeObserver((entries) => {
     console.log("resize")
     this.listHeight = this.getHeight();
@@ -283,9 +298,52 @@ export default class Programs extends Vue {
     this.isUploadDialogShow = !this.isUploadDialogShow;
   }
 
+  private isItemSelected(program: Program) {
+    return this.selectedPrograms.indexOf(program.id) >= 0;
+  }
+
+  private onItemSelected(program: Program, event: MouseEvent) {
+    if(!this.canManagePrograms) return;
+
+    if(event.shiftKey) {
+      const indexes = this.selectedPrograms.map(id => this.files.findIndex(f => f.id == id));
+      const currentIdx = this.files.indexOf(program);   
+      
+      const minIdx = Math.min.apply(null, indexes);
+      const maxIdx = Math.max.apply(null, indexes);
+      console.log("Item selected " + currentIdx + ", " + minIdx + ", " + maxIdx);   
+      let _i: number;
+      for(_i=currentIdx; _i<minIdx; _i++) {
+        this.selectProgram(this.files[_i]);
+      }
+
+      for(_i=maxIdx+1; _i<=currentIdx; _i++) {
+        this.selectProgram(this.files[_i]);
+      }
+    } else if(event.ctrlKey || event.metaKey) {
+      this.selectProgram(program);
+    } else {
+      this.selectedPrograms.length = 0;
+      this.selectedPrograms.push(program.id);
+    }
+  }
+
+  private selectProgram(program: Program){
+    if(this.selectedPrograms.find(id=> program.id == id) === undefined) {
+      this.selectedPrograms.push(program.id);
+    }
+  }
+
+  private onDeletePrograms() {
+    const dialog = new Dialog();
+    dialog.show();
+    console.log("On delete");
+  }
+
   private onFolderChanged(folder: Folder) {
     this.folder = folder;
     this.fileInput = null;
+    this.selectedPrograms.length = 0;
     this.fetchPrograms(folder);
     return folder;
   }
@@ -436,3 +494,43 @@ export default class Programs extends Vue {
   }
 }
 </script>
+<style lang="scss">
+  @import "~vuetify/src/styles/main.sass";
+
+  #programs {
+    -moz-user-select: -moz-none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+
+    /*
+      Introduced in IE 10.
+      See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+    */
+    -ms-user-select: none;
+    user-select: none;
+
+    .v-toolbar__content {
+      padding: 0 !important;
+    }
+
+    .selected {
+      color: #197bac;
+      position: relative;
+
+      &::before {
+        background: currentColor;
+        bottom: 2px;
+        content: "";
+        left: 0;
+        opacity: 0.12;
+        pointer-events: none;
+        position: absolute;
+        right: 4px;
+        box-sizing: border-box;
+        border-radius: 4px;
+        top: 2px;
+        transition: .3s cubic-bezier(.25,.8,.5,1);
+      }
+    }
+  }
+</style>

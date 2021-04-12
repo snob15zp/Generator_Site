@@ -3,6 +3,7 @@ export interface UserJson {
     token: String;
     privileges: String[];
     profile: UserProfileJson;
+    role: String;
 }
 
 export interface UserProfileJson {
@@ -16,6 +17,7 @@ export interface UserProfileJson {
     email: string;
     created_at: string;
     updated_at?: string;
+    password?: string;
 }
 
 export interface Link {
@@ -57,6 +59,7 @@ export interface User {
     name: String;
     privileges: String[];
     profile: UserProfile;
+    role: String;
 }
 
 export interface UserCredetials {
@@ -93,6 +96,7 @@ export interface UserProfile {
     email: string;
     createdAt?: Date;
     updatedAt?: Date;
+    password?: string;
 }
 
 export interface Program {
