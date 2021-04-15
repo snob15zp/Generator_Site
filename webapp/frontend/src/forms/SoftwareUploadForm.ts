@@ -10,6 +10,6 @@ export class SoftwareUploadForm extends BaseUploadForm {
 
     versionRules = [
         (v: string | null) => !!v || "Version is required",
-        (v: string) => /^\d+\.\d+.\d+$/.test(v) || "Version is not valid"
+        (v: string) => /^\d+\.\d+.\d+(.\d+)?$/.test(v) || "Version is not valid"
     ];
 }
