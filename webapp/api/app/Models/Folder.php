@@ -10,6 +10,7 @@ use phpDocumentor\Reflection\Types\Boolean;
 /**
  * @property string name
  * @property Program[] programs
+ * @property bool is_encrypted
  */
 class Folder extends Model
 {
@@ -18,7 +19,7 @@ class Folder extends Model
     protected $primaryKey = 'id';
     public $incrementing = true;
 
-    protected $fillable = ['name', 'expires_in', 'active'];
+    protected $fillable = ['name', 'expires_in', 'active', 'is_encrypted'];
 
     public function user(): BelongsTo
     {

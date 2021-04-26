@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use Doctrine\DBAL\Query\QueryException;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -73,8 +74,12 @@ class Handler extends ExceptionHandler
                 }, $messages);
             }
             return response()->json(['errors' => $formattedErrors], 422);
+        } else if ($e instanceof ApiException) {
+            return response()->json(['errors' => [
+                'status' => $e->getCode(),
+                'message' => $e->getMessage()
+            ]], 500);
         }
-
         if ($e instanceof Exception && !env('APP_DEBUG')) {
             return response()->json([
                 'errors' => [

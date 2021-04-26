@@ -1,5 +1,5 @@
 import {Action, getModule, Module, Mutation, MutationAction, VuexModule} from "vuex-module-decorators";
-import {User, UserCredetials} from "../models";
+import {User, UserCredentials} from "../models";
 import authService from "../../service/api/authService";
 import store from "@/store";
 
@@ -51,7 +51,7 @@ class UserModule extends VuexModule {
     }
 
     @MutationAction
-    async login(userCredentials: UserCredetials) {
+    async login(userCredentials: UserCredentials) {
         const user = await authService.login(userCredentials);
         return {user};
     }

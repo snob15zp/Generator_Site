@@ -10,6 +10,7 @@ use Vinkla\Hashids\Facades\Hashids;
  * @property string name
  * @property mixed expires_in
  * @property mixed created_at
+ * @property bool is_encrypted
  */
 class FolderResource extends JsonResource
 {
@@ -19,7 +20,8 @@ class FolderResource extends JsonResource
             'id' => Hashids::encode($this->id),
             'name' => $this->name,
             'expires_in' => $this->expires_in,
-            'created_at' => $this->created_at
+            'created_at' => $this->created_at,
+            'is_encrypted' => $this->is_encrypted != 0
         ];
     }
 }

@@ -14,14 +14,13 @@
     </v-card-title>
     <v-divider horizontal/>
     <v-row dense justify="space-between">
+      <!-- Folders -->
       <v-col cols="4">
         <v-list class="overflow-y-auto" nav :height="listHeight">
           <v-list-item-group active-class="primary--text" v-model="selected">
             <v-list-item v-for="folder in folders" :key="folder.id">
               <v-list-item-avatar>
-                <v-icon>
-                  mdi-folder
-                </v-icon>
+                <v-icon>{{ folder.isEncrypted && canManagePrograms ? 'mdi-folder-key' : 'mdi-folder' }}</v-icon>
               </v-list-item-avatar>
               <v-list-item-content>
                 <v-list-item-title>{{ folder.name }}</v-list-item-title>
@@ -34,6 +33,7 @@
         </v-list>
       </v-col>
       <v-divider vertical></v-divider>
+      <!-- Programs -->
       <v-col class="d-flex">
         <v-card
             v-if="folder"
@@ -46,7 +46,7 @@
             {{ folder.name }}
           </v-card-title>
           <v-card-subtitle>
-            <v-btn v-if="canManagePrograms" class="mr-2 mt-1"
+            <v-btn v-if="canManagePrograms" class="mr-2"
                    @click="downloadFolder(folder)"
                    :loading="downloadFolderId===folder.id"
                    outlined
@@ -56,7 +56,7 @@
               <v-icon right dark small>mdi-archive-arrow-down-outline</v-icon>
             </v-btn>
             <v-btn
-                class="mr-2  mt-1"
+                class="mr-2"
                 @click="importToDevice(folder)"
                 :disabled="!canManagePrograms && isExpired(folder.expiredAt)"
                 :loading="importFolderId===folder.id"
@@ -68,7 +68,7 @@
             </v-btn>
             <v-btn
                 v-if="canManagePrograms"
-                class="mr-2  mt-1"
+                class="mr-2"
                 @click="deleteFolder(folder)"
                 :loading="deletingFolderId===folder.id"
                 outlined
@@ -77,14 +77,13 @@
               Delete
               <v-icon right dark small>mdi-delete</v-icon>
             </v-btn>
-            <v-btn-toggle v-if="canManagePrograms" v-model="toggle" class="mr-2 mt-1">
+            <v-btn-toggle v-if="canManagePrograms" v-model="toggle" class="mr-2">
               <v-btn
                   :disabled="uploadInProgress"
                   :color="isUploadDialogShow?'primary':''"
                   @click="showUploadForm()"
                   outlined
-                  small
-                  text>
+                  small>
                 Upload programs
                 <v-icon right dark small :color="isUploadDialogShow?'primary':''">mdi-upload</v-icon>
               </v-btn>
@@ -191,23 +190,7 @@
       </v-card>
     </v-dialog>
 
-    <message-dialog ref="messageDialog" title="Delete"
-                    message="Are you sure you want to delete the selected programs?"/>
-
-    <v-dialog v-model="deleteDialogShow" max-width="500px">
-      <v-card>
-        <v-card-title class="headline">Delete folder</v-card-title>
-        <v-divider></v-divider>
-        <v-card-text class="mt-4">
-          {{ deleteDialogMessage }}
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="closeDelete">{{ $t("form.cancel") }}</v-btn>
-          <v-btn color="blue darken-1" text @click="deleteConfirm">{{ $t("form.ok") }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <message-dialog ref="messageDialog"/>
   </v-card>
 </template>
 
@@ -249,6 +232,7 @@ export default class Programs extends Vue {
   private folder: Folder | null = null;
 
   private downloadFolderId: string | null = null;
+  private deletingFolderId: string | null = null;
   private importFolderId: string | null = null;
   private uploadInProgress = false;
   private progress = 0;
@@ -263,14 +247,9 @@ export default class Programs extends Vue {
   private isUploadDialogShow = false;
   private toggle = -1;
 
-  private deletingFolderId: string | null = null;
-  private deleteDialogMessage: string | null = null;
-  private deleteDialogShow = false;
-
   private selectedPrograms: string[] = [];
 
-  private observer = new ResizeObserver((entries) => {
-    console.log("resize")
+  private observer = new ResizeObserver(() => {
     this.listHeight = this.getHeight();
   });
 
@@ -346,13 +325,13 @@ export default class Programs extends Vue {
   }
 
   private onDeletePrograms() {
-    this.messageDialog!.show()
+    this.messageDialog!.show("Delete", "Are you sure you want to delete the selected programs?")
         .then((result) => {
           if (result) {
             this.filesLoading = true;
             return programService.deletePrograms(this.selectedPrograms)
           } else {
-            return;
+            return Promise.reject();
           }
         })
         .then(() => this.fetchPrograms(this.folder!))
@@ -378,7 +357,6 @@ export default class Programs extends Vue {
   }
 
   private uploadFile() {
-    //this.snackbar = true;
     this.uploadInProgress = true;
     this.file = this.fileInput;
     programService.uploadFile({
@@ -451,18 +429,6 @@ export default class Programs extends Vue {
         });
   }
 
-  private downloadFile(program: Program) {
-    this.file = new File([], program.name);
-    programService.downloadFile({
-      program: program,
-      onProgressCallback: (process) => this.progress = process
-    })
-        .then(blob => saveDownloadFile(blob, program.name))
-        .finally(() => {
-          this.progress = 0;
-        });
-  }
-
   private isExpired(date: Date) {
     return isExpired(date);
   }
@@ -496,25 +462,19 @@ export default class Programs extends Vue {
   }
 
   private deleteFolder(folder: Folder) {
-    this.deletingFolderId = folder.id;
-    this.deleteDialogMessage = `Are you sure you want to delete the folder ${folder.name}?`;
-    this.deleteDialogShow = true;
-  }
-
-  private closeDelete() {
-    this.deletingFolderId = null;
-    this.deleteDialogShow = false;
-    this.deleteDialogMessage = null;
-  }
-
-  private deleteConfirm() {
-    this.deleteDialogShow = false;
-    this.deleteDialogMessage = null;
-    this.filesLoading = true;
-    this.selected = null;
-    programService.deleteFolder(this.deletingFolderId!)
+    this.messageDialog!.show("Delete folder", `Are you sure you want to delete the folder ${folder.name}?`)
+        .then((result) => {
+          if (result) {
+            this.deletingFolderId = folder.id;
+            this.filesLoading = true;
+            this.selected = null;
+            return programService.deleteFolder(folder.id!)
+          } else {
+            return Promise.reject();
+          }
+        })
         .then(() => this.fetchFolders())
-        .catch((e) => EventBus.$emit("error", e))
+        .catch((e) => e && EventBus.$emit("error", e))
         .finally(() => {
           this.deletingFolderId = null;
         });

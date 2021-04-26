@@ -1,10 +1,10 @@
 <template>
   <v-dialog v-model="visible" max-width="500px">
     <v-card>
-      <v-card-title class="headline">{{ title }}</v-card-title>
+      <v-card-title class="headline">{{ dialogTitle }}</v-card-title>
       <v-divider></v-divider>
       <v-card-text class="mt-4">
-        {{ message }}
+        {{ dialogMessage }}
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -20,13 +20,15 @@ import {Component, Prop, Vue} from "vue-property-decorator";
 
 @Component
 export default class MessageDialog extends Vue {
-  @Prop({default: null}) readonly title?: string;
-  @Prop({default: null}) readonly message?: string;
-
   private visible = false;
   private resolve?: (value: (PromiseLike<boolean> | boolean)) => void;
 
-  async show(): Promise<boolean> {
+  private dialogTitle: string | null = null;
+  private dialogMessage: string | null = null;
+
+  async show(title: string, message: string): Promise<boolean> {
+    this.dialogTitle = title;
+    this.dialogMessage = message;
     return new Promise<boolean>((resolve) => {
       this.visible = true;
       this.resolve = resolve;

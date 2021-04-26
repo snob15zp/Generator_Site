@@ -10,7 +10,6 @@ use Vinkla\Hashids\Facades\Hashids;
  * @property string name
  * @property string hash
  * @property mixed created_at
- * @property boolean is_encrypted
  */
 class ProgramResource extends JsonResource
 {
@@ -20,7 +19,6 @@ class ProgramResource extends JsonResource
             'id' => Hashids::encode($this->id),
             'name' => $this->name,
             'hash' => $this->hash,
-            'is_encrypted' => $this->is_encrypted,
             'created_at' => $this->created_at,
         ];
     }

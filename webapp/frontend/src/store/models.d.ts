@@ -44,6 +44,7 @@ export interface FolderJson {
     name: string;
     expires_in: number;
     created_at?: string;
+    is_encrypted?: boolean;
 }
 
 export interface ProgramJson {
@@ -62,12 +63,12 @@ export interface User {
     role: String;
 }
 
-export interface UserCredetials {
+export interface UserCredentials {
     login: String;
     password: String;
 }
 
-export interface ErrorReponse {
+export interface ErrorResponse {
     code: Number;
     message?: String;
 }
@@ -109,6 +110,7 @@ export interface Folder {
     name: string;
     expiredAt: Date;
     createdAt?: Date;
+    isEncrypted: boolean;
 }
 
 export interface UploadFileRequest {

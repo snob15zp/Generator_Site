@@ -1,8 +1,6 @@
 <?php
 
-
 namespace App\Http\Controllers;
-
 
 use App\Http\Resources\FolderResource;
 use App\Models\Folder;
@@ -18,21 +16,32 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\URL;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Vinkla\Hashids\Facades\Hashids;
-
-use function App\Utils\makeZipWithFiles;
 
 class FolderController extends Controller
 {
     public function getAllByUserProfileId(Request $request, $userProfileId): JsonResponse
     {
-        $user = $this->verifyUser($userProfileId);
+        $user = $this->getUserFromProfile($userProfileId);
         if ($request->user()->cannot(UserPrivileges::VIEW_PROGRAMS, $user)) {
             $this->raiseError(403, "Resource not available");
         }
         return $this->respondWithResource(FolderResource::collection($user->folders));
+    }
+
+    public function get(Request $request, $id, $hash = null): JsonResponse
+    {
+        if($hash == null) {
+            $user = $request->user();
+        } else {
+            $user = $this->getUserFromHash($hash);
+        }
+
+        $folder = $this->getFolderFromRequest($id);
+        $this->canUserDownloadFolder($folder, $user);
+
+        return $this->respondWithResource(new FolderResource($folder));
     }
 
     public function create(Request $request, $userProfileId): JsonResponse
@@ -45,7 +54,7 @@ class FolderController extends Controller
             'name' => 'required|date_format:d-m-y|after:today'
         ]);
 
-        $user = $this->verifyUser($userProfileId);
+        $user = $this->getUserFromProfile($userProfileId);
         $name = $request->input('name');
 
         try {
@@ -69,7 +78,8 @@ class FolderController extends Controller
         $folder = $user->folders()->create([
             'name' => $request->input('name'),
             'expires_in' => $expiresIn,
-            'active' => true
+            'active' => true,
+            'is_encrypted' => env('ENCRYPTION_ENABLED', true)
         ]);
         return $this->respondWithResource(new FolderResource($folder));
     }
@@ -96,31 +106,31 @@ class FolderController extends Controller
         return $this->respondWithMessage('Folder deleted');
     }
 
-    public function download(Request $request, $id, $hash = null): BinaryFileResponse
+    public function import($id, $hash = null): BinaryFileResponse
     {
-        $folder = Folder::query()->whereKey(Hashids::decode($id))->first();
-        if ($folder == null) {
-            $this->raiseError(404, 'Folder not found');
-        }
+        $user = $this->getUserFromHash($hash);
+        return $this->createZip($user, $id, false);
+    }
 
-        if ($hash != null && $request->user() == null) {
-            try {
-                $decrypted = Crypt::decrypt(base64_decode($hash));
-                list($userId, $expiredAt) = explode(":", $decrypted);
-                if ($expiredAt <  Carbon::now()->timestamp) {
-                    throw new Exception();
-                }
-                $user = User::find($userId);
-            } catch (Exception $e) {
-                $this->raiseError(422, "Request is not valid");
-            }
-        } else {
-            $user = $request->user();
-        }
+    public function download(Request $request, $id): BinaryFileResponse
+    {
+        $user = $request->user();
+        return $this->createZip($user, $id, true);
+    }
 
-        if ($user->cannot(UserPrivileges::VIEW_PROGRAMS, $folder->user)) {
-            $this->raiseError(403, "Resource not available");
-        }
+    public function prepareDownload(Request $request, string $id): string
+    {
+        $folder = $this->getFolderFromRequest($id);
+        $this->canUserDownloadFolder($folder, $request->user());
+
+        $params = $request->user()->id . ':' . Carbon::now()->addMinutes(30)->timestamp;
+        return base64_encode(Crypt::encrypt($params));
+    }
+
+    private function createZip(User $user, $id, $decryptFiles): BinaryFileResponse
+    {
+        $folder = $this->getFolderFromRequest($id);
+        $this->canUserDownloadFolder($folder, $user);
 
         $path = storage_path('app/' . $folder->path());
         try {
@@ -128,13 +138,7 @@ class FolderController extends Controller
                 return $program->name;
             });
 
-            $listOfFiles = $files->map(function ($file) {
-                return str_pad($file, 22);
-            })->join("\n");
-            Storage::put($folder->path() . '/' . env("PROGRAM_LIST_FILE"), $listOfFiles);
-            $files->add(env("PROGRAM_LIST_FILE"));
-
-            $zipFile = Files::makeZipWithFiles($folder->name, $path, $files->all());
+            $zipFile = Files::makeZipWithFiles($folder->name, $path, $files->all(), $decryptFiles && $folder->is_encrypted);
             return response()->download($zipFile, $folder->name . '.zip', [
                 'Content-Length' => filesize($zipFile),
                 'Content-Type' => 'application/zip'
@@ -144,22 +148,38 @@ class FolderController extends Controller
         }
     }
 
-    public function prepareDownload(Request $request, string $id): string
+    private function getUserFromHash($hash): User
+    {
+        try {
+            $decrypted = Crypt::decrypt(base64_decode($hash));
+            list($userId, $expiredAt) = explode(":", $decrypted);
+            if ($expiredAt < Carbon::now()->timestamp) {
+                throw new Exception();
+            }
+            return User::find($userId);
+        } catch (Exception $e) {
+            $this->raiseError(422, "Request is not valid");
+        }
+    }
+
+    private function canUserDownloadFolder(Folder $folder, User $user): bool
+    {
+        if ($user->cannot(UserPrivileges::VIEW_PROGRAMS, $folder->user)) {
+            $this->raiseError(403, "Resource not available");
+        }
+        return true;
+    }
+
+    private function getFolderFromRequest($id): Folder
     {
         $folder = Folder::query()->whereKey(Hashids::decode($id))->first();
         if ($folder == null) {
             $this->raiseError(404, 'Folder not found');
         }
-
-        if ($request->user()->cannot(UserPrivileges::VIEW_PROGRAMS, $folder->user)) {
-            $this->raiseError(403, "Resource not available");
-        }
-
-        $params = $request->user()->id . ':' . Carbon::now()->addMinutes(30)->timestamp;
-        return base64_encode(Crypt::encrypt($params));
+        return $folder;
     }
 
-    private function verifyUser($userProfileId)
+    private function getUserFromProfile($userProfileId): User
     {
         $userProfile = UserProfile::query()->whereKey(Hashids::decode($userProfileId))->first();
         if ($userProfile == null) {

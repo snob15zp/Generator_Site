@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property Folder folder
  * @property string name
- * @property boolean is_encrypted
  */
 class Program extends Model
 {
@@ -19,7 +18,7 @@ class Program extends Model
 
     public $timestamps = true;
 
-    protected $fillable = ['name', 'hash', 'active', 'is_encrypted'];
+    protected $fillable = ['name', 'hash', 'active'];
 
     public function folder(): BelongsTo
     {

@@ -19,6 +19,7 @@ class CreateFoldersTable extends Migration
             $table->string('name');
             $table->unsignedInteger('expires_in');
             $table->boolean('active');
+            $table->boolean('is_encrypted');
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('user');
         });

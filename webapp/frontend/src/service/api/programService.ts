@@ -4,8 +4,7 @@ import {
     FolderJson,
     Program,
     ProgramJson,
-    UploadFileRequest,
-    UserProfile
+    UploadFileRequest
 } from "@/store/models";
 import api from ".";
 import transformers from "./transformers";
@@ -45,20 +44,28 @@ class ProgramService {
         });
     }
 
-    async uploadFile(fileRequest: UploadFileRequest): Promise<Program> {
-        return new Promise((resolve, reject) => {
+    async uploadFile(fileRequest: UploadFileRequest): Promise<void> {
+        const length = fileRequest.files.length;
+        const promises: Array<Promise<void>> = [];
+        for (let i = 0; i < length; i += 20) {
             const formData = new FormData();
-            fileRequest.files.forEach((file, idx) => formData.append(`programs[]`, file))
-            api.post(`/folders/${fileRequest.folder.id}/programs`, formData, {
-                onUploadProgress: function (progressEvent) {
-                    console.log(progressEvent);
-                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                    fileRequest.onProgressCallback(percentCompleted);
-                }
-            })
-                .then((response) => resolve(transformers.programFromJson(response.data)))
-                .catch((error) => reject(new Error(apiErrorMapper(error))));
-        });
+            fileRequest.files.slice(i, Math.min(i + 20, length))
+                .forEach((file, idx) => formData.append(`programs[]`, file));
+
+            promises.push(new Promise<void>((resolve, reject) => api.post(`/folders/${fileRequest.folder.id}/programs`, formData, {
+                    onUploadProgress: function (progressEvent) {
+                        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                        fileRequest.onProgressCallback(percentCompleted);
+                    },
+                    headers: {
+                        "Content-Type": "multipart/form-data"
+                    },
+                })
+                    .then(() => resolve())
+                    .catch((error) => reject(new Error(apiErrorMapper(error))))
+            ));
+        }
+        await Promise.all(promises);
     }
 
     async downloadFolder(folderId: string, onProgressCallback: (_: number) => void): Promise<Blob> {

@@ -62,7 +62,9 @@
   "server-error": {
     "user_not_found": "User with the given email or password was not found",
     "user_profile_not_found": "User profile was not found",
-    "general_error": "An error has occurred. Operation could not complete."
+    "general_error": "An error has occurred. Operation could not complete.",
+    "unauthorized": "The authorization token has expired",
+    "duplicate_program": "Duplication programs"
   },
   "$vuetify": {
     "fileInput": {

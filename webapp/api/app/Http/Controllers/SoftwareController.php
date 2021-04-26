@@ -3,13 +3,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\FirmwareResource;
 use App\Http\Resources\SoftwareResource;
-use App\Models\Firmware;
-use App\Models\FirmwareFiles;
 use App\Models\Software;
 use App\Models\UserPrivileges;
-use App\Utils\Files;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,7 +14,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Vinkla\Hashids\Facades\Hashids;
 use function App\Utils\makeZipWithFiles;
@@ -66,7 +61,7 @@ class SoftwareController extends Controller
         }
 
         $this->validate($request, [
-            'version' => 'nullable|regex:/^\d+\.\d+\.\d+$/',
+            'version' => 'nullable|regex:/^\d+\.\d+\.\d+(\.\d+)?$/',
             'active' => 'nullable|boolean',
         ]);
 
@@ -90,7 +85,7 @@ class SoftwareController extends Controller
         }
 
         $this->validate($request, [
-            'version' => 'required|regex:/^\d+\.\d+\.\d+$/',
+            'version' => 'required|regex:/^\d+\.\d+\.\d+(\.\d+)?$/',
             'file' => 'required|file'
         ]);
 
@@ -117,7 +112,7 @@ class SoftwareController extends Controller
         }
 
         return Storage::download($software->path() . '/' . $software->file);
-        }
+    }
 
     /**
      * @param Request $request

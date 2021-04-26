@@ -1,13 +1,14 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
-
+use App\Exceptions\ApiException;
 use App\Http\Resources\ProgramResource;
 use App\Models\Folder;
 use App\Models\Program;
 use App\Models\UserPrivileges;
+use App\Utils\Files;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -15,14 +16,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Vinkla\Hashids\Facades\Hashids;
+use const App\Exceptions\ERROR_DUPLICATE_PROGRAM;
+use const App\Exceptions\ERROR_SQL_EXCEPTION;
 
 class ProgramController extends Controller
 {
-    private const IS_ENCRYPTION_ENABLED = false;
-    private const KEY = "\x3a\xf5\x4c\x68\xaa\x0a\x65\xf2\xb2\x2f\xd5\x33\x05\xb9\xad\x96";
-    private const IV = "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0";
-    private const CYPHER = "AES-128-CBC";
-
     public function getAll(Request $request, $folderId): JsonResponse
     {
         $folder = Folder::query()->whereKey(Hashids::decode($folderId))->first();
@@ -74,14 +72,13 @@ class ProgramController extends Controller
                 $name = $requestFile->getClientOriginalName();
 
                 $content = $requestFile->get();
-                if (ProgramController::IS_ENCRYPTION_ENABLED) {
-                    $content = openssl_encrypt($content, ProgramController::CYPHER, ProgramController::KEY, 0, ProgramController::IV);
+                if ($folder->is_encrypted) {
+                    $content = Files::encryptData($content);
                 }
                 Storage::put($folder->path() . "/$name", $content);
                 $programs[] = $folder->programs()->create([
                     'name' => $name,
                     'hash' => crc32($content),
-                    'is_encrypted' => ProgramController::IS_ENCRYPTION_ENABLED,
                     'active' => true
                 ]);
             });
@@ -90,7 +87,16 @@ class ProgramController extends Controller
         } catch (\Exception  $e) {
             DB::rollBack();
             Log::error($e->getMessage());
-            $this->raiseError(500, "Cannot to make folder");
+            if ($e instanceof QueryException) {
+                switch ($e->getCode()) {
+                    case 23000:
+                        throw new ApiException(ERROR_DUPLICATE_PROGRAM);
+                    default:
+                        throw new ApiException(ERROR_SQL_EXCEPTION);
+                }
+            } else {
+                $this->raiseError(500, "Cannot to make folder");
+            }
         }
     }
 

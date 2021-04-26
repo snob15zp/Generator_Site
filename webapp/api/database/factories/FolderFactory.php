@@ -24,7 +24,8 @@ class FolderFactory extends Factory
         return [
             'name' => $this->faker->date('d-m-y'),
             'expires_in' => $this->faker->numberBetween(0, 100) * 24 * 3600,
-            'active' => true
+            'active' => true,
+            'is_encrypted' => false
         ];
     }
 }

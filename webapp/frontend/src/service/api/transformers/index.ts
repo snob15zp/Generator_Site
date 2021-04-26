@@ -63,7 +63,8 @@ function folderFromJson(json: FolderJson): Folder {
         id: json.id,
         name: json.name,
         expiredAt: moment(json.created_at).add(json.expires_in, "s").toDate(),
-        createdAt: moment(json.created_at).toDate()
+        createdAt: moment(json.created_at).toDate(),
+        isEncrypted: json.is_encrypted || false
     }
 }
 
@@ -71,7 +72,7 @@ function folderToJson(folder: Folder): FolderJson {
     return {
         "id": folder.id,
         "name": folder.name,
-        "expires_in": Math.ceil((folder.expiredAt.getTime() - (new Date()).getTime()) / 1000)
+        "expires_in": Math.ceil((folder.expiredAt.getTime() - (new Date()).getTime()) / 1000),
     }
 }
 

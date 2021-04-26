@@ -1,4 +1,4 @@
-import {User, UserCredetials, UserJson} from "@/store/models";
+import {User, UserCredentials, UserJson} from "@/store/models";
 import axios from "axios";
 import api from "."
 import transformers from "./transformers"
@@ -6,7 +6,7 @@ import {apiErrorMapper} from "@/service/api/utils";
 
 
 class AuthService {
-    async login(userCredentials: UserCredetials): Promise<User> {
+    async login(userCredentials: UserCredentials): Promise<User> {
         return new Promise((resolve, reject) => {
             axios.post<UserJson>("/users/login", userCredentials)
                 .then((response) => resolve(transformers.userFromJson(response.data)))
