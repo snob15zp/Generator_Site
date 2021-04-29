@@ -119,6 +119,7 @@ class UserProfileController extends Controller
         }
 
         $this->validate($request, [
+            'email' => 'required|email|unique:user,login',
             'name' => 'required|max:40',
             'surname' => 'required|max:40',
             'address' => 'required|max:200',
@@ -127,12 +128,13 @@ class UserProfileController extends Controller
             'password' => 'min:8'
         ]);
 
-        $profile->update($request->only(['name', 'surname', 'address', 'phone_number', 'date_of_birth']));
+        $profile->update($request->only(['email', 'name', 'surname', 'address', 'phone_number', 'date_of_birth']));
+
+        $userFields = ['login' => $request->input('email')];
         if ($request->has('password')) {
-            $profile->user()->update([
-                "password" => Hash::make($request->input('password'))
-            ]);
+            $userFields['password'] = Hash::make($request->input('password'));
         }
+        $profile->user()->update($userFields);
 
         return $this->respondWithResource(new UserProfileResource($profile));
     }
