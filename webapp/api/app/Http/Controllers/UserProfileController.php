@@ -11,9 +11,12 @@ use App\Models\UserPrivileges;
 use App\Models\UserProfile;
 use App\Models\UserRole;
 use App\Notifications\UserCreateNotification;
+use Carbon\Carbon;
 use DateTime;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -156,15 +159,27 @@ class UserProfileController extends Controller
         ]);
 
         $role = UserRole::query()->where('name', $request->input('role', UserRole::ROLE_USER))->first();
-        $profile = new UserProfile($request->only(['name', 'surname', 'address', 'phone_number', 'email', 'date_of_birth']));
+
+        $userProfile = $request->only(['name', 'surname', 'address', 'phone_number', 'email', 'date_of_birth']);
+        $dateOfBirth = Carbon::createFromFormat("Y-m-d", $userProfile['date_of_birth'])->toDateTime();
+        $userProfile['date_of_birth'] = $dateOfBirth;
+        $profile = new UserProfile($userProfile);
 
         $user = new User([
             'login' => $profile->email,
             'password' => $request->has('password') ? Hash::make($request->input('password')) : null
         ]);
         $user->role()->associate($role);
-        $user->save();
-        $user->profile()->save($profile);
+        try {
+            DB::beginTransaction();
+            $user->save();
+            $user->profile()->save($profile);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error($e->getMessage());
+            $this->raiseError(500, "Cannot to create user");
+        }
 
         if (!$request->has('password')) {
             $resetPassword = ResetPassword::create([

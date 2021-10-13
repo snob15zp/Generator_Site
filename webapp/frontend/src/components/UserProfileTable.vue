@@ -62,7 +62,7 @@
           </v-toolbar>
         </template>
         <template v-slot:[`item.name`]="{ item }">
-          <a :href="'/profile/' + item.id">{{ item.name + " " + item.surname }}</a>
+          <a :href="'profile/' + item.id">{{ item.name + " " + item.surname }}</a>
         </template>
         <template v-slot:[`item.created_at`]="{ item }">{{ $d(item.createdAt) }}</template>
         <template v-slot:[`item.updated_at`]="{ item }">{{ $d(item.updatedAt) }}</template>
