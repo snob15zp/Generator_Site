@@ -1,24 +1,22 @@
 <template>
   <v-layout column align-top justify-center>
-    <user-profile-info :user-profile="userProfile" :loading="profileLoading" v-if="userProfile"/>
+    <user-profile-info :user-profile="userProfile" :loading="profileLoading" v-if="userProfile" class="mt-4"/>
     <programs :user-profile-id="userProfile.id" class="flex-column fill-height mt-8 mb-8" v-if="userProfile"/>
-     <v-card outlined class="mt-8" v-else-if="!profileLoading">
-       <v-card-title>No data</v-card-title>
-       <v-card-text><p class="justify-start text--secondary" style="font-size:1.2em">There is no user with the given id</p></v-card-text>
+    <v-card outlined class="mt-8" v-else-if="!profileLoading">
+      <v-card-title>No data</v-card-title>
+      <v-card-text><p class="justify-start text--secondary" style="font-size:1.2em">There is no user with the given
+        id</p></v-card-text>
     </v-card>
   </v-layout>
 </template>
 
 <script lang="ts">
-import {Component, Prop, Ref, Vue, Watch} from "vue-property-decorator";
-import {Folder, Program, SaveFolderRequest, UploadFileRequest, UserProfile} from "@/store/models";
+import {Component, Prop, Vue, Watch} from "vue-property-decorator";
+import {UserProfile} from "@/store/models";
 import {fields} from "@/forms/UserProfileFormValidator";
 import UserProfileInfo from "@/components/UserProfileInfo.vue";
 import Programs from "@/components/Programs.vue";
-import moment from "moment";
-import programService from "@/service/api/programService";
 import userProfileService from "@/service/api/userProfileService";
-import saveDownloadFile from "../utils/download-file";
 import {EventBus} from "@/utils/event-bus";
 
 @Component({
@@ -53,10 +51,10 @@ export default class UserProfileDetails extends Vue {
     }
   }
 
-  mounted(){
-    if(this.userId) {
+  mounted() {
+    if (this.userId) {
       this.fetchUserProfile(userProfileService.fetchByUserId(this.userId));
-    } else if(this.userProfileId){
+    } else if (this.userProfileId) {
       this.fetchUserProfile(userProfileService.fetchById(this.userProfileId));
     }
   }
