@@ -28,6 +28,7 @@ class CreateFirmwareTable extends Migration
      */
     public function down()
     {
+        Schema::dropIfExists('firmware_files');
         Schema::dropIfExists('firmware');
     }
 }

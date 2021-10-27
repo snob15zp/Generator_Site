@@ -15,6 +15,9 @@ class UserProfile extends Model
 
     protected $fillable = ['name', 'surname', 'address', 'phone_number', 'email', 'date_of_birth'];
 
+    protected $casts = [
+        'date_of_birth' => 'date:Y-m-d'
+    ];
 
     public function user()
     {

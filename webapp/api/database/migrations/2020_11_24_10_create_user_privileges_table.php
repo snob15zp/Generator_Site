@@ -29,9 +29,6 @@ class CreateUserPrivilegesTable extends Migration
      */
     public function down()
     {
-        Schema::table('user_privileges', function (Blueprint $table){
-            $table->dropForeign('user_role_id');
-        });
         Schema::dropIfExists('user_privileges');
     }
 }

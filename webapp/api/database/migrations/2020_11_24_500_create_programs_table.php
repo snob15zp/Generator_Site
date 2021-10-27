@@ -32,9 +32,6 @@ class CreateProgramsTable extends Migration
      */
     public function down()
     {
-        Schema::table('program', function (Blueprint $table){
-            $table->dropForeign('folder_id');
-        });
         Schema::dropIfExists('program');
     }
 }

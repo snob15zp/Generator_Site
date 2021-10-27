@@ -20,6 +20,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\ErrorHandler\Debug;
 use Vinkla\Hashids\Facades\Hashids;
 
 class UserProfileController extends Controller
@@ -121,23 +123,23 @@ class UserProfileController extends Controller
             $this->raiseError(403, 'Operation is restricted');
         }
 
-        $this->validate($request, [
-            'email' => 'required|email|unique:user,login',
-            'name' => 'required|max:40',
-            'surname' => 'required|max:40',
-            'address' => 'required|max:200',
-            'phone_number' => 'required|max:255',
-            'date_of_birth' => 'date_format:Y-m-d',
-            'password' => 'min:8'
-        ]);
+        $userProfile = $this->getUserProfileFromRequest($request, false);
 
-        $profile->update($request->only(['email', 'name', 'surname', 'address', 'phone_number', 'date_of_birth']));
+        try {
+            DB::beginTransaction();
+            $profile->update($userProfile);
 
-        $userFields = ['login' => $request->input('email')];
-        if ($request->has('password')) {
-            $userFields['password'] = Hash::make($request->input('password'));
+            $userFields = ['login' => $request->input('email')];
+            if ($request->has('password')) {
+                $userFields['password'] = Hash::make($request->input('password'));
+            }
+            $profile->user()->update($userFields);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error($e->getMessage());
+            $this->raiseError(500, "Cannot to update user");
         }
-        $profile->user()->update($userFields);
 
         return $this->respondWithResource(new UserProfileResource($profile));
     }
@@ -147,22 +149,13 @@ class UserProfileController extends Controller
         if ($request->user()->cannot(UserPrivileges::CREATE_USER)) {
             $this->raiseError(403, 'Operation is restricted');
         }
-        $this->validate($request, [
-            'email' => 'required|email|unique:user,login',
-            'name' => 'required|max:255',
-            'surname' => 'required|max:255',
-            'address' => 'required|max:255',
-            'phone_number' => 'required|max:255',
-            'date_of_birth' => 'date_format:Y-m-d',
-            'role' => 'nullable|in:' . UserRole::ROLE_ADMIN . ',' . UserRole::ROLE_USER,
-            'password' => 'min:8'
-        ]);
 
+        $this->validate($request, [
+            'role' => 'nullable|in:' . UserRole::ROLE_ADMIN . ',' . UserRole::ROLE_USER,
+        ]);
         $role = UserRole::query()->where('name', $request->input('role', UserRole::ROLE_USER))->first();
 
-        $userProfile = $request->only(['name', 'surname', 'address', 'phone_number', 'email', 'date_of_birth']);
-        $dateOfBirth = Carbon::createFromFormat("Y-m-d", $userProfile['date_of_birth'])->toDateTime();
-        $userProfile['date_of_birth'] = $dateOfBirth;
+        $userProfile = $this->getUserProfileFromRequest($request, true);
         $profile = new UserProfile($userProfile);
 
         $user = new User([
@@ -216,5 +209,23 @@ class UserProfileController extends Controller
         }
 
         return $this->respondWithResource(new UserProfileResource($user->profile));
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function getUserProfileFromRequest(Request $request, bool $checkUniqueEmail): array
+    {
+        $this->validate($request, [
+            'email' => 'required|email' . ($checkUniqueEmail ? '|unique:user,login' : ''),
+            'name' => 'required|max:255',
+            'surname' => 'required|max:255',
+            'address' => 'required|max:255',
+            'phone_number' => 'required|max:255',
+            'date_of_birth' => 'date_format:Y-m-d',
+            'password' => 'min:8'
+        ]);
+
+        return $request->only(['name', 'surname', 'address', 'phone_number', 'email', 'date_of_birth']);
     }
 }

@@ -21,7 +21,7 @@ class CreateUserProfileTable extends Migration
             $table->string('address')->nullable();
             $table->string('phone_number')->nullable();
             $table->string('email');
-            $table->timestamp('date_of_birth')->nullable();
+            $table->date('date_of_birth')->nullable();
             $table->unsignedBigInteger('user_id');
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('user');
@@ -37,9 +37,6 @@ class CreateUserProfileTable extends Migration
      */
     public function down()
     {
-        Schema::table('user_profile', function (Blueprint $table){
-            $table->dropForeign('user_id');
-        });
         Schema::dropIfExists('user_profile');
     }
 }
