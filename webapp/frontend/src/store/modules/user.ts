@@ -5,6 +5,7 @@ import store from "@/store";
 
 export const MANAGE_PROFILES = 'manage-profiles';
 export const MANAGE_PROGRAMS = 'manage-programs';
+export const MANAGE_FIRMWARE = 'manage-firmware';
 const CREATE_USER = 'create-user';
 const VIEW_PROFILE = 'view-profile';
 const VIEW_PROGRAMS = 'view-programs';
@@ -28,8 +29,13 @@ class UserModule extends VuexModule {
         return this.user ? this.user.privileges.indexOf(MANAGE_PROFILES) != -1 : false;
     }
 
+
     get canManagePrograms() {
         return this.user ? this.user.privileges.indexOf(MANAGE_PROGRAMS) != -1 : false;
+    }
+
+    get canManageFirmware() {
+        return this.user ? this.user.privileges.indexOf(MANAGE_FIRMWARE) != -1 : false;
     }
 
     get userName() {
