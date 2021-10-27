@@ -13,6 +13,14 @@ class SoftwareService {
         });
     }
 
+    async getLatest(): Promise<Software> {
+        return new Promise<Software>((resolve, reject) => {
+            api.get("/software/latest")
+                .then(response => resolve(transformers.softwareFromJson(response.data)))
+                .catch(error => reject(new Error(apiErrorMapper(error))));
+        });
+    }
+
     async delete(version: string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             api.delete(`/software/${version}`)
@@ -30,10 +38,11 @@ class SoftwareService {
     }
 
     async upload(version: string, file: File, onProgressCallback: (_: number) => void): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const formData = new FormData();
-            formData.append("version", version);
-            formData.append("file", file);
+        const formData = new FormData();
+        formData.append("version", version);
+        formData.append("file", file);
+
+        return new Promise<void>((resolve, reject) => {
             api.post(`/software`, formData, {
                 onUploadProgress: function (progressEvent) {
                     const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);

@@ -1,56 +1,85 @@
 <template>
-  <v-card outlined class="mt-8">
-    <v-progress-linear indeterminate v-if="loading" />
-    <v-layout column pa-4>
-      <v-row>
-        <v-col cols="6" md="3" class="font-weight-bold">{{ fields.name }}:</v-col>
-        <v-col cols="6" md="3">
-          <span v-if="userProfile">{{ userProfile.name }}</span>
-        </v-col>
-        <v-col cols="6" md="3" class="font-weight-bold">{{ fields.surname }}:</v-col>
-        <v-col cols="6" md="3">
-          <span v-if="userProfile">{{ userProfile.surname }}</span>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="6" md="3" class="font-weight-bold">{{ fields.dateOfBirth }}:</v-col>
-        <v-col cols="6" md="3">
-          <span v-if="userProfile">{{ userProfile.dateOfBirth | formatDate }}</span>
-        </v-col>
-        <v-col cols="6" md="3" class="font-weight-bold">{{ fields.phoneNumber }}:</v-col>
-        <v-col cols="6" md="3">
-          <span v-if="userProfile">{{ userProfile.phoneNumber }}</span>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="6" md="3" class="font-weight-bold">{{ fields.email }}:</v-col>
-        <v-col cols="6" md="9">
-          <span v-if="userProfile">{{ userProfile.email }}</span>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="6" md="3" class="font-weight-bold">{{ fields.address }}:</v-col>
-        <v-col cols="6" md="9">
-          <span v-if="userProfile">{{ userProfile.address }}</span>
-        </v-col>
-      </v-row>
-    </v-layout>
+  <v-card outlined>
+    <v-progress-linear indeterminate v-if="loading"/>
+    <v-card-title>
+      <div class="text-h4">
+        {{ userProfile.name }}&nbsp;{{ userProfile.surname }}
+      </div>
+      <v-spacer/>
+      <div class="text-body-1" v-if="software">
+        <v-btn small color="primary" link :href="fileUrl">Download software<v-icon right dark small>mdi-download</v-icon></v-btn>
+      </div>
+    </v-card-title>
+    <v-card-text>
+      <v-list dense>
+        <v-list-item>
+          <v-list-item-icon>
+            <v-icon>mdi-email</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            {{ userProfile.email }}
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item>
+          <v-list-item-icon>
+            <v-icon>mdi-calendar</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            {{ userProfile.dateOfBirth | formatDate }}
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item>
+          <v-list-item-icon>
+            <v-icon>mdi-phone</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            {{ userProfile.phoneNumber }}
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item>
+          <v-list-item-icon>
+            <v-icon>mdi-map-marker</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            {{ userProfile.address }}
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+    </v-card-text>
   </v-card>
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from "vue-property-decorator";
-import { UserProfile } from "../store/models";
-import { fields } from "../forms/UserProfileFormValidator";
-import { formatDate } from "../utils/dateUtils";
+import {Component, Prop, Vue} from "vue-property-decorator";
+import {Software, UserProfile} from "@/store/models";
+import {fields} from "@/forms/UserProfileFormValidator";
+import UserModule from "@/store/modules/user";
+import softwareService from "@/service/api/softwareService";
+import {settings} from "@/settings";
 
 @Component
 export default class UserProfileInfo extends Vue {
   @Prop() private userProfile!: UserProfile;
   @Prop() private loading!: boolean;
 
+  private software: Software | null = null;
+
   get fields() {
     return fields;
   }
+
+  get fileUrl() {
+    return settings.apiUrl + this.software?.fileUrl;
+  }
+
+  mounted() {
+    if (!UserModule.canManageFirmware) {
+      softwareService.getLatest()
+          .then((software) => {
+            this.software = software;
+          })
+    }
+  }
+
 }
 </script>
