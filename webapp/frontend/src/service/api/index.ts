@@ -17,7 +17,7 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
     if (UserModule.isAuthorized) {
-        config.headers['Authorization'] = `Bearer ${UserModule.user?.token}`;
+        config.headers!['Authorization'] = `Bearer ${UserModule.user?.token}`;
     }
     return config;
 }, error => Promise.reject(error));

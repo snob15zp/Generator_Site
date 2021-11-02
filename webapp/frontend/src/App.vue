@@ -81,7 +81,7 @@ export default class App extends Vue {
   }
 
   get showNavigation() {
-    return UserModule.canManageProfiles && this.$route.meta.requiresAuth;
+    return UserModule.canManageProfiles && this.$route.meta?.requiresAuth;
   }
 
   get userName() {

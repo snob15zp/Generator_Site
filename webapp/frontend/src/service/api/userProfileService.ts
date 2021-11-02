@@ -4,8 +4,8 @@ import api from "."
 import {apiErrorMapper} from "@/service/api/utils";
 
 class UserProfileService {
-    async delete(userProfiles: Array<UserProfile>) {
-        return new Promise((resolve, reject) => {
+    async delete(userProfiles: Array<UserProfile>): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
             const query = userProfiles.map((profile) => `ids[]=${profile.id}`).join('&');
             api.delete(`/profiles?${query}`)
                 .then(() => resolve())
