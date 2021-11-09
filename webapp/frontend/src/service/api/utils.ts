@@ -16,6 +16,9 @@ export function apiErrorMapper(error: AxiosError<ErrorResponseJson>): string {
 
     case API_ERROR_CODES.UNAUTHORIZED:
       return i18n.t("server-error.unauthorized") as string;
+
+    case API_ERROR_CODES.USER_NOT_FOUND:
+      return i18n.t("server-error.invalid_credentials") as string;
   }
 
   return error.response?.data.errors.message || i18n.t("server-error.general_error") as string;

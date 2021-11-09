@@ -23,7 +23,6 @@ const routes: Array<RouteConfig> = [
       icon: "mdi-account-multiple",
       navigation: true,
       requiresAuth: true,
-      requiresPermissions: [MANAGE_PROFILES],
       title: i18n.t("page.home")
     }
   },
@@ -35,7 +34,6 @@ const routes: Array<RouteConfig> = [
       icon: "mdi-memory",
       navigation: true,
       requiresAuth: true,
-      requiresPermissions: [MANAGE_PROFILES],
       title: i18n.t("page.firmware")
     }
   },
@@ -47,7 +45,6 @@ const routes: Array<RouteConfig> = [
       icon: "mdi-laptop",
       navigation: true,
       requiresAuth: true,
-      requiresPermissions: [MANAGE_PROFILES],
       title: i18n.t("page.software")
     }
   },

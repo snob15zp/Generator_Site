@@ -64,7 +64,8 @@
     "user_profile_not_found": "User profile was not found",
     "general_error": "An error has occurred. Operation could not complete.",
     "unauthorized": "The authorization token has expired",
-    "duplicate_program": "Duplication programs"
+    "duplicate_program": "Duplication programs",
+    "invalid_credentials": "Invalid login or password"
   },
   "$vuetify": {
     "fileInput": {

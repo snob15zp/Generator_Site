@@ -28,7 +28,7 @@ class UserProfileController extends Controller
 {
     public function getAll(Request $request)
     {
-        if ($request->user()->cannot(UserPrivileges::MANAGE_PROFILES)) {
+        if ($request->user()->cannot(UserPrivileges::VIEW_USERS)) {
             $this->raiseError(403, 'Resource not available');
         }
         $this->validate($request, [

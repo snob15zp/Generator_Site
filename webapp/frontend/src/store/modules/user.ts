@@ -3,12 +3,15 @@ import {User, UserCredentials} from "../models";
 import authService from "../../service/api/authService";
 import store from "@/store";
 
+export const CREATE_USER = 'create-user';
 export const MANAGE_PROFILES = 'manage-profiles';
 export const MANAGE_PROGRAMS = 'manage-programs';
 export const MANAGE_FIRMWARE = 'manage-firmware';
-const CREATE_USER = 'create-user';
-const VIEW_PROFILE = 'view-profile';
-const VIEW_PROGRAMS = 'view-programs';
+export const UPLOAD_PROGRAMS = 'upload-programs';
+export const VIEW_PROFILE = 'view-profile';
+export const VIEW_PROGRAMS = 'view-programs';
+export const VIEW_USERS = 'view-users';
+
 
 @Module({
     namespaced: true,
@@ -43,12 +46,20 @@ class UserModule extends VuexModule {
         return this.user ? this.user.name : null;
     }
 
-    get userRole() {
-        switch(this.user?.role) {
-            case "ROLE_ADMIN": return "Administrator";
-            case "ROLE_USER": return "User";
-            case "ROLE_GUEST": return "Guest";
-            default: return "Guest";
+    get userRoleName() {
+        switch (this.user?.role) {
+            case "ROLE_ADMIN":
+                return "Administrator";
+            case "ROLE_USER":
+                return "User";
+            case "ROLE_GUEST":
+                return "Guest";
+            case "ROLE_PROFESSIONAL":
+                return "Professional";
+            case "ROLE_SUPER_PROFESSIONAL":
+                return "S.Professional";
+            default:
+                return "Guest";
         }
     }
 

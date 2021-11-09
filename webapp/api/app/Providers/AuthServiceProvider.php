@@ -26,7 +26,7 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        Gate::define(UserPrivileges::MANAGE_PROFILES, function ($user) {
+        Gate::define(UserPrivileges::VIEW_USERS, function ($user) {
             return $user->hasRole(UserRole::ROLE_ADMIN);
         });
 

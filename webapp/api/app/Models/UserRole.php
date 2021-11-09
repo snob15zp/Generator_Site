@@ -14,6 +14,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class UserRole extends Model
 {
     const ROLE_ADMIN = 'ROLE_ADMIN';
+    const ROLE_PROFESSIONAL = 'ROLE_PROFESSIONAL';
+    const ROLE_SUPER_PROFESSIONAL = 'ROLE_SUPER_PROFESSIONAL';
     const ROLE_USER = 'ROLE_USER';
     const ROLE_GUEST = 'ROLE_GUEST';
 

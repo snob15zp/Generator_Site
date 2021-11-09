@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use JWTAuth;
 
 
 class UserController extends Controller
@@ -32,7 +31,7 @@ class UserController extends Controller
 
         $credentials = $request->only(['login', 'password']);
         if (!$token = Auth::attempt($credentials)) {
-            $this->raiseError(401, 'Invalid credentials');
+            $this->raiseError(ErrorStatusCodes::$INVALID_CREDENTIALS, 'Invalid credentials');
         }
 
         $user = Auth::user();
@@ -44,7 +43,7 @@ class UserController extends Controller
         try {
             return response()->json(['token' => auth()->refresh()]);
         } catch (\Exception $e) {
-            $this->raiseError(401, 'Invalid token');
+            $this->raiseError(ErrorStatusCodes::$INVALID_TOKEN, 'Invalid token');
         }
     }
 

@@ -47,7 +47,7 @@ RUN apk add \
   php7-session \
   php7-exif
 
-RUN apk add --update nodejs nodejs-npm
+RUN apk add --update nodejs npm
 
 
 RUN sed -i "s/#LoadModule\ rewrite_module/LoadModule\ rewrite_module/" /usr/local/apache2/conf/httpd.conf;

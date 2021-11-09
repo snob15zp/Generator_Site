@@ -8,12 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class UserPrivileges extends Model
 {
-    const MANAGE_PROFILES = 'manage-profiles';
-    const MANAGE_PROGRAMS = 'manage-programs';
+    const UPLOAD_PROGRAMS = 'upload-programs';
     const CREATE_USER = 'create-user';
+    const MANAGE_PROGRAMS = 'manage-programs';
+    const MANAGE_FIRMWARE = 'manage-firmware';
+    const VIEW_USERS = 'view-users';
     const VIEW_PROFILE = 'view-profile';
     const VIEW_PROGRAMS = 'view-programs';
-    const MANAGE_FIRMWARE = 'manage-firmware';
 
     protected $table = 'user_privileges';
     public $timestamps = false;
