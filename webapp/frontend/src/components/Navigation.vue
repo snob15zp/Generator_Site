@@ -5,10 +5,7 @@
       floating
       app>
     <v-app-bar flat dark class="v-bar--underline">
-      <v-toolbar-title class="site-title">
-        <img src="@/assets/logo-small.png" alt="logo"/>
-        <span>InHealion</span>
-      </v-toolbar-title>
+      <site-title />
     </v-app-bar>
     <v-list nav dense class="mt-2">
       <v-list-item-group active-class="primary--text" v-model="selected">
@@ -27,8 +24,11 @@
 
 import {Component, Prop, Vue} from "vue-property-decorator";
 import UserModule from "@/store/modules/user";
+import SiteTitle from "@/components/SiteTitle.vue";
 
-@Component
+@Component({
+  components: {SiteTitle}
+})
 export default class Navigation extends Vue {
   @Prop() readonly visible!: boolean;
 
@@ -60,23 +60,6 @@ export default class Navigation extends Vue {
 <style scoped>
 
 .v-bar--underline {
-  background-color: rgb(30, 26, 26)!important;
+  background-color: rgb(30, 26, 26) !important;
 }
-
-.site-title {
-  font-family: termina, sans-serif;
-  font-weight: 700;
-  font-style: normal;
-}
-
-span {
-  float: right;
-  padding-top: 6px;
-}
-
-img {
-  float: left;
-  margin-right: 12px;
-}
-
 </style>

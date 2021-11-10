@@ -3,15 +3,24 @@ import {User, UserCredentials} from "../models";
 import authService from "../../service/api/authService";
 import store from "@/store";
 
-export const CREATE_USER = 'create-user';
-export const MANAGE_PROFILES = 'manage-profiles';
-export const MANAGE_PROGRAMS = 'manage-programs';
-export const MANAGE_FIRMWARE = 'manage-firmware';
-export const UPLOAD_PROGRAMS = 'upload-programs';
-export const VIEW_PROFILE = 'view-profile';
-export const VIEW_PROGRAMS = 'view-programs';
-export const VIEW_USERS = 'view-users';
+export enum Privileges {
+    createUser = 'create-user',
+    manageProfiles = 'manage-profiles',
+    managePrograms = 'manage-programs',
+    manageFirmware = 'manage-firmware',
+    uploadPrograms = 'upload-programs',
+    viewProfile = 'view-profile',
+    viewPrograms = 'view-programs',
+    viewUsers = 'view-users'
+}
 
+export enum Role {
+    Admin = "ROLE_ADMIN",
+    Professional = "ROLE_PROFESSIONAL",
+    SuperProfessional = "ROLE_SUPER_PROFESSIONAL",
+    User = "ROLE_USER",
+    Guest = "ROLE_GUEST"
+}
 
 @Module({
     namespaced: true,
@@ -29,16 +38,16 @@ class UserModule extends VuexModule {
     }
 
     get canManageProfiles() {
-        return this.user ? this.user.privileges.indexOf(MANAGE_PROFILES) != -1 : false;
+        return this.user ? this.user.privileges.indexOf(Privileges.manageProfiles) != -1 : false;
     }
 
 
     get canManagePrograms() {
-        return this.user ? this.user.privileges.indexOf(MANAGE_PROGRAMS) != -1 : false;
+        return this.user ? this.user.privileges.indexOf(Privileges.managePrograms) != -1 : false;
     }
 
     get canManageFirmware() {
-        return this.user ? this.user.privileges.indexOf(MANAGE_FIRMWARE) != -1 : false;
+        return this.user ? this.user.privileges.indexOf(Privileges.manageFirmware) != -1 : false;
     }
 
     get userName() {
@@ -48,15 +57,15 @@ class UserModule extends VuexModule {
 
     get userRoleName() {
         switch (this.user?.role) {
-            case "ROLE_ADMIN":
+            case Role.Admin:
                 return "Administrator";
-            case "ROLE_USER":
+            case Role.User:
                 return "User";
-            case "ROLE_GUEST":
+            case Role.Guest:
                 return "Guest";
-            case "ROLE_PROFESSIONAL":
+            case Role.Professional:
                 return "Professional";
-            case "ROLE_SUPER_PROFESSIONAL":
+            case Role.SuperProfessional:
                 return "S.Professional";
             default:
                 return "Guest";

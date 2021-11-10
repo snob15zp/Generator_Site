@@ -2,11 +2,19 @@
   <v-app-bar app flat color="#1e1a1a" dark v-if="isAuthorized" class="v-bar--underline">
     <v-app-bar-nav-icon
         @click="onClickShowDrawer"
-        v-if="$vuetify.breakpoint.mdAndDown && showNavigation"></v-app-bar-nav-icon>
-    <v-toolbar-title v-if="!showNavigation" class="site-title">
-      <img src="@/assets/logo-small.png" alt="logo"/>
-      <span>InHealion</span>
-    </v-toolbar-title>
+        v-if="$vuetify.breakpoint.smAndDown && showNavigation"></v-app-bar-nav-icon>
+    <site-title v-if="$vuetify.breakpoint.mdAndUp"/>
+    <v-row class="d-flex justify-center" v-if="$vuetify.breakpoint.mdAndUp">
+      <v-btn-toggle tile group>
+        <v-btn
+            tile text
+            height="64"
+            v-for="route in routers" :key="route.path"
+            :input-value="route.path"
+            :href="route.path"
+        >{{ route.meta.title }}</v-btn>
+      </v-btn-toggle>
+    </v-row>
     <v-spacer/>
     <div class="pa-4 d-flex">
       <v-icon class="ma-2" x-large>mdi-account</v-icon>
@@ -23,8 +31,11 @@
 
 import {Component, Emit, Vue} from "vue-property-decorator";
 import UserModule from "@/store/modules/user";
+import SiteTitle from "@/components/SiteTitle.vue";
 
-@Component
+@Component({
+  components: {SiteTitle}
+})
 export default class AppBar extends Vue {
   get isAuthorized() {
     return UserModule.isAuthorized;
@@ -42,6 +53,10 @@ export default class AppBar extends Vue {
     return UserModule.userName;
   }
 
+  get routers() {
+    return this.$router.options.routes?.filter(config => config.meta?.navigation)
+  }
+
   @Emit()
   onClickShowDrawer() {
     return;
@@ -57,6 +72,12 @@ export default class AppBar extends Vue {
 </script>
 
 <style scoped lang="scss">
+.site-title {
+  font-family: termina, sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
 .v-bar--underline {
   border-bottom-style: solid !important;
   border-bottom-width: 1px !important;
