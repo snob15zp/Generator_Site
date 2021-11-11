@@ -119,7 +119,7 @@ const router = new VueRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  window.document.title = (to.meta.title ? to.meta.title + " - " : "") + "InHealion";
+  window.document.title = (to.meta?.title ? to.meta.title + " - " : "") + "InHealion";
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (UserModule.isAuthorized) {
       next();
