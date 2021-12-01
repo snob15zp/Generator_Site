@@ -7,10 +7,16 @@ use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\DB;
 use Laravel\Lumen\Auth\Authorizable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 /**
+ * @property numeric $id
  * @property string $login
  * @property UserRole $role
  */
@@ -34,29 +40,35 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         'password', 'salt'
     ];
 
-    public function role()
+    public function role(): BelongsTo
     {
-        return $this->belongsTo('\App\Models\UserRole');
+        return $this->belongsTo('\App\Models\UserRole')->with('privileges');
     }
 
-    public function sessions()
-    {
-        return $this->hasMany('\App\Models\Session');
-    }
-
-    public function profile()
+    public function profile(): Relation
     {
         return $this->hasOne('\App\Models\UserProfile');
     }
 
-    public function hasRole(string $role)
+    public function hasRole(string $role): bool
     {
         return $this->role->name === $role;
     }
 
-    public function folders()
+    public function folders(): Relation
     {
         return $this->hasMany('\App\Models\Folder');
+    }
+
+    public function delete(): ?bool
+    {
+        $this->profile()->delete();
+        $this->hasMany('\App\Models\Program', 'owner_user_id')->delete();
+        DB::table('user_owner')
+            ->where('owner_id', '=', $this->id)
+            ->orWhere('user_id', '=', $this->id)
+            ->delete();
+        return parent::delete();
     }
 
     /**
@@ -74,7 +86,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
      *
      * @return array
      */
-    public function getJWTCustomClaims()
+    public function getJWTCustomClaims(): array
     {
         return [];
     }

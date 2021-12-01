@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property Folder folder
@@ -18,15 +20,20 @@ class Program extends Model
 
     public $timestamps = true;
 
-    protected $fillable = ['name', 'hash', 'active'];
+    protected $fillable = ['name', 'hash', 'active', 'owner_user_id'];
 
-    public function folder(): BelongsTo
+    public function folders(): BelongsToMany
     {
-        return $this->belongsTo('\App\Models\Folder');
+        return $this->belongsToMany(Folder::class, 'folder_program');
     }
 
     public function fileName(): string
     {
-        return $this->folder->path() . '/' . $this->name;
+        return Program::path() . '/' . $this->name;
+    }
+
+    public static function path()
+    {
+        return env('PROGRAM_PATH');
     }
 }

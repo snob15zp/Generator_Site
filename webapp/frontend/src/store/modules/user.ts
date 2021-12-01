@@ -3,23 +3,121 @@ import {User, UserCredentials} from "../models";
 import authService from "../../service/api/authService";
 import store from "@/store";
 
-export enum Privileges {
-    createUser = 'create-user',
-    manageProfiles = 'manage-profiles',
-    managePrograms = 'manage-programs',
-    manageFirmware = 'manage-firmware',
-    uploadPrograms = 'upload-programs',
-    viewProfile = 'view-profile',
-    viewPrograms = 'view-programs',
-    viewUsers = 'view-users'
+export class Privileges {
+    private static UPLOAD_PROGRAMS = 'upload-programs';
+    private static MANAGE_PROGRAMS = 'manage-programs';
+    private static MANAGE_FIRMWARE = 'manage-firmware';
+    private static MANAGE_USERS = 'manage-users';
+    private static MANAGE_OWN_USERS = 'manage-own-users';
+    private static VIEW_USERS = 'view-users';
+    private static VIEW_PROFILE = 'view-profile';
+    private static VIEW_PROGRAMS = 'view-programs';
+
+    static canManageOwnUsers(user: User) {
+        return user.privileges.indexOf(this.MANAGE_OWN_USERS) >= 0;
+    }
+
+    static canUploadPrograms(user: User) {
+        return user.privileges.indexOf(this.UPLOAD_PROGRAMS) >= 0;
+    }
+
+    static canManagePrograms(user: User) {
+        return user.privileges.indexOf(this.MANAGE_PROGRAMS) >= 0;
+    }
+
+    static canManageFirmware(user: User) {
+        return user.privileges.indexOf(this.MANAGE_FIRMWARE) >= 0;
+    }
+
+    static canManageUsers(user: User) {
+        return user.privileges.indexOf(this.MANAGE_USERS) >= 0;
+    }
+
+    static canViewUsers(user: User) {
+        return user.privileges.indexOf(this.VIEW_USERS) >= 0;
+    }
+
+    static canViewProfile(user: User) {
+        return user.privileges.indexOf(this.VIEW_PROFILE) >= 0;
+    }
+
+    static canViewPrograms(user: User) {
+        return user.privileges.indexOf(this.VIEW_PROGRAMS) >= 0;
+    }
 }
 
-export enum Role {
-    Admin = "ROLE_ADMIN",
-    Professional = "ROLE_PROFESSIONAL",
-    SuperProfessional = "ROLE_SUPER_PROFESSIONAL",
-    User = "ROLE_USER",
-    Guest = "ROLE_GUEST"
+export abstract class Role {
+    private static ROLE_ADMIN = "ROLE_ADMIN";
+    private static ROLE_PROFESSIONAL = "ROLE_PROFESSIONAL";
+    private static ROLE_SUPER_PROFESSIONAL = "ROLE_SUPER_PROFESSIONAL";
+    private static ROLE_USER = "ROLE_USER";
+    private static ROLE_GUEST = "ROLE_GUEST";
+
+    static readonly Admin = new class extends Role {
+        constructor() {
+            super(Role.ROLE_ADMIN);
+        }
+    }
+    static readonly Professional = new class extends Role {
+        constructor() {
+            super(Role.ROLE_PROFESSIONAL);
+        }
+    };
+    static readonly SuperProfessional = new class extends Role {
+        constructor() {
+            super(Role.ROLE_SUPER_PROFESSIONAL);
+        }
+    };
+    static readonly User = new class extends Role {
+        constructor() {
+            super(Role.ROLE_USER);
+        }
+    };
+    static readonly Guest = new class extends Role {
+        constructor() {
+            super(Role.ROLE_GUEST);
+        }
+    };
+
+    readonly name: string;
+
+    protected constructor(name: string) {
+        this.name = name;
+    }
+
+    toString(): string {
+        switch (this) {
+            case Role.Admin:
+                return "Administrator";
+            case Role.User:
+                return "User";
+            case Role.Guest:
+                return "Guest";
+            case Role.Professional:
+                return "Professional";
+            case Role.SuperProfessional:
+                return "S.Professional";
+            default:
+                return "Guest";
+        }
+    }
+
+    static parse(name: string): Role {
+        switch (name) {
+            case Role.ROLE_ADMIN:
+                return Role.Admin;
+            case Role.ROLE_PROFESSIONAL:
+                return Role.Professional;
+            case Role.ROLE_SUPER_PROFESSIONAL:
+                return Role.SuperProfessional;
+            case Role.ROLE_USER:
+                return Role.User;
+            case Role.ROLE_GUEST:
+                return Role.Guest;
+            default:
+                return Role.Guest;
+        }
+    }
 }
 
 @Module({
@@ -38,16 +136,16 @@ class UserModule extends VuexModule {
     }
 
     get canManageProfiles() {
-        return this.user ? this.user.privileges.indexOf(Privileges.manageProfiles) != -1 : false;
+        return this.user ? Privileges.canManageUsers(this.user) : false;
     }
 
 
     get canManagePrograms() {
-        return this.user ? this.user.privileges.indexOf(Privileges.managePrograms) != -1 : false;
+        return this.user ? Privileges.canManagePrograms(this.user) : false;
     }
 
     get canManageFirmware() {
-        return this.user ? this.user.privileges.indexOf(Privileges.manageFirmware) != -1 : false;
+        return this.user ? Privileges.canManageFirmware(this.user) : false;
     }
 
     get userName() {

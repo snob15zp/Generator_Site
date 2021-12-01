@@ -5,6 +5,7 @@ namespace Database\Seeders;
 
 
 use App\Models\User;
+use App\Models\UserOwner;
 use App\Models\UserProfile;
 use App\Models\UserRole;
 use Database\Factories\FolderFactory;
@@ -31,28 +32,35 @@ class UserTableSeeder extends Seeder
         ]));
 
         $userRole = UserRole::where('name', UserRole::ROLE_USER)->first();
+        $userIds = collect();
         User::factory()
             ->count(30)
             ->make()
-            ->each(function ($user) use ($userRole) {
+            ->each(function ($user) use ($userRole, $userIds) {
+                $userProfile = new UserProfileFactory();
+                $user->role()->associate($userRole);
+                $user->save();
+                $user->profile()->save($userProfile->make());
+                $userIds->add($user->id);
+            });
+
+        $userRole = UserRole::where('name', UserRole::ROLE_PROFESSIONAL)->first();
+        User::factory()
+            ->count(10)
+            ->make()
+            ->each(function ($user) use ($userRole, $userIds) {
                 $userProfile = new UserProfileFactory();
                 $user->role()->associate($userRole);
                 $user->save();
                 $user->profile()->save($userProfile->make());
 
-                $folderFactory = new FolderFactory();
-                $folders = $folderFactory
-                    ->count(20)
-                    ->make();
-
-                $user->folders()->saveMany($folders);
-
-//                $folders->each(function ($folder) use ($user) {
-//                    $programs = (new ProgramFactory())
-//                        ->count(100)
-//                        ->make();
-//                    $folder->programs()->saveMany($programs);
-//                });
+                $userIds->shuffle()->slice(0, 10)->each(function ($id) use ($user) {
+                    $userOwner = new UserOwner([
+                        'owner_id' => $user->id,
+                        'user_id' => $id
+                    ]);
+                    $userOwner->save();
+                });
             });
     }
 }

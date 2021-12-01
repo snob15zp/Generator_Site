@@ -13,6 +13,7 @@ import {
     Software,
     SoftwareJson
 } from "@/store/models";
+import {Role} from "@/store/modules/user";
 
 function userProfileFromJson(json: UserProfileJson): UserProfile {
     return {
@@ -27,6 +28,7 @@ function userProfileFromJson(json: UserProfileJson): UserProfile {
         updatedAt: json.updated_at ? moment(json.updated_at).toDate() : null
     } as UserProfile;
 }
+
 function userProfileToJson(userProfile: UserProfile): UserProfileJson {
     return {
         "id": userProfile.id,
@@ -47,7 +49,7 @@ function userFromJson(json: UserJson): User {
         profile: userProfileFromJson(json.profile),
         privileges: json.privileges,
         token: json.token,
-        role: json.role
+        role: Role.parse(json.role)
     } as User;
 }
 

@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Models\UserPrivileges;
 use App\Models\UserRole;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -26,28 +28,20 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        Gate::define(UserPrivileges::VIEW_USERS, function ($user) {
-            return $user->hasRole(UserRole::ROLE_ADMIN);
-        });
-
-        Gate::define(UserPrivileges::CREATE_USER, function ($user) {
-            return $user->hasRole(UserRole::ROLE_ADMIN);
-        });
-
-        Gate::define(UserPrivileges::MANAGE_PROGRAMS, function ($user) {
-            return $user->hasRole(UserRole::ROLE_ADMIN);
-        });
-
-        Gate::define(UserPrivileges::VIEW_PROFILE, function ($user, $profile) {
-            return $user->id === $profile->user->id || $user->hasRole(UserRole::ROLE_ADMIN);
-        });
-
-        Gate::define(UserPrivileges::VIEW_PROGRAMS, function ($user, $owner) {
-            return $user->hasRole(UserRole::ROLE_ADMIN) || $user->id === $owner->id;
-        });
-
-        Gate::define(UserPrivileges::MANAGE_FIRMWARE, function ($user) {
-            return $user->hasRole(UserRole::ROLE_ADMIN);
-        });
+        try {
+            $roles = UserRole::query()->get();
+            UserPrivileges::query()->get()->mapToGroups(function ($item) use ($roles) {
+                $role = $roles->first(function ($role) use ($item) {
+                    return $role->id == $item->user_role_id;
+                });
+                return [$item->name => $role->name];
+            })->each(function ($roles, $privilege) {
+                Gate::define($privilege, function ($user) use ($roles) {
+                    return collect($roles)->contains($user->role->name);
+                });
+            });
+        } catch(QueryException $e) {
+            Log::error("Unable to boot AuthServiceProvider");
+        }
     }
 }

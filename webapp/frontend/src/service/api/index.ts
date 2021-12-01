@@ -23,10 +23,9 @@ api.interceptors.request.use((config) => {
 }, error => Promise.reject(error));
 
 api.interceptors.response.use((response) => response, (error) => {
-    const originalRequest = error.config;
     if (error.response.status === 401) {
         UserModule.reset();
-        router.push("/login");
+        router.replace("/login");
 
         // if (!originalRequest._retry) {
         //     originalRequest._retry = true;
@@ -44,8 +43,6 @@ api.interceptors.response.use((response) => response, (error) => {
         //         })
         // }
     }
-
-
     return Promise.reject(error);
 });
 

@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateSessionTable extends Migration
+class CreateFolderProgramsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,14 +13,15 @@ class CreateSessionTable extends Migration
      */
     public function up()
     {
-        Schema::create('session', function (Blueprint $table) {
+        Schema::create('folder_program', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
-            $table->string('token', 512)->unique()->nullable(false);
-            $table->unsignedInteger('expires_in');
-            $table->boolean('active');
+            $table->unsignedBigInteger('program_id');
+            $table->foreign('program_id')->references('id')->on('program');
+
+            $table->unsignedBigInteger('folder_id');
+            $table->foreign('folder_id')->references('id')->on('folder');
+
             $table->timestamps();
-            $table->foreign('user_id')->references('id')->on('user');
         });
     }
 
@@ -31,6 +32,6 @@ class CreateSessionTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('session');
+        Schema::dropIfExists('program');
     }
 }

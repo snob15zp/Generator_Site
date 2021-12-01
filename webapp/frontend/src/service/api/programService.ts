@@ -9,6 +9,7 @@ import {
 import api from ".";
 import transformers from "./transformers";
 import {apiErrorMapper} from "@/service/api/utils";
+import axios from "axios";
 
 class ProgramService {
     async fetchFolders(userProfileId: string): Promise<Folder[]> {
@@ -47,12 +48,14 @@ class ProgramService {
     async uploadFile(fileRequest: UploadFileRequest): Promise<void> {
         const length = fileRequest.files.length;
         const promises: Array<Promise<void>> = [];
+        const url = fileRequest.folder ? `/folder/${fileRequest.folder.id}/programs` : '/programs';
         for (let i = 0; i < length; i += 20) {
             const formData = new FormData();
             fileRequest.files.slice(i, Math.min(i + 20, length))
                 .forEach((file, idx) => formData.append(`programs[]`, file));
 
-            promises.push(new Promise<void>((resolve, reject) => api.post(`/folders/${fileRequest.folder.id}/programs`, formData, {
+            promises.push(new Promise<void>((resolve, reject) => api.post(url, formData, {
+                    cancelToken: fileRequest.cancelSource?.token,
                     onUploadProgress: function (progressEvent) {
                         const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
                         fileRequest.onProgressCallback(percentCompleted);
@@ -62,7 +65,15 @@ class ProgramService {
                     },
                 })
                     .then(() => resolve())
-                    .catch((error) => reject(new Error(apiErrorMapper(error))))
+                    .catch((error) => {
+                        console.log(error);
+                        // TODO axios.isCancel does not recognize a cancel properly.
+                        if (axios.isCancel(error)) {
+                            resolve();
+                        } else {
+                            reject(new Error(apiErrorMapper(error)))
+                        }
+                    })
             ));
         }
         await Promise.all(promises);
@@ -117,6 +128,14 @@ class ProgramService {
                 .then(response => resolve(new Blob([response.data], {type: 'application/octet-stream'})))
                 .catch(error => reject(new Error(apiErrorMapper(error))))
         })
+    }
+
+    async getAll(): Promise<Program[]> {
+        return new Promise<Program[]>((resolve, reject) => {
+            api.get(`/programs`)
+                .then(response => resolve(response.data.map((json: ProgramJson) => transformers.programFromJson(json))))
+                .catch(error => reject(new Error(apiErrorMapper(error))))
+        });
     }
 }
 

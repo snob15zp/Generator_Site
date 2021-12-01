@@ -15,13 +15,13 @@ class CreateProgramsTable extends Migration
     {
         Schema::create('program', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('folder_id');
             $table->string('name');
             $table->string('hash')->nullable(false);
             $table->boolean('active');
+            $table->unsignedBigInteger('owner_user_id');
+            $table->foreign('owner_user_id')->references('id')->on('user');
             $table->timestamps();
-            $table->foreign('folder_id')->references('id')->on('folder');
-            $table->unique(['name', 'folder_id']);
+            $table->unique(['name']);
         });
     }
 

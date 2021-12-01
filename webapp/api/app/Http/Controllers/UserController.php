@@ -5,14 +5,21 @@ namespace App\Http\Controllers;
 use App\Http\Resources\UserResource;
 use App\Models\ResetPassword;
 use App\Models\User;
+use App\Models\UserPrivileges;
+use App\Models\UserProfile;
+use App\Models\UserRole;
 use App\Notifications\ForgetPasswordNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Vinkla\Hashids\Facades\Hashids;
 
 
 class UserController extends Controller
@@ -91,6 +98,90 @@ class UserController extends Controller
         ]);
 
         return $this->respondWithMessage("Password changed");
+    }
+
+    /**
+     * @param Request $request
+     * @return ResourceCollection
+     * @throws ValidationException
+     */
+    public function getAll(Request $request): ResourceCollection
+    {
+        $user = $request->user();
+        if ($user->cannot(UserPrivileges::VIEW_USERS)) {
+            $this->raiseError(403, 'Resource not available');
+        }
+
+        $this->validate($request, [
+            'roles' => 'nullable|array',
+            'owner_id' => 'nullable|string'
+        ]);
+
+        $ownerId = $request->input('owner_id');
+        $roles = collect($request->input('roles'))->filter(function ($role) use ($user) {
+            return UserRole::compare($role, $user->role->name) > 0;
+        });
+
+        $query = User::with(['profile', 'role']);
+        $select = collect(['user.*']);
+
+        if ($user->can(UserPrivileges::MANAGE_USERS)) {
+            if ($ownerId != null) {
+                $select->add('user_owner.owner_id');
+                $query->join('user_owner', 'user_owner.user_id', '=', 'user.id')
+                    ->where('user_owner.owner_id', '=', Hashids::decode($ownerId)[0]);
+            }
+
+            if ($roles->count() > 0) {
+                $select->add('user_role.name');
+                $query->join('user_role', "user_role.id", "=", "user.role_id")
+                    ->whereIn('user_role.name', $roles);
+            }
+        } elseif ($user->can(UserPrivileges::MANAGE_OWN_USERS)) {
+            $select->add('user_owner.owner_id');
+            $query->join('user_owner', "user_owner.user_id", "=", "user.id")
+                ->where("user_owner.owner_id", "=", $user->id);
+        } else {
+            $this->raiseError(403, 'Resource not available');
+        }
+        return UserResource::collection($query->select($select->all())->get());
+    }
+
+    public function delete(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if ($user->cannot(UserPrivileges::MANAGE_OWN_USERS) && $user->cannot(UserPrivileges::MANAGE_USERS)) {
+            $this->raiseError(403, 'Resource not available');
+        }
+
+        $this->validate($request, [
+            'ids' => 'required|array|min:1'
+        ]);
+
+        $ids = collect($request->input('ids'))->map(function ($id) {
+            return Hashids::decode($id)[0];
+        });
+
+        $query = User::query()->whereIn('id', $ids);
+        $select = ['user.*'];
+        if ($user->can(UserPrivileges::MANAGE_OWN_USERS)) {
+            $select[] = "user_owner.owner_id";
+            $query->join('user_owner', "user_owner.user_id", "=", "user.id")
+                ->where("user_owner.owner_id", "=", $user->id);
+        }
+
+        try {
+            DB::beginTransaction();
+            $query->select($select)->get()->each(function ($user) {
+               $user->delete();
+            });
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error($e->getMessage());
+            $this->raiseError(500, "Cannot to delete users");
+        }
+        return $this->respondWithMessage();
     }
 
     public function update(Request $request, $id)

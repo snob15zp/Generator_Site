@@ -15,7 +15,6 @@
         >{{ route.meta.title }}</v-btn>
       </v-btn-toggle>
     </v-row>
-    <v-spacer/>
     <div class="pa-4 d-flex">
       <v-icon class="ma-2" x-large>mdi-account</v-icon>
       <div class="mt-1">{{ userName }}<small class="d-flex">{{ userRoleName }}</small></div>

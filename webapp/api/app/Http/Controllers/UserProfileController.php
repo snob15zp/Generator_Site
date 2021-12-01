@@ -53,7 +53,6 @@ class UserProfileController extends Controller
             });
 
         $perPage = $request->input('perPage', 10);
-        $profiles = null;
         $search = trim($request->input('query', ''));
         if ($search !== '') {
             $where = 'MATCH(name, surname, address, phone_number, email) AGAINST(? IN BOOLEAN MODE)';
@@ -66,7 +65,7 @@ class UserProfileController extends Controller
 
     public function deleteAll(Request $request)
     {
-        if ($request->user()->cannot(UserPrivileges::CREATE_USER)) {
+        if ($request->user()->cannot(UserPrivileges::MANAGE_USERS)) {
             $this->raiseError(403, 'Operation is restricted');
         }
 
@@ -87,7 +86,7 @@ class UserProfileController extends Controller
 
     public function delete(Request $request, $id)
     {
-        if ($request->user()->cannot(UserPrivileges::CREATE_USER)) {
+        if ($request->user()->cannot(UserPrivileges::MANAGE_USERS)) {
             $this->raiseError(403, 'Operation is restricted');
         }
 
@@ -146,7 +145,7 @@ class UserProfileController extends Controller
 
     public function create(Request $request)
     {
-        if ($request->user()->cannot(UserPrivileges::CREATE_USER)) {
+        if ($request->user()->cannot(UserPrivileges::MANAGE_USERS)) {
             $this->raiseError(403, 'Operation is restricted');
         }
 

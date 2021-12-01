@@ -50,7 +50,8 @@
     "field-address": "Address",
     "field-phone-number": "Phone number",
     "field-password": "Password",
-    "field-password-confirm": "Confirm Password"
+    "field-password-confirm": "Confirm Password",
+    "field-role": "Role"
   },
   "not-found": {
     "title": "Something's wrong here&#8230;",
@@ -64,7 +65,7 @@
     "user_profile_not_found": "User profile was not found",
     "general_error": "An error has occurred. Operation could not complete.",
     "unauthorized": "The authorization token has expired",
-    "duplicate_program": "Duplication programs",
+    "duplicate_program": "Some programs already exist",
     "invalid_credentials": "Invalid login or password"
   },
   "$vuetify": {

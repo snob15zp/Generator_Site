@@ -6,6 +6,8 @@ use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\DB;
 
 $router->group(['prefix' => 'users'], function () use ($router) {
+    $router->get('/', ['middleware' => 'auth', 'uses' => 'UserController@getAll']);
+
     $router->post('login', 'UserController@login');
     $router->put('refresh', 'UserController@refresh');
     $router->post('reset-password', 'UserController@resetPassword');
@@ -13,6 +15,7 @@ $router->group(['prefix' => 'users'], function () use ($router) {
 
     $router->post('logout', ['middleware' => 'auth', 'uses' => 'UserController@logout']);
     $router->put('/{id}', ['middleware' => 'auth', 'uses' => 'UserController@update']);
+    $router->delete('/', ['middleware' => 'auth', 'uses' => 'UserController@delete']);
 
     $router->get('/{id}/profile', ['middleware' => 'auth', 'uses' => 'UserProfileController@getByUserId']);
 });
@@ -25,11 +28,13 @@ $router->group(['prefix' => 'folders'], function () use ($router) {
     $router->get('/{id}/download-link', ['middleware' => 'auth', 'uses' => 'FolderController@prepareDownload']);
     $router->get('/{id}/download/{hash}', 'FolderController@import');
 
-    $router->post('/{folderId}/programs', ['middleware' => 'auth', 'uses' => 'ProgramController@create']);
+    $router->post('/{folderId}/programs', ['middleware' => 'auth', 'uses' => 'ProgramController@createWithFolder']);
     $router->get('/{folderId}/programs', ['middleware' => 'auth', 'uses' => 'ProgramController@getAll']);
 });
 
 $router->group(['prefix' => 'programs'], function () use ($router) {
+    $router->post('/', ['middleware' => 'auth', 'uses' => 'ProgramController@create']);
+    $router->get('/', ['middleware' => 'auth', 'uses' => 'ProgramController@getAllForUser']);
     $router->get('/{id}/download', ['middleware' => 'auth', 'uses' => 'ProgramController@download']);
     $router->delete('/{id}', ['middleware' => 'auth', 'uses' => 'ProgramController@delete']);
     $router->delete('/', ['middleware' => 'auth', 'uses' => 'ProgramController@deleteAll']);

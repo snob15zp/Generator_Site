@@ -1,9 +1,12 @@
+import {Role} from "@/store/modules/user";
+import {CancelTokenSource} from "axios";
+
 export interface UserJson {
-    id: String;
-    token: String;
-    privileges: String[];
+    id: string;
+    token: string;
+    privileges: string[];
     profile: UserProfileJson;
-    role: String;
+    role: string;
 }
 
 export interface UserProfileJson {
@@ -55,22 +58,22 @@ export interface ProgramJson {
 }
 
 export interface User {
-    id: String;
-    token: String;
-    name: String;
-    privileges: String[];
+    id: string;
+    token: string;
+    name: string;
+    privileges: string[];
     profile: UserProfile;
-    role: String;
+    role: Role;
 }
 
 export interface UserCredentials {
-    login: String;
-    password: String;
+    login: string;
+    password: string;
 }
 
 export interface ErrorResponse {
     code: Number;
-    message?: String;
+    message?: string;
 }
 
 export interface PagingRequest {
@@ -98,6 +101,7 @@ export interface UserProfile {
     createdAt?: Date;
     updatedAt?: Date;
     password?: string;
+    role?: Role;
 }
 
 export interface Program {
@@ -115,8 +119,9 @@ export interface Folder {
 
 export interface UploadFileRequest {
     files: File[];
-    folder: Folder;
+    folder?: Folder;
     onProgressCallback: (_: number) => void;
+    cancelSource?: CancelTokenSource
 }
 
 export interface DownloadFileRequest {
