@@ -1,17 +1,17 @@
 import moment from "moment";
 import {
-    UserJson,
-    User,
-    UserProfileJson,
-    UserProfile,
-    FolderJson,
+    Firmware,
+    FirmwareJson,
     Folder,
+    FolderJson,
     Program,
     ProgramJson,
-    FirmwareJson,
-    Firmware,
     Software,
-    SoftwareJson
+    SoftwareJson,
+    User,
+    UserJson,
+    UserProfile,
+    UserProfileJson
 } from "@/store/models";
 import {Role} from "@/store/modules/user";
 
@@ -38,14 +38,12 @@ function userProfileToJson(userProfile: UserProfile): UserProfileJson {
         "email": userProfile.email,
         "date_of_birth": userProfile.dateOfBirth ? moment(userProfile.dateOfBirth).format("YYYY-MM-DD") : null,
         "phone_number": userProfile.phoneNumber,
-        "password": userProfile.password
     } as UserProfileJson;
 }
 
 function userFromJson(json: UserJson): User {
     return {
         id: json.id,
-        name: json.profile.name,
         profile: userProfileFromJson(json.profile),
         privileges: json.privileges,
         token: json.token,
@@ -53,10 +51,19 @@ function userFromJson(json: UserJson): User {
     } as User;
 }
 
+function userToJson(user: User): UserJson {
+    return {
+        "profile": userProfileToJson(user.profile),
+        "role": user.role.name,
+        "password": user.password
+    } as UserJson;
+}
+
 function programFromJson(json: ProgramJson): Program {
     return {
         id: json.id,
-        name: json.name
+        name: json.name,
+        owner: json.owner ? userFromJson(json.owner) : null
     }
 }
 
@@ -66,7 +73,8 @@ function folderFromJson(json: FolderJson): Folder {
         name: json.name,
         expiredAt: moment(json.created_at).add(json.expires_in, "s").toDate(),
         createdAt: moment(json.created_at).toDate(),
-        isEncrypted: json.is_encrypted || false
+        isEncrypted: json.is_encrypted || false,
+        active: json.active || true
     }
 }
 
@@ -105,6 +113,7 @@ function softwareFromJson(json: SoftwareJson): Software {
 
 export default {
     userFromJson,
+    userToJson,
     userProfileFromJson,
     userProfileToJson,
     folderFromJson,

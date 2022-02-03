@@ -1,13 +1,13 @@
 import i18n from "@/i18n";
-import {UserProfile} from "@/store/models";
 import Component from "vue-class-component";
 import {Vue} from "vue-property-decorator";
 import {maxLength, minLength, required, email} from "vuelidate/lib/validators";
 import {FormValidationHelper} from "./FormValidationHelper";
 import {FormValidator} from "./types";
+import {UserProfileFormData} from "@/components/UserProfileForm.vue";
 
 const validations = {
-    userProfile: {
+    userProfileFormData: {
         name: {required, minLength: minLength(4), maxLength: maxLength(40)},
         password: {minLength: minLength(8), maxLength: maxLength(128)},
         surname: {required, minLength: minLength(4), maxLength: maxLength(40)},
@@ -28,10 +28,10 @@ const validations = {
     },
     confirmPassword: {
         sameAsPassword(repeatPassword: string, v: any): boolean {
-            if (!v.userProfile.password) {
+            if (!v.userProfileFormData.password) {
                 return true;
             } else {
-                return repeatPassword == v.userProfile.password;
+                return repeatPassword == v.userProfileFormData.password;
             }
         }
     }
@@ -52,15 +52,15 @@ export const fields = {
 @Component({
     validations: validations
 })
-export default class UserProfileFormValidator extends Vue implements FormValidator<UserProfile> {
+export default class UserProfileFormValidator extends Vue implements FormValidator<UserProfileFormData> {
     private validationHelper = new FormValidationHelper();
 
-    get fields(): { [key in keyof UserProfile]: string } {
+    get fields(): { [key in keyof UserProfileFormData]: string } {
         return fields;
     }
 
-    validateField(field: keyof UserProfile): string | string[] {
-        return this.validationHelper.validate(this.$v.userProfile[field]!, this.fields[field]!);
+    validateField(field: keyof UserProfileFormData): string | string[] {
+        return this.validationHelper.validate(this.$v.userProfileFormData[field]!, this.fields[field]!);
     }
 
     validateConfirmPassword(): string | string[] {

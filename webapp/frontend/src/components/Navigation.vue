@@ -1,11 +1,11 @@
 <template>
   <v-navigation-drawer
-      v-if="isAuthorized && showNavigation"
-      v-model="computedVisible"
+      v-if="isAuthorized && showNavigation && isRoutesNotEmpty"
+      v-model="visibleSync"
       floating
       app>
     <v-app-bar flat dark class="v-bar--underline">
-      <site-title />
+      <site-title/>
     </v-app-bar>
     <v-list nav dense class="mt-2">
       <v-list-item-group active-class="primary--text" v-model="selected">
@@ -22,36 +22,42 @@
 
 <script lang="ts">
 
-import {Component, Prop, Vue} from "vue-property-decorator";
+import {Component, Prop, PropSync, Vue} from "vue-property-decorator";
 import UserModule from "@/store/modules/user";
 import SiteTitle from "@/components/SiteTitle.vue";
+import {RouteConfig, RouterOptions} from "vue-router/types/router";
+import {navigationRouters} from "@/router";
 
 @Component({
   components: {SiteTitle}
 })
 export default class Navigation extends Vue {
-  @Prop() readonly visible!: boolean;
+  @PropSync('visible') readonly visibleSync!: boolean;
 
   private selected = 0;
-
-  get computedVisible() {
-    return this.visible;
-  }
-
-  set computedVisible(value: boolean) {
-    this.$emit('update:visible', value);
-  }
 
   get isAuthorized() {
     return UserModule.isAuthorized;
   }
 
+  get isRoutesNotEmpty() {
+    return (this.routers?.length || 0) > 0;
+  }
+
   get showNavigation() {
-    return UserModule.canManageProfiles && this.$route.meta?.requiresAuth;
+    return this.$route.meta?.requiresAuth;
   }
 
   get routers() {
-    return this.$router.options.routes?.filter(config => config.meta?.navigation)
+    return navigationRouters(UserModule.user, this.$router.options.routes);
+  }
+
+  private isRouterAllow(config: RouteConfig) {
+    if (config.meta?.privileges) {
+      return UserModule.user?.privileges?.some(p => config.meta?.privileges?.indexOf(p) >= 0);
+    } else {
+      return true;
+    }
   }
 }
 

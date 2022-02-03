@@ -2,24 +2,32 @@
 
 namespace App\Http\Resources;
 
+use App\Models\User;
+use DateTime;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Vinkla\Hashids\Facades\Hashids;
 
 /**
  * @property integer id
  * @property string name
- * @property string hash
- * @property mixed created_at
+ * @property DateTime $createdAt
  */
 class ProgramResource extends JsonResource
 {
+    private $owner;
+
+    public function owner(User $owner): ProgramResource
+    {
+        $this->owner = $owner;
+        return $this;
+    }
+
     public function toArray($request): array
     {
         return [
-            'id' => Hashids::encode($this->id),
+            'id' => $this->id,
             'name' => $this->name,
-            'hash' => $this->hash,
-            'created_at' => $this->created_at,
+            'created_at' => $this->createdAt,
+            'owner' => $this->owner != null ? new SimpleUserResource($this->owner) : null
         ];
     }
 }

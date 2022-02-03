@@ -8,6 +8,7 @@ use App\Models\Firmware;
 use App\Models\FirmwareFiles;
 use App\Models\UserPrivileges;
 use App\Utils\Files;
+use App\Utils\HashUtils;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -61,7 +62,7 @@ class FirmwareController extends Controller
             $this->raiseError(403, "Resource not available");
         }
 
-        $firmware = Firmware::where('id', Hashids::decode($id))->first();
+        $firmware = Firmware::where('id', HashUtils::decode($id))->first();
         if ($firmware == null) {
             $this->raiseError(404, "Firmware not found");
         }

@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <app-bar @on-click-show-drawer="showNavDrawer"/>
-    <navigation v-if="$vuetify.breakpoint.smAndDown" :visible.sync="navDrawerVisible"/>
+    <navigation :visible.sync="navDrawerVisible"/>
     <v-main>
       <toast/>
       <v-container class="justify-center align-start pa-0">

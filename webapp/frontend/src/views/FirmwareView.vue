@@ -74,7 +74,7 @@
       </v-form>
     </v-dialog>
 
-    <v-card outlined class="mt-8 mb-8">
+    <v-card outlined class="mt-2 mb-2" v-if="canManageFirmware">
       <v-card-title>
         Releases
         <v-spacer/>
@@ -116,6 +116,12 @@
         </template>
       </v-data-table>
     </v-card>
+    <v-card outlined class="mt-2 mb-2" v-else>
+      <v-card-title>Error</v-card-title>
+      <v-card-text>
+        You don't have access to manage firmware.
+      </v-card-text>
+    </v-card>
   </v-container>
 </template>
 
@@ -129,6 +135,7 @@ import saveDownloadFile from "@/utils/download-file";
 import {EventBus} from "@/utils/event-bus";
 import {FormRef} from "@/forms/types";
 import {FirmwareUploadForm} from "@/forms/FirmwareUploadForm";
+import UserModule from "@/store/modules/user";
 
 
 @Component
@@ -152,6 +159,10 @@ export default class FirmwareView extends Vue {
   private file: File | null = null;
 
   private loadingFirmwareId: string | null = null;
+
+  private get canManageFirmware() {
+    return UserModule.canManageFirmware;
+  }
 
   private get headers() {
     return [

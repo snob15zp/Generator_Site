@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateFolderProgramsTable extends Migration
+class CreateProgramsHistoryTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,15 +13,13 @@ class CreateFolderProgramsTable extends Migration
      */
     public function up()
     {
-        Schema::create('folder_program', function (Blueprint $table) {
+        Schema::create('program_history', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('program_id');
-            $table->foreign('program_id')->references('id')->on('program');
-
-            $table->unsignedBigInteger('folder_id');
-            $table->foreign('folder_id')->references('id')->on('folder');
-
+            $table->string('name');
+            $table->unsignedBigInteger('user_owner_id');
             $table->timestamps();
+            $table->foreign('user_owner_id')->references('id')->on('user');
+            $table->unique(['name','user_owner_id']);
         });
     }
 
@@ -32,6 +30,6 @@ class CreateFolderProgramsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('program');
+        Schema::dropIfExists('program_history');
     }
 }

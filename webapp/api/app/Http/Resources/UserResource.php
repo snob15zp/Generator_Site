@@ -4,32 +4,26 @@ namespace App\Http\Resources;
 
 use App\Models\UserProfile;
 use App\Models\UserRole;
+use App\Utils\HashUtils;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Log;
 use Vinkla\Hashids\Facades\Hashids;
 
 /**
  * @property integer id
  * @property UserRole role
  * @property UserProfile profile
+ * @property mixed $owners
  */
 class UserResource extends JsonResource
 {
-    private $token;
-
-    public function __construct($user, $token)
-    {
-        parent::__construct($user);
-        $this->token = $token;
-    }
-
     public function toArray($request): array
     {
         return [
-            'id' => Hashids::encode($this->id),
-            'privileges' => UserPrivilegesResource::collection($this->role->privileges),
+            'id' => HashUtils::encode($this->id),
             'profile' => new UserProfileResource($this->profile),
-            'token' => $this->token,
-            'role' => $this->role->name
+            'role' => $this->role->name,
+            'owner' => $this->owners != null ? UserResource::collection($this->owners) : null
         ];
     }
 }

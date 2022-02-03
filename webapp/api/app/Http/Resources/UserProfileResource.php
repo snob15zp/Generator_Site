@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Models\User;
+use App\Utils\HashUtils;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Vinkla\Hashids\Facades\Hashids;
 
@@ -15,6 +17,7 @@ use Vinkla\Hashids\Facades\Hashids;
  * @property mixed date_of_birth
  * @property mixed created_at
  * @property mixed updated_at
+ * @property User $user
  */
 class UserProfileResource extends JsonResource
 {
@@ -22,7 +25,7 @@ class UserProfileResource extends JsonResource
     public function toArray($request): array
     {
         $collection = collect([
-            'id' => Hashids::encode($this->id),
+            'id' => HashUtils::encode($this->id),
             'name' => $this->name,
             'surname' => $this->surname,
             'email' => $this->email,

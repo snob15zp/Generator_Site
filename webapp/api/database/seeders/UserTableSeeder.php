@@ -49,18 +49,20 @@ class UserTableSeeder extends Seeder
             ->count(10)
             ->make()
             ->each(function ($user) use ($userRole, $userIds) {
-                $userProfile = new UserProfileFactory();
+                $userProfileFactory = new UserProfileFactory();
+                $userProfile = $userProfileFactory->make();
+                $userProfile->email = $user->login;
                 $user->role()->associate($userRole);
                 $user->save();
-                $user->profile()->save($userProfile->make());
+                $user->profile()->save($userProfile);
 
-                $userIds->shuffle()->slice(0, 10)->each(function ($id) use ($user) {
-                    $userOwner = new UserOwner([
-                        'owner_id' => $user->id,
-                        'user_id' => $id
-                    ]);
-                    $userOwner->save();
-                });
+//                $userIds->shuffle()->slice(0, 10)->each(function ($id) use ($user) {
+//                    $userOwner = new UserOwner([
+//                        'owner_id' => $user->id,
+//                        'user_id' => $id
+//                    ]);
+//                    $userOwner->save();
+//                });
             });
     }
 }

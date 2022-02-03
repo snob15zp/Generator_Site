@@ -2,6 +2,7 @@ import {PagingRequest, PagingResponse, PagingResponseJson, UserProfile, UserProf
 import transformers from "./transformers";
 import api from "."
 import {apiErrorMapper} from "@/service/api/utils";
+import builder from "@/service/api/builder";
 
 class UserProfileService {
     async delete(userProfiles: Array<UserProfile>): Promise<void> {
@@ -26,10 +27,7 @@ class UserProfileService {
     }
 
     async fetchAll(pagingRequest: PagingRequest): Promise<PagingResponse<UserProfile>> {
-        const query = `perPage=${pagingRequest.itemsPerPage}&page=${pagingRequest.page}&query=${pagingRequest.query}&`
-            + pagingRequest.sortBy.map((item, index) =>
-                `sortBy[]=${item}&sortDir[]=${pagingRequest.sortDesc[index] ? 'asc' : 'desc'}`
-            ).join('&');
+        const query = builder.queryFromPagingRequest(pagingRequest);
 
         return new Promise<PagingResponse<UserProfile>>((resolve, reject) => {
             api.get<PagingResponseJson<UserProfileJson>>("/profiles?" + query)

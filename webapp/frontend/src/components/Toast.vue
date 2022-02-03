@@ -5,7 +5,7 @@
       dismissible
       transition="scale-transition"
       border="right"
-      class="ml-2 mr-2 mt-2">{{ message }}
+      class="ml-2 mr-2 mt-2"><span v-html="message"></span>
   </v-alert>
 </template>
 

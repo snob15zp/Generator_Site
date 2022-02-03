@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\FirmwareFiles;
+use App\Utils\HashUtils;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Vinkla\Hashids\Facades\Hashids;
 
@@ -19,7 +20,7 @@ class FirmwareResource extends JsonResource
     public function toArray($request): array
     {
         return [
-            'id' => Hashids::encode($this->id),
+            'id' => HashUtils::encode($this->id),
             'active' => $this->active,
             'version' => $this->version,
             'files' => FirmwareFilesResource::collection($this->files),

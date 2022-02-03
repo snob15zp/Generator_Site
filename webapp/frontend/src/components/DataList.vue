@@ -1,16 +1,15 @@
 <template>
-  <v-card :loading="loading">
-    <v-card-title>
-      {{ title }}
-      <v-spacer/>
-      <slot name="action"></slot>
-    </v-card-title>
+  <v-card :loading="loading" elevation="0">
     <v-overlay :value="loading" absolute opacity="0.5" color="#ffffff"></v-overlay>
-    <v-toolbar flat class="mt-4">
+    <v-toolbar flat>
       <v-toolbar-items class="row row--dense">
-        <v-checkbox class="pt-4 col col-1" @change="onSelectAllChanged"/>
+        <v-checkbox
+            class="pt-4 col col-1"
+            @click.stop="onSelectAllChanged"
+            :indeterminate="someNodesSelected"
+            :input-value="allNodeSelected"/>
         <v-select
-            class="col col-4"
+            class="col col-2"
             :items="sortItems"
             label="Sort By"
             item-text="label"
@@ -31,52 +30,51 @@
           </template>
         </v-select>
         <v-text-field
-            class="col col-7"
+            class="col col-6"
             v-model="options.filter"
             append-icon="mdi-magnify"
             :label="$t('user-profile.search')"
             single-line
             hide-details
         ></v-text-field>
+        <v-spacer/>
+        <slot name="action"></slot>
       </v-toolbar-items>
     </v-toolbar>
-    <v-virtual-scroll :height="height" item-height="50" :items="filteredItems">
-      <template v-slot:default="{ item }">
-        <v-list-item :key="item.key">
-          <v-list-item-action>
-            <v-checkbox v-model="selectedSync" :value="item.item"/>
-          </v-list-item-action>
-          <v-list-item-content @click="onItemClicked(item.item)">
-            <router-link v-if="item.href" :to="item.href">
-              <v-list-item-title v-text="item.title"></v-list-item-title>
-            </router-link>
-            <v-list-item-title v-else v-text="item.title"></v-list-item-title>
-            <v-list-item-subtitle v-if="item.subtitle" v-text="item.subtitle"></v-list-item-subtitle>
-          </v-list-item-content>
-          <v-list-item-action>
-            <v-row>
-              <slot name="item-action" :item="item.item"></slot>
-            </v-row>
-          </v-list-item-action>
-        </v-list-item>
-      </template>
-    </v-virtual-scroll>
+    <v-list-item-group multiple v-model="selectedSync">
+      <v-virtual-scroll :height="height" item-height="50" :items="filteredItems">
+        <template v-slot:default="{ item }">
+          <v-list-item :key="item.key" :value="item.item">
+            <template v-slot:default="{ active, }">
+              <v-list-item-action>
+                <v-checkbox :input-value="active" :true-value="item.item"/>
+              </v-list-item-action>
+              <v-list-item-content @click="onItemClicked(item.item)">
+                <slot name="item-content" :item="item.item"/>
+              </v-list-item-content>
+              <v-list-item-action>
+                <v-row>
+                  <slot name="item-action" :item="item.item"></slot>
+                </v-row>
+              </v-list-item-action>
+            </template>
+          </v-list-item>
+        </template>
+      </v-virtual-scroll>
+    </v-list-item-group>
   </v-card>
 </template>
 
 <script lang="ts">
 
-import {Component, Emit, Model, Prop, PropSync, Vue, Watch} from "vue-property-decorator";
+import {Component, Emit, Prop, PropSync, Vue} from "vue-property-decorator";
 import {compare} from "@/utils/objects";
 
 export interface DataListHeader {
   text: string,
   value: string | Function,
   sortable?: boolean,
-  title?: boolean
-  subtitle?: boolean,
-  filtered?: boolean,
-  href?: string | Function
+  filtered?: boolean
 }
 
 interface Sort {
@@ -111,9 +109,6 @@ export default class DataList extends Vue {
   private options: Options = {}
   private selectAll = false;
 
-  private titleField: string | Function | null = null;
-  private hrefHeader: string | Function | null = null;
-  private subtitleField: string | Function | null = null;
   private filteredFields: (string | Function)[] = [];
 
   private get sortItems(): Sort[] {
@@ -130,17 +125,17 @@ export default class DataList extends Vue {
 
   mounted() {
     this.filteredFields = [];
-    this.titleField = null;
-    this.subtitleField = null;
-
     this.headers.forEach(header => {
-      if (header.title) {
-        this.titleField = header.value;
-        this.hrefHeader = header.href ?? null;
-      }
-      if (header.subtitle) this.subtitleField = header.value;
       if (header.filtered) this.filteredFields.push(header.value);
     });
+  }
+
+  private get someNodesSelected() {
+    return this.selectedSync.length > 0 && !this.allNodeSelected;
+  }
+
+  private get allNodeSelected() {
+    return this.selectedSync.length == this.filteredItems.length;
   }
 
   private get filteredItems(): Node[] {
@@ -151,9 +146,6 @@ export default class DataList extends Vue {
     return result.map(item => {
       return {
         item: item,
-        title: this.titleField ? DataList.getValueByKey(item, this.titleField) : null,
-        subtitle: this.subtitleField ? DataList.getValueByKey(item, this.subtitleField) : null,
-        href: this.hrefHeader ? DataList.getValueByKey(item, this.hrefHeader) : null,
         key: idx++
       } as Node;
     });
@@ -163,15 +155,16 @@ export default class DataList extends Vue {
     if (this.options.sort) {
       const field = this.options.sort.field;
       const isAscending = this.options.sort.isAscending ?? true;
-      return items.sort((a: any, b: any) => {
+      items.sort((a: any, b: any) => {
         const v1 = DataList.getValueByKey(a, field);
         const v2 = DataList.getValueByKey(b, field)
         const result = compare(v1, v2);
         return isAscending ? result : -result;
       })
-    } else {
-      return items;
+      this.selectedSync = [];
     }
+    return items;
+
   }
 
   private search(items: any[]): any[] {
@@ -196,9 +189,8 @@ export default class DataList extends Vue {
   }
 
   private onSelectAllChanged() {
-    this.selectAll = !this.selectAll;
     const items = this.filteredItems;
-    if (this.selectAll) {
+    if (this.selectedSync.length == 0 || this.someNodesSelected) {
       this.selectedSync = items.map(node => node.item);
     } else {
       this.selectedSync = [];

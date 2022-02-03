@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\SoftwareResource;
 use App\Models\Software;
 use App\Models\UserPrivileges;
+use App\Utils\HashUtils;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -51,11 +52,11 @@ class SoftwareController extends Controller
 
     public function update(Request $request, $id): JsonResponse
     {
-        if ($request->user()->cannot(UserPrivileges::MANAGE_FIRMWARE)) {
+        if ($request->user()->cannot(UserPrivileges::MANAGE_SOFTWARE)) {
             $this->raiseError(403, "Resource not available");
         }
 
-        $software = Software::where('id', Hashids::decode($id))->first();
+        $software = Software::where('id', HashUtils::decode($id))->first();
         if ($software == null) {
             $this->raiseError(404, "Software not found");
         }
@@ -80,7 +81,7 @@ class SoftwareController extends Controller
      */
     public function create(Request $request): JsonResponse
     {
-        if ($request->user()->cannot(UserPrivileges::MANAGE_FIRMWARE)) {
+        if ($request->user()->cannot(UserPrivileges::MANAGE_SOFTWARE)) {
             $this->raiseError(403, "Resource not available");
         }
 
@@ -121,7 +122,7 @@ class SoftwareController extends Controller
      */
     public function delete(Request $request, $version): JsonResponse
     {
-        if ($request->user()->cannot(UserPrivileges::MANAGE_FIRMWARE)) {
+        if ($request->user()->cannot(UserPrivileges::MANAGE_SOFTWARE)) {
             $this->raiseError(403, "Resource not available");
         }
 

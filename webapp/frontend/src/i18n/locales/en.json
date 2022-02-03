@@ -28,7 +28,8 @@
     "error-field-too-long": "The {0} is too long. Maximum length is {1}.",
     "error-email-invalid": "The E-mail is invalid.",
     "error-date-invalid": "The date is invalid.",
-    "error-password-not-same": "Passwords must be identical"
+    "error-password-not-same": "Passwords must be identical",
+    "error-email-is-used": "E-mail is already used."
   },
   "user-profile": {
     "title": "Users",

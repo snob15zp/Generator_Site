@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Utils\HashUtils;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Vinkla\Hashids\Facades\Hashids;
 
@@ -17,7 +18,7 @@ class SoftwareResource extends JsonResource
     public function toArray($request): array
     {
         return [
-            'id' => Hashids::encode($this->id),
+            'id' => HashUtils::encode($this->id),
             'active' => $this->active,
             'version' => $this->version,
             'file' => $this->file,

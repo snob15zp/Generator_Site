@@ -65,7 +65,7 @@
       </v-form>
     </v-dialog>
 
-    <v-card outlined class="mt-8 mb-8">
+    <v-card outlined class="mt-2 mb-2" v-if="canManageSoftware">
       <v-card-title>
         Software versions
         <v-spacer/>
@@ -107,6 +107,12 @@
         </template>
       </v-data-table>
     </v-card>
+    <v-card outlined class="mt-2 mb-2" v-else>
+      <v-card-title>Error</v-card-title>
+      <v-card-text>
+        You don't have access to manage software.
+      </v-card-text>
+    </v-card>
   </v-container>
 </template>
 
@@ -120,6 +126,7 @@ import {EventBus} from "@/utils/event-bus";
 import {FormRef} from "@/forms/types";
 import {SoftwareUploadForm} from "@/forms/SoftwareUploadForm";
 import {settings} from "@/settings";
+import UserModule from "@/store/modules/user";
 
 
 @Component
@@ -152,6 +159,10 @@ export default class SoftwareView extends Vue {
         width: "90px",
       },
     ];
+  }
+
+  private get canManageSoftware() {
+    return UserModule.canManageSoftware;
   }
 
   private fileUrl(software: Software): string {

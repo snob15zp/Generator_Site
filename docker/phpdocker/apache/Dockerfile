@@ -51,6 +51,7 @@ RUN apk add --update nodejs npm
 
 
 RUN sed -i "s/#LoadModule\ rewrite_module/LoadModule\ rewrite_module/" /usr/local/apache2/conf/httpd.conf;
+RUN sed -i "s/443/7443" /usr/local/apache2/conf/httpd.conf;
 
 # Copy apache vhost file to proxy php requests to php-fpm container
 COPY generator.apache.conf /usr/local/apache2/conf/generator.apache.conf

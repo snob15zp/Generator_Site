@@ -54,12 +54,27 @@ class Handler extends ExceptionHandler
             //return parent::render($request, $e);
         }
 
+        if ($e instanceof UploadFilesException) {
+            return response()->json((
+            ['errors' => [
+                'status' => $e->getStatusCode(),
+                'code' => $e->getCode(),
+                'message' => $e->getMessage(),
+                'data' => [
+                    'exists_files' => $e->exists,
+                    'failed_files' => $e->failed
+                ]
+            ]
+            ]), $e->getStatusCode());
+        }
+
         if ($e instanceof HttpException) {
             $message = $e->getMessage() ?: Response::$statusTexts[$e->getStatusCode()];
 
             return response()->json((
             ['errors' => [
                 'status' => $e->getStatusCode(),
+                'code' => $e->getCode(),
                 'message' => $message,
             ]
             ]), $e->getStatusCode());
@@ -74,12 +89,8 @@ class Handler extends ExceptionHandler
                 }, $messages);
             }
             return response()->json(['errors' => $formattedErrors], 422);
-        } else if ($e instanceof ApiException) {
-            return response()->json(['errors' => [
-                'status' => $e->getCode(),
-                'message' => $e->getMessage()
-            ]], 500);
         }
+
         if ($e instanceof Exception && !env('APP_DEBUG')) {
             return response()->json([
                 'errors' => [

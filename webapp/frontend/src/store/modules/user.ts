@@ -4,9 +4,13 @@ import authService from "../../service/api/authService";
 import store from "@/store";
 
 export class Privileges {
+    private static ATTACH_PROGRAMS = 'attach-programs';
+    private static DOWNLOAD_PROGRAMS = 'download-programs';
+    private static IMPORT_PROGRAMS = 'import-programs';
     private static UPLOAD_PROGRAMS = 'upload-programs';
     private static MANAGE_PROGRAMS = 'manage-programs';
     private static MANAGE_FIRMWARE = 'manage-firmware';
+    private static MANAGE_SOFTWARE = 'manage-software';
     private static MANAGE_USERS = 'manage-users';
     private static MANAGE_OWN_USERS = 'manage-own-users';
     private static VIEW_USERS = 'view-users';
@@ -17,8 +21,20 @@ export class Privileges {
         return user.privileges.indexOf(this.MANAGE_OWN_USERS) >= 0;
     }
 
+    static canAttachPrograms(user: User) {
+        return user.privileges.indexOf(this.ATTACH_PROGRAMS) >= 0;
+    }
+
     static canUploadPrograms(user: User) {
         return user.privileges.indexOf(this.UPLOAD_PROGRAMS) >= 0;
+    }
+
+    static canDownloadPrograms(user: User) {
+        return user.privileges.indexOf(this.DOWNLOAD_PROGRAMS) >= 0;
+    }
+
+    static canImportPrograms(user: User) {
+        return user.privileges.indexOf(this.IMPORT_PROGRAMS) >= 0;
     }
 
     static canManagePrograms(user: User) {
@@ -27,6 +43,10 @@ export class Privileges {
 
     static canManageFirmware(user: User) {
         return user.privileges.indexOf(this.MANAGE_FIRMWARE) >= 0;
+    }
+
+    static canManageSoftware(user: User) {
+        return user.privileges.indexOf(this.MANAGE_SOFTWARE) >= 0;
     }
 
     static canManageUsers(user: User) {
@@ -85,7 +105,7 @@ export abstract class Role {
         this.name = name;
     }
 
-    toString(): string {
+    toString = (): string => {
         switch (this) {
             case Role.Admin:
                 return "Administrator";
@@ -135,43 +155,64 @@ class UserModule extends VuexModule {
         return this.user != null;
     }
 
-    get canManageProfiles() {
+    get isAdmin() {
+        return this.user?.role.name == Role.Admin.name;
+    }
+
+    get isUser() {
+        return this.user?.role.name == Role.User.name;
+    }
+
+    get canManageUsers() {
         return this.user ? Privileges.canManageUsers(this.user) : false;
     }
 
+    get canAttachPrograms() {
+        return this.user ? Privileges.canAttachPrograms(this.user) : false;
+    }
+
+    get canViewUsers() {
+        return this.user ? Privileges.canViewUsers(this.user) : false;
+    }
 
     get canManagePrograms() {
         return this.user ? Privileges.canManagePrograms(this.user) : false;
+    }
+
+    get canDownloadPrograms() {
+        return this.user ? Privileges.canDownloadPrograms(this.user) : false;
+    }
+
+    get canImportPrograms() {
+        return this.user ? Privileges.canImportPrograms(this.user) : false;
     }
 
     get canManageFirmware() {
         return this.user ? Privileges.canManageFirmware(this.user) : false;
     }
 
+    get canManageSoftware() {
+        return this.user ? Privileges.canManageSoftware(this.user) : false;
+    }
+
+    get canUploadPrograms() {
+        return this.user ? Privileges.canUploadPrograms(this.user) : false;
+    }
+
+    get canManageOwnUsers() {
+        return this.user ? Privileges.canManageOwnUsers(this.user) : false;
+    }
+
     get userName() {
-        console.log("Get User name: " + this.user);
-        return this.user ? this.user.name : null;
+        return this.user?.profile.name ?? null;
     }
 
     get userRoleName() {
-        switch (this.user?.role) {
-            case Role.Admin:
-                return "Administrator";
-            case Role.User:
-                return "User";
-            case Role.Guest:
-                return "Guest";
-            case Role.Professional:
-                return "Professional";
-            case Role.SuperProfessional:
-                return "S.Professional";
-            default:
-                return "Guest";
-        }
+        return this.user?.role ? Role.parse(this.user.role.name).toString() : null;
     }
 
     get token() {
-        return this.user ? this.user.token : null;
+        return this.user?.token ?? null;
     }
 
     @MutationAction
@@ -194,7 +235,6 @@ class UserModule extends VuexModule {
 
     @Mutation
     reset() {
-        console.log("Reset user");
         this.user = null;
     }
 }

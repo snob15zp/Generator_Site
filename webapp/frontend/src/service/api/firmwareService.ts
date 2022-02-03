@@ -27,7 +27,6 @@ class FirmwareService {
                 responseType: "arraybuffer",
                 onDownloadProgress: function (progressEvent) {
                     const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                    console.log(percentCompleted);
                     onProgressCallback?.call(this, percentCompleted);
                 }
             })

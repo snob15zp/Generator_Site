@@ -3,88 +3,149 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\ApiException;
+use App\Exceptions\UploadFilesException;
 use App\Http\Resources\ProgramResource;
+use App\Http\Resources\ProgramResourceCollection;
 use App\Models\Folder;
 use App\Models\Program;
-use App\Models\User;
+use App\Models\ProgramHistory;
 use App\Models\UserPrivileges;
-use App\Models\UserRole;
 use App\Utils\Files;
-use Illuminate\Database\QueryException;
+use App\Utils\HashUtils;
+use Exception;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
-use Vinkla\Hashids\Facades\Hashids;
-use const App\Exceptions\ERROR_DUPLICATE_PROGRAM;
-use const App\Exceptions\ERROR_SQL_EXCEPTION;
 
 class ProgramController extends Controller
 {
-    public function getAll(Request $request, $folderId): JsonResponse
+    public function getAllForFolder(Request $request, $folderId): JsonResponse
     {
-        if ($folderId != null) {
-            $folder = Folder::query()->whereKey(Hashids::decode($folderId))->first();
-            if ($request->user()->cannot(UserPrivileges::VIEW_PROGRAMS, $folder->user)) {
-                $this->raiseError(403, "Resource not available");
-            }
-            $programs = $this->synchronizeWithDisk($folder, $folder->programs);
-        } else {
-            $user = $request->user();
-            if ($user->cannot(UserPrivileges::MANAGE_PROGRAMS))
-                $programs = [];
+        $folder = $this->getFolderById($folderId);
+        $user = $request->user();
+        if ($user->cannot(UserPrivileges::MANAGE_PROGRAMS) && $user->id != $folder->user->id) {
+            throw new ApiException(ErrorStatusCodes::$RESOURCE_NOT_AVAILABLE);
         }
+        $this->verifyUserPrivileges($folder->user, UserPrivileges::VIEW_PROGRAMS);
+
+        $programs = Program::fetchAllFromFolder($folder);
         return $this->respondWithResource(ProgramResource::collection($programs));
     }
 
-    public function getAllForUser(Request $request): JsonResponse
+    public function getAllForUser(Request $request, string $id): ResourceCollection
     {
         $user = $request->user();
-        $query = Program::query();
-        if (!$user->hasRole(UserRole::ROLE_ADMIN)) {
-            $query
-                ->select(['program.*', 'folder.user_id', 'folder.active'])
-                ->join('folder_program', 'folder_program.program_id', '=', 'program.id')
-                ->join('folder', 'folder.id', '=', 'folder_program.folder_id')
-                ->where('folder.user_id', '=', $user->id)
-                ->where('folder.active', '=', true);
-        }
-        return $this->respondWithResource(ProgramResource::collection($query->get()));
+        $this->verifyUserPrivileges($user, UserPrivileges::MANAGE_PROGRAMS);
+
+        $owner = $this->getUserById($id);
+        $programs = Program::fetchAllForUser($owner);
+        return (new ProgramResourceCollection($programs))->owner($owner);
     }
 
-    public function download(Request $request, $id)
+
+    /**
+     * @throws ApiException
+     * @throws ValidationException
+     * @throws FileNotFoundException
+     */
+    public function createForUser(Request $request, string $id): ResourceCollection
     {
-        $program = Program::query()->whereKey(Hashids::decode($id))->first();
-        if ($program == null) {
-            $this->raiseError(404, 'Program not found');
+        $user = $this->getUserById($id);
+        return $this->uploadAndCreatePrograms($request, Program::userPath($user));
+    }
+
+    /**
+     * @throws ApiException
+     * @throws ValidationException
+     * @throws FileNotFoundException
+     */
+    public function createForFolder(Request $request, $folderId): ResourceCollection
+    {
+        $folder = Folder::query()->whereKey(HashUtils::decode($folderId))->first();
+        if ($folder == null) {
+            throw new ApiException(ErrorStatusCodes::$FOLDER_NOT_FOUND);
+        }
+        return $this->uploadAndCreatePrograms($request, Program::folderPath($folder));
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    public function attachToFolderFromList(Request $request, $folderId): ResourceCollection
+    {
+        $folder = $this->getFolderById($folderId);
+        $programs = $this->attachPrograms($request, Program::folderPath($folder));
+        return ProgramResource::collection($programs);
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    public function attachToUserFromList(Request $request, $id): ResourceCollection
+    {
+        $user = $this->getUserById($id);
+        $programs = $this->attachPrograms($request, Program::userPath($user));
+        return ProgramResource::collection($programs);
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function attachPrograms(Request $request, $path): array
+    {
+        $user = $request->user();
+        $this->verifyUserPrivileges($user, UserPrivileges::MANAGE_PROGRAMS);
+        $this->validate($request, [
+            'programs' => 'required|array'
+        ]);
+
+        $ids = collect($request->get('programs'));
+
+        $allPrograms = Program::fetchAllForUser($user);
+        $existsPrograms = [];
+        $programs = [];
+
+        $copyPrograms = $allPrograms->filter(function ($p) use ($ids) {
+            return $ids->contains($p->id);
+        })->all();
+
+        foreach ($copyPrograms as $program) {
+            $fileName = $path . DIRECTORY_SEPARATOR . $program->name;
+            if (Storage::exists($fileName)) {
+                $existsPrograms[] = $program;
+                continue;
+            }
+            Storage::copy($program->path . DIRECTORY_SEPARATOR . $program->name, $fileName);
+            $programs[] = new Program($program->name, $path, new \DateTime());
         }
 
-        if ($request->user()->cannot(UserPrivileges::VIEW_PROGRAMS, $program->folder->user)) {
-            $this->raiseError(403, "Resource not available");
+        if (count($existsPrograms) > 0) {
+            throw new UploadFilesException($existsPrograms, []);
         }
+        return $programs;
+    }
 
-        return Storage::download($program->fileName());
+    public function getProgramsHistory(Request $request, $id): ResourceCollection
+    {
+        $this->verifyUserPrivileges($request->user(), UserPrivileges::UPLOAD_PROGRAMS);
+
+        $user = $this->getUserById($id);
+        $history = ProgramHistory::query()->where('user_owner_id', $user->id)->get();
+        return ProgramResource::collection($history);
     }
 
     /**
      * @throws ApiException
      * @throws ValidationException
      */
-    public function create(Request $request): JsonResponse
+    private function uploadAndCreatePrograms(Request $request, string $path): ResourceCollection
     {
-        return $this->createWithFolder($request, null);
-    }
-
-    /**
-     * @throws ApiException
-     * @throws ValidationException
-     */
-    public function createWithFolder(Request $request, $folderId): JsonResponse
-    {
-        $this->verifyUserPrivileges($request);
+        $user = $request->user();
+        $this->verifyUserPrivileges($user, UserPrivileges::UPLOAD_PROGRAMS);
 
         $this->validate($request, [
             'programs' => 'required|array',
@@ -92,133 +153,109 @@ class ProgramController extends Controller
             'encrypted' => 'nullable|boolean'
         ]);
 
-        if ($folderId != null) {
-            $folder = Folder::query()->whereKey(Hashids::decode($folderId))->first();
-            if ($folder == null) {
-                $this->raiseError(404, "Folder not found");
-            }
-        } else {
-            $folder = null;
-        }
-
-        $user = $request->user();
         $encrypted = $request->input('encrypted');
         if ($encrypted == null) $encrypted = false;
 
-        $programs = collect();
-        try {
-            DB::beginTransaction();
-            $programFiles = $request->file('programs');
-            $programs = collect($programFiles)->map(function ($requestFile) use ($encrypted, $user, $folder) {
+        $programFiles = $request->file('programs');
+        $allPrograms = Program::fetchAllByPath($path);
+
+        $programs = [];
+        $programNames = collect();
+        $existsPrograms = [];
+        $failedPrograms = [];
+
+        foreach ($programFiles as $requestFile) {
+            try {
                 $name = $requestFile->getClientOriginalName();
+                $program = new Program($name, $path, new \DateTime());
+                if ($allPrograms->contains('name', $program->name)) {
+                    $existsPrograms[] = $program;
+                    continue;
+                }
 
                 $content = $requestFile->get();
                 if (!$encrypted) {
                     $content = Files::encryptData($content);
                 }
-
-                $program = new Program([
-                    'owner_user_id' => $user->id,
-                    'name' => $name,
-                    'hash' => crc32($content),
-                    'active' => true
-                ]);
-                $program->save();
-                Storage::put($program->fileName(), $content);
-
-                if ($folder != null) {
-                    $program->folders()->attach($folder->id);
-                }
-                return $program;
-            });
-            DB::commit();
-            return $this->respondWithResource(ProgramResource::collection($programs));
-        } catch (\Exception  $e) {
-            DB::rollBack();
-            $programs->each(function (Program $program) {
-                $fileName = $program->fileName();
-                if (Storage::exists($fileName)) {
-                    Storage::delete($fileName);
-                }
-            });
-            Log::error($e->getMessage());
-            if ($e instanceof QueryException) {
-                switch ($e->getCode()) {
-                    case 23000:
-                        throw new ApiException(ERROR_DUPLICATE_PROGRAM);
-                    default:
-                        throw new ApiException(ERROR_SQL_EXCEPTION);
-                }
-            } else {
-                $this->raiseError(500, "Cannot to make folder");
+                $program->save($content);
+                $programNames->add($program->name);
+                $programs[] = $program;
+            } catch (Exception  $e) {
+                Log::error($e->getMessage());
+                $failedPrograms[] = $program;
             }
         }
-    }
 
-    public function delete(Request $request, $id): JsonResponse
-    {
-        $this->verifyUserPrivileges($request);
+        $programHistory = ProgramHistory::query()
+            ->where('user_owner_id', $user->id)
+            ->whereIn('name', $programNames->all())
+            ->get()
+            ->map(function ($p) {
+                return $p->name;
+            });
 
-        $program = Program::query()->whereKey(Hashids::decode($id))->first();
-        if ($program == null) {
-            $this->raiseError(404, "Folder not found");
+        $programNames->diff($programHistory)->each(function ($name) use ($user) {
+            ProgramHistory::create([
+                'name' => $name,
+                'user_owner_id' => $user->id
+            ]);
+        });
+
+        if (count($failedPrograms) > 0 || count($existsPrograms) > 0) {
+            throw new UploadFilesException($existsPrograms, $failedPrograms);
         }
 
-        $this->deleteProgram($program);
-
-        return $this->respondWithMessage('Program deleted');
+        return ProgramResource::collection($programs);
     }
 
-    public function deleteAll(Request $request): JsonResponse
+    /**
+     * @throws ValidationException
+     */
+    public function deleteForUser(Request $request, $id): JsonResponse
     {
-        if ($request->user()->cannot(UserPrivileges::MANAGE_PROGRAMS)) {
-            $this->raiseError(403, 'Operation is restricted');
-        }
+        $this->verifyUserPrivileges($request->user(), UserPrivileges::UPLOAD_PROGRAMS);
 
+        $owner = $this->getUserById($id);
+        $this->deleteAllByPath($request, Program::userPath($owner));
+        return $this->respondWithMessage("OK");
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    public function deleteFromFolder(Request $request, $folderId): JsonResponse
+    {
+        $this->verifyUserPrivileges($request->user(), UserPrivileges::MANAGE_PROGRAMS);
+
+        $folder = $this->getFolderById($folderId);
+        $this->deleteAllByPath($request, Program::folderPath($folder));
+        return $this->respondWithMessage("OK");
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function deleteAllByPath(Request $request, string $path)
+    {
         $this->validate($request, [
             'ids' => 'required|array|min:1'
         ]);
-
-        $ids = collect($request->input('ids'))->map(function ($id) {
-            return Hashids::decode($id)[0];
+        $ids = collect($request->input('ids'));
+        Program::fetchAllByPath($path)->each(function ($program) use ($ids) {
+            if ($ids->contains($program->id)) {
+                Log::info("Delete program {$program->fileName()}");
+                Storage::delete($program->fileName());
+            }
         });
-        Program::query()->findMany($ids)->each(function ($program) {
-            $this->deleteProgram($program);
-        });
-
-        return $this->respondWithMessage();
     }
 
-    private function deleteProgram(Program $program)
+    private function getFolderById($encodedFolderId): Folder
     {
-        $fileName = $program->fileName();
-        if (Storage::exists($fileName)) {
-            Storage::delete($fileName);
+        $folder = Folder::query()->whereKey(HashUtils::decode($encodedFolderId))->first();
+        if ($folder == null) {
+            throw new ApiException(ErrorStatusCodes::$FOLDER_NOT_FOUND);
         }
 
-        $program->delete();
-    }
-
-    private function synchronizeWithDisk(Folder $folder, Collection $programs): Collection
-    {
-        $existsPrograms = collect($programs)->filter(function ($program) use ($folder) {
-            return Storage::exists(Program::path() . '/' . $program->name);
-        });
-
-        $notExistsProgramIds = collect($programs)->filter(function ($program) use ($folder) {
-            return !Storage::exists(Program::path() . '/' . $program->name);
-        })->map(function ($program) {
-            return $program->id;
-        });
-        Program::query()->whereIn('id', $notExistsProgramIds)->delete();
-
-        return $existsPrograms;
-    }
-
-    private function verifyUserPrivileges(Request $request)
-    {
-        if ($request->user()->cannot(UserPrivileges::MANAGE_PROGRAMS)) {
-            $this->raiseError(403, "Resource not available");
-        }
+        return $folder;
     }
 }

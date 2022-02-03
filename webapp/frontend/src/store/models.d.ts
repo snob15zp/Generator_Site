@@ -1,17 +1,19 @@
 import {Role} from "@/store/modules/user";
 import {CancelTokenSource} from "axios";
+import {UserFilter} from "@/service/api/userService";
 
 export interface UserJson {
     id: string;
     token: string;
     privileges: string[];
+    password?: string;
     profile: UserProfileJson;
     role: string;
 }
 
 export interface UserProfileJson {
     id?: string;
-    user_id: string;
+    user: UserJson;
     name: string;
     surname?: string;
     phone_number?: string;
@@ -48,6 +50,7 @@ export interface FolderJson {
     expires_in: number;
     created_at?: string;
     is_encrypted?: boolean;
+    active?: boolean;
 }
 
 export interface ProgramJson {
@@ -55,15 +58,17 @@ export interface ProgramJson {
     name: string;
     hash: string;
     created_at: string;
+    owner: UserJson;
 }
 
 export interface User {
     id: string;
     token: string;
-    name: string;
     privileges: string[];
+    password?: string,
     profile: UserProfile;
     role: Role;
+    owner?: User;
 }
 
 export interface UserCredentials {
@@ -82,6 +87,7 @@ export interface PagingRequest {
     sortBy: string[];
     sortDesc: boolean[];
     query: string;
+    filter?: UserFilter;
 }
 
 export interface PagingResponse<R> {
@@ -91,7 +97,6 @@ export interface PagingResponse<R> {
 
 export interface UserProfile {
     id?: string;
-    userId?: string;
     name: string;
     surname: string;
     phoneNumber: string;
@@ -100,13 +105,12 @@ export interface UserProfile {
     email: string;
     createdAt?: Date;
     updatedAt?: Date;
-    password?: string;
-    role?: Role;
 }
 
 export interface Program {
     id: string;
     name: string;
+    owner?: User | null;
 }
 
 export interface Folder {
@@ -115,10 +119,12 @@ export interface Folder {
     expiredAt: Date;
     createdAt?: Date;
     isEncrypted: boolean;
+    active: boolean;
 }
 
 export interface UploadFileRequest {
     files: File[];
+    owner: User;
     folder?: Folder;
     onProgressCallback: (_: number) => void;
     cancelSource?: CancelTokenSource
@@ -179,6 +185,8 @@ export interface Software {
 export interface ErrorJson {
     message: string;
     status: number;
+    code: number;
+    data?: any;
 }
 
 export interface ErrorResponseJson {

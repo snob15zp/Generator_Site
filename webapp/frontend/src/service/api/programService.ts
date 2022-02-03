@@ -2,21 +2,35 @@ import {
     DownloadFileRequest,
     Folder,
     FolderJson,
+    PagingRequest,
+    PagingResponse,
+    PagingResponseJson,
     Program,
     ProgramJson,
-    UploadFileRequest
+    UploadFileRequest,
+    User
 } from "@/store/models";
 import api from ".";
 import transformers from "./transformers";
+import builder from "./builder";
 import {apiErrorMapper} from "@/service/api/utils";
 import axios from "axios";
 
 class ProgramService {
-    async fetchFolders(userProfileId: string): Promise<Folder[]> {
+    async fetchFolders(user: User): Promise<Folder[]> {
         return new Promise<Folder[]>((resolve, reject) => {
-            api.get(`/profiles/${userProfileId}/folders`)
+            api.get(`/users/${user.id}/folders`)
                 .then((response) => resolve(response.data.map((json: FolderJson) => transformers.folderFromJson(json))))
                 .catch((error) => reject(new Error(apiErrorMapper(error))));
+        });
+    }
+
+    async unlinkPrograms(folder: Folder, programIds: string[]): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            const query = programIds.map(id => `ids[]=${id}`).join('&');
+            api.delete(`/folders/${folder.id}/programs?${query}`)
+                .then(() => resolve())
+                .catch(error => reject(new Error(apiErrorMapper(error))))
         });
     }
 
@@ -28,18 +42,43 @@ class ProgramService {
         });
     }
 
-    async deletePrograms(programIds: Array<string>): Promise<void> {
+    async addProgramsToFolder(folder: Folder, programs: Program[]): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            api.post(`/folders/${folder.id}/attach`, {programs: programs.map(p => p.id)})
+                .then(response => resolve())
+                .catch(error => reject(new Error(apiErrorMapper(error))))
+        });
+    }
+
+    async addProgramsForUser(user: User, programs: Program[]): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            api.post(`/users/${user.id}/attach`, {programs: programs.map(p => p.id)})
+                .then(response => resolve())
+                .catch(error => reject(new Error(apiErrorMapper(error))))
+        });
+    }
+
+    async deleteProgramsForUser(user: User, programIds: Array<string>): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             const query = programIds.map(id => `ids[]=${id}`).join('&');
-            api.delete(`/programs?${query}`)
+            api.delete(`/users/${user.id}/programs?${query}`)
                 .then(() => resolve())
                 .catch(error => reject(new Error(apiErrorMapper(error))))
         });
     }
 
-    async saveFolder(userProfileId: string, folder: Folder): Promise<Folder> {
+
+    async saveFolder(user: User, folder: Folder): Promise<Folder> {
         return new Promise<Folder>((resolve, reject) => {
-            api.post(`/profiles/${userProfileId}/folders`, transformers.folderToJson(folder))
+            api.post(`/users/${user.id}/folders`, transformers.folderToJson(folder))
+                .then((response) => resolve(transformers.folderFromJson(response.data)))
+                .catch((error) => reject(new Error(apiErrorMapper(error))));
+        });
+    }
+
+    async copyFolder(user: User, copyTo: Folder, copyFrom: Folder): Promise<Folder> {
+        return new Promise<Folder>((resolve, reject) => {
+            api.post(`/users/${user.id}/folders/${copyFrom.id}/renew`, transformers.folderToJson(copyTo))
                 .then((response) => resolve(transformers.folderFromJson(response.data)))
                 .catch((error) => reject(new Error(apiErrorMapper(error))));
         });
@@ -48,7 +87,7 @@ class ProgramService {
     async uploadFile(fileRequest: UploadFileRequest): Promise<void> {
         const length = fileRequest.files.length;
         const promises: Array<Promise<void>> = [];
-        const url = fileRequest.folder ? `/folder/${fileRequest.folder.id}/programs` : '/programs';
+        const url = fileRequest.folder ? `/folders/${fileRequest.folder.id}/programs` : `/users/${fileRequest.owner.id}/programs`;
         for (let i = 0; i < length; i += 20) {
             const formData = new FormData();
             fileRequest.files.slice(i, Math.min(i + 20, length))
@@ -85,7 +124,6 @@ class ProgramService {
                 responseType: "arraybuffer",
                 onDownloadProgress: function (progressEvent) {
                     const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                    console.log(percentCompleted);
                     onProgressCallback?.call(this, percentCompleted);
                 }
             })
@@ -130,10 +168,33 @@ class ProgramService {
         })
     }
 
-    async getAll(): Promise<Program[]> {
+    async getAll(pagingRequest: PagingRequest): Promise<PagingResponse<Program>> {
+        const query = builder.queryFromPagingRequest(pagingRequest);
+        return new Promise<PagingResponse<Program>>((resolve, reject) => {
+            api.get<PagingResponseJson<ProgramJson>>(`/programs?${query}`)
+                .then(response => {
+                    const programs = response.data;
+                    resolve({
+                        data: programs.data.map(json => transformers.programFromJson(json)),
+                        total: programs.meta.total
+                    });
+                })
+                .catch(error => reject(new Error(apiErrorMapper(error))))
+        });
+    }
+
+    async getAllForUser(user: User): Promise<Program[]> {
         return new Promise<Program[]>((resolve, reject) => {
-            api.get(`/programs`)
-                .then(response => resolve(response.data.map((json: ProgramJson) => transformers.programFromJson(json))))
+            api.get<ProgramJson[]>(`/users/${user.id}/programs`)
+                .then(response => resolve(response.data.map(json => transformers.programFromJson(json))))
+                .catch(error => reject(new Error(apiErrorMapper(error))))
+        });
+    }
+
+    async fetchHistory(user: User) : Promise<Program[]> {
+        return new Promise<Program[]>((resolve, reject) => {
+            api.get<ProgramJson[]>(`/users/${user.id}/history`)
+                .then(response => resolve(response.data.map(json => transformers.programFromJson(json))))
                 .catch(error => reject(new Error(apiErrorMapper(error))))
         });
     }

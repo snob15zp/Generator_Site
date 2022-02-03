@@ -32,6 +32,8 @@ class CreateUserTable extends Migration
     {
         Schema::dropIfExists('user_profile');
         Schema::dropIfExists('user_owner');
+        Schema::dropIfExists('user_program');
+        Schema::dropIfExists('folder');
         Schema::dropIfExists('user');
     }
 }

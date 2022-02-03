@@ -2,7 +2,6 @@ import Vue from "vue";
 import VueRouter, {RouteConfig} from "vue-router";
 import LoginView from "../views/LoginView.vue";
 import HomePageView from "../views/HomePageView.vue";
-import Profile from "../views/ProfileView.vue";
 import NotFoundView from "../views/NotFoundView.vue";
 import UserModule from "@/store/modules/user";
 import i18n from "@/i18n";
@@ -11,6 +10,8 @@ import ForgetPasswordView from "@/views/ForgetPasswordView.vue";
 import FirmwareView from "@/views/FirmwareView.vue";
 import SoftwareView from "@/views/SoftwareView.vue";
 import ImportProgramsView from "@/views/ImportProgramsView.vue";
+import UserView from "@/views/UserView.vue";
+import {User} from "@/store/models";
 
 Vue.use(VueRouter);
 
@@ -23,7 +24,8 @@ const routes: Array<RouteConfig> = [
             icon: "mdi-account-multiple",
             navigation: true,
             requiresAuth: true,
-            title: i18n.t("page.home")
+            title: i18n.t("page.home"),
+            privileges: ["manage-users", "manage-own-users"]
         }
     },
     {
@@ -34,7 +36,8 @@ const routes: Array<RouteConfig> = [
             icon: "mdi-memory",
             navigation: true,
             requiresAuth: true,
-            title: i18n.t("page.firmware")
+            title: i18n.t("page.firmware"),
+            privileges: ["manage-firmware"]
         }
     },
     {
@@ -45,13 +48,14 @@ const routes: Array<RouteConfig> = [
             icon: "mdi-laptop",
             navigation: true,
             requiresAuth: true,
-            title: i18n.t("page.software")
+            title: i18n.t("page.software"),
+            privileges: ["manage-software"]
         }
     },
     {
-        path: "/profile/:id",
-        name: "user-profile",
-        component: Profile,
+        path: "/user/:id",
+        name: "user",
+        component: UserView,
         meta: {
             navigation: false,
             requiresAuth: true,
@@ -108,6 +112,14 @@ const routes: Array<RouteConfig> = [
         redirect: "/404"
     }
 ];
+
+export function navigationRouters(user?: User | null, config?: RouteConfig[]) {
+    return config?.filter(route => {
+        const isRouterAllow = (route.meta?.privileges) ?
+            UserModule.user?.privileges?.some(p => route.meta?.privileges?.indexOf(p) >= 0) : true;
+        return route.meta?.navigation && isRouterAllow;
+    });
+}
 
 const router = new VueRouter({
     mode: "history",

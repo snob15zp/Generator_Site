@@ -1,7 +1,9 @@
 <template>
   <v-toolbar-title class="site-title">
-    <img src="@/assets/logo-small.png" alt="logo"/>
-    <span>InHealion</span>
+    <a href="/">
+      <img src="@/assets/logo-small.png" alt="logo"/>
+      InHealion
+    </a>
   </v-toolbar-title>
 </template>
 
@@ -9,12 +11,13 @@
 import {Component, Vue} from "vue-property-decorator";
 
 @Component
-export default class SiteTitle extends Vue {}
+export default class SiteTitle extends Vue {
+}
 </script>
 
 <style scoped>
 .v-bar--underline {
-  background-color: rgb(30, 26, 26)!important;
+  background-color: rgb(30, 26, 26) !important;
 }
 
 .site-title {
@@ -23,8 +26,9 @@ export default class SiteTitle extends Vue {}
   font-style: normal;
 }
 
-span {
-  float: right;
+a {
+  text-decoration: none;
+  color: white !important;
   padding-top: 6px;
 }
 

@@ -4,7 +4,7 @@
       <v-card-title class="headline">Upload programs</v-card-title>
       <v-divider></v-divider>
       <v-card-text>
-        <v-flex class="mt-4 mb-4">
+        <v-row class="mt-4 mb-4">
           <v-file-input
               :disabled="uploadInProgress"
               accept=".txt"
@@ -30,7 +30,10 @@
                   </span>
             </template>
           </v-file-input>
-        </v-flex>
+        </v-row>
+        <v-row class="mt-4">
+          <v-checkbox label="Encrypted" class="pl-4"/>
+        </v-row>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -42,7 +45,10 @@
             :disabled="fileInput == null || uploadInProgress">
           Upload
         </v-btn>
-        <v-btn color="primary" text @click="onCancelClick"> {{ $t("form.cancel") }}</v-btn>
+        <v-btn color="primary"
+               :disabled="uploadInProgress"
+               text @click="onCancelClick"> {{ $t("form.cancel") }}
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -52,18 +58,18 @@
 
 import {Component, Emit, Model, Prop, Vue} from "vue-property-decorator";
 import programService from "@/service/api/programService";
-import {Folder, UploadFileRequest} from "@/store/models";
+import {Folder, UploadFileRequest, User} from "@/store/models";
 import {EventBus} from "@/utils/event-bus";
 import axios from "axios";
 
 @Component
 export default class UploadDialog extends Vue {
-  @Model("visible") readonly visible!: boolean
-  @Prop({default: () => null}) folder?: Folder
+  @Model("visible") readonly visible!: boolean;
+  @Prop() readonly user?: User;
+  @Prop() readonly folder?: Folder;
 
   private uploadInProgress = false;
   private fileInput: any | null = null;
-  private file: any | null = null;
   private progress = 0;
 
   private readonly cancelSource = axios.CancelToken.source();
@@ -78,16 +84,15 @@ export default class UploadDialog extends Vue {
 
   private uploadFile() {
     this.uploadInProgress = true;
-    this.file = this.fileInput;
-
     programService.uploadFile({
       files: this.fileInput,
+      owner: this.user,
       folder: this.folder,
       onProgressCallback: (progress) => this.progress = progress,
       cancelSource: this.cancelSource
     } as UploadFileRequest)
         .then(() => this.uploadFinished())
-        .catch((e) => EventBus.$emit("error", e))
+        .catch((e) => this.uploadFailed(e))
         .finally(() => {
           this.reset();
           this.dismiss();
@@ -118,6 +123,11 @@ export default class UploadDialog extends Vue {
 
   private dismiss() {
     this.visibleSync = false;
+  }
+
+  @Emit('failed')
+  uploadFailed(e: Error) {
+    return e;
   }
 
   @Emit('success')

@@ -25,10 +25,16 @@ class Files
     public static function makeZipWithFiles(string $name, string $path, array $files, bool $decrypt = false): string
     {
         $zip = new \ZipArchive();
-        $tempFileUri = $path . '/' . $name . '.zip';
+        $zipArchivePath = storage_path('tempdir');
+        if (!file_exists($zipArchivePath)) {
+            mkdir($zipArchivePath);
+        }
+
+        $tempFileUri = $zipArchivePath . '/' . $name . '.zip';
         if (file_exists($tempFileUri)) unlink($tempFileUri);
 
         Log::info('Create zip archive: ' . $tempFileUri);
+        Log::info('file path: ' . $path);
         if ($zip->open($tempFileUri, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
             // Add File in ZipArchive
             foreach ($files as $file) {

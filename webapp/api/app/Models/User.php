@@ -8,6 +8,7 @@ use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -29,7 +30,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     protected $primaryKey = 'id';
     public $incrementing = true;
 
-    protected $fillable = ['login', 'password', 'role', 'one_time_password'];
+    protected $fillable = ['login', 'password', 'role_id', 'one_time_password'];
 
     /**
      * The attributes excluded from the model's JSON form.
@@ -42,12 +43,12 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 
     public function role(): BelongsTo
     {
-        return $this->belongsTo('\App\Models\UserRole')->with('privileges');
+        return $this->belongsTo(UserRole::class)->with('privileges');
     }
 
     public function profile(): Relation
     {
-        return $this->hasOne('\App\Models\UserProfile');
+        return $this->hasOne(UserProfile::class);
     }
 
     public function hasRole(string $role): bool
@@ -55,19 +56,36 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         return $this->role->name === $role;
     }
 
+    public function owners(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, UserOwner::class, 'user_id', 'owner_id');
+    }
+
     public function folders(): Relation
     {
-        return $this->hasMany('\App\Models\Folder');
+        return $this->hasMany(Folder::class);
+    }
+
+    public function programs(): Relation
+    {
+        return $this->hasMany(Program::class, 'user_owner_id');
     }
 
     public function delete(): ?bool
     {
-        $this->profile()->delete();
-        $this->hasMany('\App\Models\Program', 'owner_user_id')->delete();
-        DB::table('user_owner')
+        UserOwner::query()
             ->where('owner_id', '=', $this->id)
             ->orWhere('user_id', '=', $this->id)
             ->delete();
+
+        $this->folders()->get()->each(function ($folder) {
+            $folder->delete();
+        });
+        $this->programs()->get()->each(function ($program) {
+            $program->delete();
+        });
+
+        $this->profile()->delete();
         return parent::delete();
     }
 

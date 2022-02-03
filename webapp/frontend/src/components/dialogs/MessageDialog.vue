@@ -3,13 +3,11 @@
     <v-card>
       <v-card-title class="headline">{{ dialogTitle }}</v-card-title>
       <v-divider></v-divider>
-      <v-card-text class="mt-4">
-        {{ dialogMessage }}
-      </v-card-text>
+      <v-card-text class="mt-4" v-html="dialogMessage"/>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="blue darken-1" text @click="onCancelClick">{{ $t("form.cancel") }}</v-btn>
-        <v-btn color="blue darken-1" text @click="onOkClick">{{ $t("form.ok") }}</v-btn>
+        <v-btn color="blue darken-1" text @click="onCancelClick" v-if="showCancelButton">{{ $t("form.cancel") }}</v-btn>
+        <v-btn color="blue darken-1" text @click="onOkClick" v-if="showOkButton">{{ $t("form.ok") }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -26,9 +24,14 @@ export default class MessageDialog extends Vue {
   private dialogTitle: string | null = null;
   private dialogMessage: string | null = null;
 
-  async show(title: string, message: string): Promise<boolean> {
+  private showOkButton = true;
+  private showCancelButton = true;
+
+  async show(title: string, message: string, buttons: string[] = ['OK', 'CANCEL']): Promise<boolean> {
     this.dialogTitle = title;
     this.dialogMessage = message;
+    this.showCancelButton = buttons.indexOf('CANCEL') >= 0;
+    this.showOkButton = buttons.indexOf('OK') >= 0;
     return new Promise<boolean>((resolve) => {
       this.visible = true;
       this.resolve = resolve;

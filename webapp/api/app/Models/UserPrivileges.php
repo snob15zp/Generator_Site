@@ -9,9 +9,13 @@ use Illuminate\Support\Collection;
 
 class UserPrivileges extends Model
 {
+    const ATTACH_PROGRAMS = 'attach-programs';
     const UPLOAD_PROGRAMS = 'upload-programs';
+    const DOWNLOAD_PROGRAMS = 'download-programs';
+    const IMPORT_PROGRAMS = 'import-programs';
     const MANAGE_PROGRAMS = 'manage-programs';
     const MANAGE_FIRMWARE = 'manage-firmware';
+    const MANAGE_SOFTWARE = 'manage-software';
     const MANAGE_USERS = 'manage-users';
     const MANAGE_OWN_USERS = 'manage-own-users';
     const VIEW_USERS = 'view-users';
@@ -21,9 +25,13 @@ class UserPrivileges extends Model
     static function names(): Collection
     {
         return collect([
+            UserPrivileges::ATTACH_PROGRAMS,
             UserPrivileges::UPLOAD_PROGRAMS,
             UserPrivileges::MANAGE_PROGRAMS,
+            UserPrivileges::IMPORT_PROGRAMS,
+            UserPrivileges::DOWNLOAD_PROGRAMS,
             UserPrivileges::MANAGE_FIRMWARE,
+            UserPrivileges::MANAGE_SOFTWARE,
             UserPrivileges::MANAGE_USERS,
             UserPrivileges::MANAGE_OWN_USERS,
             UserPrivileges::VIEW_USERS,

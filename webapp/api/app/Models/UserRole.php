@@ -25,6 +25,15 @@ class UserRole extends Model
 
     protected $primaryKey = 'id';
 
+    public static function contains(string $role): bool
+    {
+        return in_array($role, [
+            self::ROLE_ADMIN,
+            self::ROLE_PROFESSIONAL,
+            self::ROLE_SUPER_PROFESSIONAL,
+            self::ROLE_USER]);
+    }
+
     public static function rolePriority(string $role): int
     {
         switch ($role) {
@@ -44,7 +53,7 @@ class UserRole extends Model
     {
         $p1 = self::rolePriority($role1);
         $p2 = self::rolePriority($role2);
-        return $p1 < $p2 ? -1 : $p1 > $p2 ? 1 : 0;
+        return ($p1 < $p2) ? -1 : ($p1 > $p2 ? 1 : 0);
     }
 
     public function privileges(): HasMany

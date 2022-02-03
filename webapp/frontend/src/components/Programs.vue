@@ -1,203 +1,196 @@
 <template>
-  <v-card ref="container" outlined :loading="loading">
-    <v-card-title class="headline">
-      Programs
-      <v-spacer/>
-      <v-btn
-          color="primary"
-          @click="openCreateFolderDialog"
-          :disabled="foldersLoading"
-          v-if="canManagePrograms" class="ml-2">
-        New folder
-        <v-icon right>mdi-folder-plus</v-icon>
-      </v-btn>
-    </v-card-title>
-    <v-divider horizontal/>
-    <v-row dense justify="space-between">
-      <!-- Folders -->
-      <v-col cols="4">
-        <v-list class="overflow-y-auto" nav :height="listHeight">
-          <v-list-item-group active-class="primary--text" v-model="selected">
-            <v-list-item v-for="folder in folders" :key="folder.id">
-              <v-list-item-avatar>
-                <v-icon>{{ folder.isEncrypted && canManagePrograms ? 'mdi-folder-key' : 'mdi-folder' }}</v-icon>
-              </v-list-item-avatar>
-              <v-list-item-content>
-                <v-list-item-title>{{ folder.name }}</v-list-item-title>
-                <v-list-item-subtitle v-bind:class="{ 'error--text': isExpired(folder.expiredAt) }">
-                  {{ folder.expiredAt | expiredAtInterval }}
-                </v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
-          </v-list-item-group>
-        </v-list>
-      </v-col>
-      <v-divider vertical></v-divider>
-      <!-- Programs -->
-      <v-col class="d-flex">
-        <v-card
-            v-if="folder"
-            :key="folder.id"
-            :disabled="filesLoading"
-            class="mx-auto"
-            flat
-            style="width:100%">
-          <v-card-title>
-            {{ folder.name }}
-          </v-card-title>
-          <v-card-subtitle>
-            <v-btn v-if="canManagePrograms" class="mr-2"
-                   @click="downloadFolder(folder)"
-                   :loading="downloadFolderId===folder.id"
-                   outlined
-                   small
-                   text>
-              download
-              <v-icon right dark small>mdi-archive-arrow-down-outline</v-icon>
-            </v-btn>
-            <v-btn
-                class="mr-2"
-                @click="importToDevice(folder)"
-                :disabled="!canManagePrograms && isExpired(folder.expiredAt)"
-                :loading="importFolderId===folder.id"
-                outlined
-                small
-                text>
-              Import to device
-              <v-icon right dark small>mdi-import</v-icon>
-            </v-btn>
-            <v-btn
-                v-if="canManagePrograms"
-                class="mr-2"
-                @click="deleteFolder(folder)"
-                :loading="deletingFolderId===folder.id"
-                outlined
-                small
-                text>
-              Delete
-              <v-icon right dark small>mdi-delete</v-icon>
-            </v-btn>
-            <v-btn-toggle v-if="canManagePrograms" v-model="toggle" class="mr-2">
-              <v-btn
-                  :disabled="uploadInProgress"
-                  :color="isUploadDialogShow?'primary':''"
-                  @click="showUploadForm()"
-                  outlined
-                  small>
-                Upload programs
-                <v-icon right dark small :color="isUploadDialogShow?'primary':''">mdi-upload</v-icon>
-              </v-btn>
-            </v-btn-toggle>
-          </v-card-subtitle>
-          <v-expand-transition>
-            <v-layout row v-show="isUploadDialogShow" class="pl-4 pr-6">
-              <v-file-input
-                  v-if="canManagePrograms"
-                  :disabled="uploadInProgress || isFoldersEmpty"
-                  accept=".txt"
-                  outlined
-                  dense
-                  multiple
-                  placeholder="Select your file"
-                  v-model="fileInput"
-                  class="mr-4 ml-4"
-                  style="height: 40px">
-                <template v-slot:selection="{ index, text }">
-                  <v-chip
-                      v-if="index < 2"
-                      dark
-                      label
-                      small>
-                    {{ text }}
-                  </v-chip>
-                  <span
-                      v-else-if="index === 2"
-                      class="overline grey--text text--darken-3 mx-2">
-                    +{{ fileInput.length - 2 }} File(s)
-                  </span>
-                </template>
-              </v-file-input>
-              <v-btn @click="uploadFile"
-                     color="primary"
-                     :loading="uploadInProgress"
-                     :disabled="fileInput == null || uploadInProgress">
-                Upload
-                <v-icon>mdi-upload</v-icon>
-              </v-btn>
-            </v-layout>
-          </v-expand-transition>
-          <v-card-text id="programs">
-            <v-toolbar flat dense>
-              <div>
-                <h4>Total programs: {{ files.length }}</h4>
-                <small v-if="canManagePrograms">Use SHIFT or CTRL with the mouse to select multiple items.</small>
-              </div>
+  <v-layout column align-top>
+    <v-card ref="container" outlined :loading="loading">
+      <v-card-title class="headline">
+        Programs
+        <v-spacer/>
+        <v-btn
+            color="primary"
+            @click="openCreateFolderDialog"
+            :disabled="foldersLoading"
+            v-if="canManagePrograms" class="ml-2">
+          New folder
+          <v-icon right>mdi-folder-plus</v-icon>
+        </v-btn>
+      </v-card-title>
+      <v-divider horizontal/>
+      <v-row dense justify="space-between">
+        <!-- Folders -->
+        <v-col cols="4">
+          <v-list class="overflow-y-auto" nav :height="listHeight">
+            <v-list-item-group active-class="primary--text" v-model="selected">
+              <v-list-item v-for="folder in folders" :key="folder.id">
+                <v-list-item-avatar>
+                  <v-icon>{{ folder.isEncrypted && canManagePrograms ? 'mdi-folder-key' : 'mdi-folder' }}</v-icon>
+                </v-list-item-avatar>
+                <v-list-item-content>
+                  <v-list-item-title>{{ folderName(folder) }}</v-list-item-title>
+                  <v-list-item-subtitle v-bind:class="{ 'error--text': isExpired(folder.expiredAt) }">
+                    expired at {{ folderExpireDate(folder) }}
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list-item-group>
+          </v-list>
+        </v-col>
+        <v-divider vertical></v-divider>
+        <!-- Programs -->
+        <v-col class="d-flex">
+          <v-card
+              v-if="folder"
+              :key="folder.id"
+              :disabled="filesLoading"
+              class="mx-auto"
+              flat
+              style="width:100%">
+            <v-card-title>
+              {{ folderName(folder) }}
               <v-spacer/>
-              <v-btn
-                  v-if="canManagePrograms"
-                  icon x-small
-                  class="mr-2"
-                  :disabled="selectedPrograms.length === 0"
-                  @click="onDeletePrograms">
-                <v-icon>mdi-delete</v-icon>
-              </v-btn>
-            </v-toolbar>
-            <v-divider/>
-            <v-row dense class="overflow-y-auto ma-2" :style="{'max-height': (listHeight - 150) + 'px'}">
-              <v-col cols="3" class="text-truncate"
-                     v-for="file in files" :key="file.id"
-                     v-bind:class="{selected: isItemSelected(file)}"
-                     @mousedown="onItemSelected(file, $event)">
-                <small>{{ file.name }}</small>
-              </v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+              <v-tooltip bottom v-if="canManagePrograms" class="mr-2">
+                <template v-slot:activator="{on, attrs}">
+                  <v-btn icon
+                         @click="deleteFolder(folder)"
+                         :loading="deletingFolderId===folder.id"
+                         v-bind="attrs" v-on="on">
+                    <v-icon>mdi-folder-remove</v-icon>
+                  </v-btn>
+                </template>
+                <span>Delete folder</span>
+              </v-tooltip>
+              <v-tooltip bottom v-if="canDownloadPrograms" class="mr-2">
+                <template v-slot:activator="{on, attrs}">
+                  <v-btn icon
+                         @click="downloadFolder(folder)"
+                         :disabled="files.length === 0"
+                         :loading="downloadFolderId===folder.id"
+                         v-bind="attrs" v-on="on">
+                    <v-icon>mdi-folder-download</v-icon>
+                  </v-btn>
+                </template>
+                <span>Download</span>
+              </v-tooltip>
+              <v-tooltip bottom v-if="canManagePrograms" class="mr-2">
+                <template v-slot:activator="{on, attrs}">
+                  <v-btn icon
+                         @click="onRenewFolder(folder)"
+                         :disabled="!isExpired(folder.expiredAt)"
+                         :loading="renewFolder && renewFolder.id===folder.id"
+                         v-bind="attrs" v-on="on">
+                    <v-icon>mdi-autorenew</v-icon>
+                  </v-btn>
+                </template>
+                <span>Renew</span>
+              </v-tooltip>
+              <v-divider vertical v-if="canManagePrograms"/>
+              <v-tooltip bottom v-if="canUploadPrograms" class="mr-2">
+                <template v-slot:activator="{on, attrs}">
+                  <v-btn icon
+                         @click="onShowUploadDialog()"
+                         :disabled="!canManagePrograms && isExpired(folder.expiredAt)"
+                         :loading="importFolderId===folder.id"
+                         v-bind="attrs" v-on="on">
+                    <v-icon>mdi-upload-multiple</v-icon>
+                  </v-btn>
+                </template>
+                <span>Upload programs</span>
+              </v-tooltip>
+              <v-tooltip bottom v-if="canManagePrograms" class="mr-2">
+                <template v-slot:activator="{on, attrs}">
+                  <v-btn icon
+                         @click="onAddPrograms(folder)"
+                         :disabled="!canManagePrograms && isExpired(folder.expiredAt)"
+                         :loading="importFolderId===folder.id"
+                         v-bind="attrs" v-on="on">
+                    <v-icon>mdi-plus-box-multiple</v-icon>
+                  </v-btn>
+                </template>
+                <span>Add programs</span>
+              </v-tooltip>
+              <v-tooltip bottom class="mr-2">
+                <template v-slot:activator="{on, attrs}" v-if="canImportPrograms">
+                  <v-btn icon
+                         @click="importToDevice(folder)"
+                         :disabled="(!canManagePrograms && isExpired(folder.expiredAt)) || files.length === 0"
+                         :loading="importFolderId===folder.id"
+                         v-bind="attrs" v-on="on">
+                    <v-icon>mdi-import</v-icon>
+                  </v-btn>
+                </template>
+                <span>Import to device</span>
+              </v-tooltip>
+            </v-card-title>
+            <v-card-subtitle>
+              Expired at {{ folderExpireDate(folder) }}
+            </v-card-subtitle>
+            <v-card-text id="programs">
+              <v-toolbar flat dense>
+                <div>
+                  <h4>Total programs: {{ files.length }}</h4>
+                  <small v-if="canManagePrograms">Use SHIFT or CTRL with the mouse to select multiple items.</small>
+                </div>
+                <v-spacer/>
+                <v-btn
+                    v-if="canManagePrograms"
+                    icon x-small
+                    class="mr-2"
+                    :disabled="selectedPrograms.length === 0"
+                    @click="onDeletePrograms">
+                  <v-icon>mdi-delete</v-icon>
+                </v-btn>
+              </v-toolbar>
+              <v-divider/>
+              <v-row dense class="overflow-y-auto ma-2" :style="{'max-height': (listHeight - 150) + 'px'}">
+                <v-col cols="3" class="text-truncate"
+                       v-for="file in files" :key="file.id"
+                       v-bind:class="{selected: isItemSelected(file)}"
+                       @mousedown="onItemSelected(file, $event)">
+                  <small>{{ file.name }}</small>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-card>
 
-    <v-dialog v-model="isCreateDialogShow" max-width="500px">
+    <create-folder-dialog
+        v-model="isCreateDialogShow"
+        :user="user"
+        :renew-folder="renewFolder"
+        @success="onCreateFolderSuccess"
+        @failed="onCreateFolderFailed"
+    />
+
+    <upload-dialog v-model="isUploadDialogShow" @success="onUploadSuccess" @failed="onUploadFailed" :folder="folder"/>
+
+    <v-dialog v-model="isProgramAddDialogShow" max-width="800px">
       <v-card>
-        <v-card-title class="headline">Create Folder</v-card-title>
-        <v-divider></v-divider>
-        <v-card-text class="mt-4">
-          <v-menu
-              ref="menuRef"
-              v-model="menu"
-              :close-on-content-click="false"
-              transition="scale-transition"
-              offset-y
-              min-width="290px"
-          >
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field v-model="expiredAt" label="Expired Date" v-bind="attrs" v-on="on" readonly/>
-            </template>
-            <v-date-picker
-                ref="pickerRef"
-                no-title
-                v-model="expiredAt"
-                :locale="$i18n.locale"
-                :min="$options.filters.formatDate(new Date())"
-                @change="save"
-            />
-          </v-menu>
-        </v-card-text>
+        <v-card-title class="headline">Add programs</v-card-title>
+        <v-card-subtitle><small>Use SHIFT or CTRL with the mouse to select multiple items.</small></v-card-subtitle>
+        <program-data-list
+            :user="currentUser"
+            height="600"
+            :selected.sync="addProgramItems"
+        />
         <v-card-actions>
+          <span>Total selected: {{ addProgramItems.length }}</span>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="createFolderClose">{{ $t("form.cancel") }}</v-btn>
-          <v-btn color="blue darken-1" text @click="createFolderConfirm">{{ $t("form.ok") }}</v-btn>
+          <v-btn color="blue darken-1" text @click="onAddProgramsCancel()">{{ $t("form.cancel") }}</v-btn>
+          <v-btn color="blue darken-1" text @click="onAddProgramsConfirm()" :disabled="addProgramItems.length === 0">
+            {{ $t("form.ok") }}
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <message-dialog ref="messageDialog"/>
-  </v-card>
+  </v-layout>
 </template>
 
 <script lang="ts">
 import {Component, Prop, Ref, Vue, Watch} from "vue-property-decorator";
-import {Folder, Program, UploadFileRequest, UserProfile} from "@/store/models";
-import {expiredAtInterval, isExpired} from "@/utils/dateUtils";
+import {Folder, Program, UploadFileRequest, User, UserProfile} from "@/store/models";
+import {expiredAtInterval, formatDate, isExpired} from "@/utils/dateUtils";
 import {ResizeObserver} from "@juggle/resize-observer";
 import UserModule from "@/store/modules/user";
 import programService from "@/service/api/programService";
@@ -205,20 +198,24 @@ import saveDownloadFile from "@/utils/download-file";
 import {EventBus} from "@/utils/event-bus";
 import moment from "moment";
 import MessageDialog from "@/components/dialogs/MessageDialog.vue";
+import ProgramDataList from "@/components/ProgramDataList.vue";
+import CreateFolderDialog from "@/components/dialogs/CreateFolderDialog.vue";
+import UploadDialog from "@/components/dialogs/UploadDialog.vue";
+import BaseVueComponent from "@/components/BaseVueComponent";
+
 
 @Component({
-  components: {MessageDialog},
+  components: {UploadDialog, CreateFolderDialog, ProgramDataList, MessageDialog},
   filters: {
     expiredAtInterval: function (value: Date) {
       return expiredAtInterval(value);
     }
   }
 })
-export default class Programs extends Vue {
-  @Prop({default: null}) readonly userProfileId!: string;
+export default class Programs extends BaseVueComponent {
+  @Prop() readonly user!: User;
 
   @Ref() readonly container: Vue | undefined;
-  @Ref() readonly menuRef: (Vue & { save: (date: string) => void }) | undefined;
   @Ref() readonly messageDialog: MessageDialog | undefined;
 
   private folders: Folder[] = [];
@@ -228,26 +225,24 @@ export default class Programs extends Vue {
   private foldersLoading = false;
 
   private selected: number | null = null;
-  private fileInput: any | null = null;
   private folder: Folder | null = null;
 
   private downloadFolderId: string | null = null;
   private deletingFolderId: string | null = null;
   private importFolderId: string | null = null;
-  private uploadInProgress = false;
   private progress = 0;
-  private file: File | null = null;
+
+  private isProgramAddDialogShow = false;
+  private addProgramItems: Program[] = [];
 
   private listHeight = this.getHeight();
 
-  private menu = false;
   private isCreateDialogShow = false;
-  private expiredAt: string | null = null;
-
   private isUploadDialogShow = false;
-  private toggle = -1;
 
   private selectedPrograms: string[] = [];
+
+  private renewFolder: Folder | null = null;
 
   private observer = new ResizeObserver(() => {
     this.listHeight = this.getHeight();
@@ -261,10 +256,6 @@ export default class Programs extends Vue {
     return this.folders?.length === 0;
   }
 
-  get canManagePrograms() {
-    return UserModule.canManagePrograms;
-  }
-
   get isDownloadDisabled() {
     return this.folder ? isExpired(this.folder!!.expiredAt) && !this.canManagePrograms : true;
   }
@@ -272,6 +263,10 @@ export default class Programs extends Vue {
   mounted() {
     this.observer.observe(this.container!.$el);
     this.fetchFolders();
+  }
+
+  private folderName(folder: Folder) {
+    return folder.createdAt ? formatDate(folder.createdAt) : folder.name;
   }
 
   @Watch("selected")
@@ -284,12 +279,45 @@ export default class Programs extends Vue {
     this.onFolderChanged(this.folder);
   }
 
-  private showUploadForm() {
-    this.isUploadDialogShow = !this.isUploadDialogShow;
+  private folderExpireDate(folder: Folder) {
+    return folder.expiredAt ? formatDate(folder.expiredAt) : "";
   }
 
   private isItemSelected(program: Program) {
     return this.selectedPrograms.indexOf(program.id) >= 0;
+  }
+
+  private onRenewFolder(folder: Folder) {
+    this.renewFolder = folder;
+    this.openCreateFolderDialog()
+  }
+
+  private onAddPrograms(folder: Folder) {
+    this.isProgramAddDialogShow = true;
+  }
+
+  private onAddProgramsCancel() {
+    this.isProgramAddDialogShow = false;
+  }
+
+  private onAddProgramsConfirm() {
+    this.isProgramAddDialogShow = false;
+    this.filesLoading = true;
+    this.addPrograms(this.folder!);
+  }
+
+  private addPrograms(folder: Folder) {
+    programService.addProgramsToFolder(folder, this.addProgramItems)
+        .then(() => this.fetchPrograms(folder))
+        .catch(e => {
+          this.filesLoading = false;
+          EventBus.$emit("error", new Error("Unable to add files"));
+          this.messageDialog?.show("Error", e.message, ['OK'])
+              .then(() => this.folder && this.fetchPrograms(this.folder));
+        })
+        .finally(() => {
+          this.addProgramItems = [];
+        })
   }
 
   private onItemSelected(program: Program, event: MouseEvent) {
@@ -329,7 +357,7 @@ export default class Programs extends Vue {
         .then((result) => {
           if (result) {
             this.filesLoading = true;
-            return programService.deletePrograms(this.selectedPrograms)
+            return programService.unlinkPrograms(this.folder!, this.selectedPrograms)
           } else {
             return Promise.reject();
           }
@@ -346,34 +374,27 @@ export default class Programs extends Vue {
 
   private onFolderChanged(folder: Folder) {
     this.folder = folder;
-    this.fileInput = null;
     this.selectedPrograms.length = 0;
     this.fetchPrograms(folder);
     return folder;
   }
 
   private getHeight() {
-    return Math.max(window.innerHeight - 490, 450);
+    return Math.max(window.innerHeight - 275, 450);
   }
 
-  private uploadFile() {
-    this.uploadInProgress = true;
-    this.file = this.fileInput;
-    programService.uploadFile({
-      files: this.fileInput,
-      folder: this.folder,
-      onProgressCallback: (progress) => this.progress = progress
-    } as UploadFileRequest)
-        .then(() => this.onFolderChanged(this.folder!))
-        .catch((e) => EventBus.$emit("error", e))
-        .finally(() => {
-          this.uploadInProgress = false;
-          this.isUploadDialogShow = false;
-          this.fileInput = null;
-          this.toggle = -1;
-          this.progress = 0;
-          this.onFolderChanged(this.folder!);
-        });
+  private onShowUploadDialog() {
+    this.isUploadDialogShow = true;
+  }
+
+  private onUploadSuccess() {
+    this.folder && this.fetchPrograms(this.folder);
+  }
+
+  private onUploadFailed(e: Error) {
+    EventBus.$emit("error", new Error("Unable to upload files"));
+    this.messageDialog?.show("Error", e.message, ['OK'])
+        .then(() => this.folder && this.fetchPrograms(this.folder));
   }
 
   private fetchPrograms(folder: Folder) {
@@ -388,9 +409,9 @@ export default class Programs extends Vue {
 
   private fetchFolders() {
     this.foldersLoading = true;
-    programService.fetchFolders(this.userProfileId)
+    programService.fetchFolders(this.user)
         .then((folders) => {
-          this.folders = folders;
+          this.folders = folders.sort((a, b) => a.expiredAt.getTime() - b.expiredAt.getTime());
           if (this.folders && this.folders.length > 0) {
             this.selected = 0;
           } else {
@@ -437,28 +458,16 @@ export default class Programs extends Vue {
     this.isCreateDialogShow = true;
   }
 
-  private createFolderClose() {
-    this.expiredAt = null;
-    this.isCreateDialogShow = false;
+  private onCreateFolderSuccess(folder: Folder) {
+    this.folders.push(folder);
+    this.folders = this.folders.sort((a, b) => a.expiredAt.getTime() - b.expiredAt.getTime());
+    this.selected = this.folders.indexOf(folder);
   }
 
-  private createFolderConfirm() {
-    this.isCreateDialogShow = false;
-    this.foldersLoading = true;
-    const date = moment(this.expiredAt);
-    const folder = {
-      id: null,
-      name: date.format("DD-MM-YY"),
-      expiredAt: date.toDate()
-    } as Folder;
-    programService.saveFolder(this.userProfileId, folder)
-        .then(() => this.fetchFolders())
-        .catch((e) => EventBus.$emit("error", e))
-        .finally(() => this.createFolderClose());
-  }
-
-  private save(date: string) {
-    this.menuRef!.save(date);
+  private onCreateFolderFailed(e: Error) {
+    EventBus.$emit("error", new Error("Unable to upload files"));
+    this.messageDialog?.show("Error", e.message, ['OK'])
+        .then(() => this.fetchFolders());
   }
 
   private deleteFolder(folder: Folder) {
