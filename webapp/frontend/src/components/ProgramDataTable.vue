@@ -5,7 +5,12 @@
       <v-card>
         <v-card-title class="headline">Add programs</v-card-title>
         <v-card-subtitle><small>Use SHIFT or CTRL with the mouse to select multiple items.</small></v-card-subtitle>
-        <program-data-list :user="currentUser" height="600" :selected.sync="addProgramItems"/>
+        <program-data-list
+            height="600"
+            :user="user"
+            :exists-programs="items"
+            :selected.sync="addProgramItems"
+            :key="programAddDialogKey"/>
         <v-card-actions>
           <span>Total selected: {{ addProgramItems.length }}</span>
           <v-spacer></v-spacer>
@@ -128,6 +133,7 @@ export default class ProgramDataTable extends BaseVueComponent {
 
   private isProgramAddDialogShow = false;
   private addProgramItems: Program[] = [];
+  private programAddDialogKey = 0;
 
   private get headers() {
     const headers: DataTableHeader[] = [
@@ -206,6 +212,7 @@ export default class ProgramDataTable extends BaseVueComponent {
   }
 
   private onAddPrograms() {
+    this.programAddDialogKey++;
     this.isProgramAddDialogShow = true;
   }
 

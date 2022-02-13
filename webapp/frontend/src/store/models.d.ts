@@ -110,6 +110,7 @@ export interface UserProfile {
 export interface Program {
     id: string;
     name: string;
+    createdAt?: Date;
     owner?: User | null;
 }
 

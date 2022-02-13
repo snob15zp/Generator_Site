@@ -1,6 +1,6 @@
 <template>
-  <v-card class="pa-0" elevation="0" outlined :loading="loading" :min-height="height">
-    <v-overlay :absolute="true" :value="disabled" opacity="0.1"></v-overlay>
+  <v-card class="pa-0" elevation="0" outlined :min-height="height">
+    <v-overlay :absolute="true" :value="disabled || loading" opacity="0.1"></v-overlay>
     <v-toolbar dense elevation="0">
       <v-text-field
           class="col col-6"
@@ -24,7 +24,7 @@
       <v-row dense class="overflow-y-auto ma-2" id="programs">
         <v-col cols="3" class="text-truncate"
                v-for="file in filteredItems" :key="file.id"
-               v-bind:class="{selected: isItemSelected(file)}"
+               v-bind:class="{selected: isItemSelected(file), disabled: isAlreadyPresent(file)}"
                @mousedown="onItemSelected(file, $event)">
           {{ file.name }}
         </v-col>
@@ -35,21 +35,23 @@
 
 <script lang="ts">
 
-import {Component, Prop, PropSync, Ref, Vue, Watch} from "vue-property-decorator";
-import DataList, {DataListHeader} from "@/components/DataList.vue";
+import {Component, Prop, PropSync, Watch} from "vue-property-decorator";
+import DataList from "@/components/DataList.vue";
 import {Program, User} from "@/store/models";
 import programService from "@/service/api/programService";
 import {EventBus} from "@/utils/event-bus";
 import UploadDialog from "@/components/dialogs/UploadDialog.vue";
 import MessageDialog from "@/components/dialogs/MessageDialog.vue";
+import BaseVueComponent from "@/components/BaseVueComponent";
 
 @Component({
   components: {MessageDialog, UploadDialog, DataList}
 })
-export default class ProgramDataList extends Vue {
+export default class ProgramDataList extends BaseVueComponent {
   @Prop({default: false}) readonly disabled!: boolean
   @Prop() readonly user!: User;
   @Prop({default: null}) readonly height?: number;
+  @Prop({default: () => []}) readonly existsPrograms!: Program[];
   @PropSync('selected', {default: () => []}) selectedSync!: any[];
 
   private programs: Program[] = [];
@@ -59,6 +61,7 @@ export default class ProgramDataList extends Vue {
 
   mounted() {
     this.fetchData();
+    console.log("mounted");
   }
 
   @Watch("user")
@@ -75,11 +78,17 @@ export default class ProgramDataList extends Vue {
     }
   }
 
+  private isAlreadyPresent(program: Program) {
+    return this.existsPrograms.findIndex(p => p.name == program.name) >= 0;
+  }
+
   private isItemSelected(program: Program) {
     return this.selectedSync.findIndex(p => p.id == program.id) >= 0;
   }
 
   private onItemSelected(program: Program, event: MouseEvent) {
+    if (this.isAlreadyPresent(program)) return;
+
     if (event.shiftKey) {
       const indexes = this.selectedSync.map(p => this.programs.findIndex(f => f.id == p.id));
       const currentIdx = this.programs.indexOf(program);
@@ -104,6 +113,7 @@ export default class ProgramDataList extends Vue {
   }
 
   private selectProgram(program: Program) {
+    if (this.isAlreadyPresent(program)) return;
     if (this.selectedSync.find(p => program.id == p.id) === undefined) {
       this.selectedSync.push(program);
     }
@@ -111,7 +121,7 @@ export default class ProgramDataList extends Vue {
 
   private fetchData() {
     this.loading = true;
-    programService.getAllForUser(this.user)
+    programService.getAllForUser(this.currentUser!)
         .then(programs => this.programs = programs.sort((a, b) => a.name.localeCompare(b.name)))
         .catch((e) => EventBus.$emit("error", e))
         .finally(() => {
@@ -140,23 +150,31 @@ export default class ProgramDataList extends Vue {
     padding: 0 !important;
   }
 
-  .selected {
-    color: #197bac;
-    position: relative;
+  .text-truncate {
+    color: #0b2e13;
 
-    &::before {
-      background: currentColor;
-      bottom: 2px;
-      content: "";
-      left: 0;
-      opacity: 0.12;
-      pointer-events: none;
-      position: absolute;
-      right: 4px;
-      box-sizing: border-box;
-      border-radius: 4px;
-      top: 2px;
-      transition: .3s cubic-bezier(.25, .8, .5, 1);
+    &.disabled {
+      color: #95999c;
+    }
+
+    &.selected {
+      color: #197bac;
+      position: relative;
+
+      &::before {
+        background: currentColor;
+        bottom: 2px;
+        content: "";
+        left: 0;
+        opacity: 0.12;
+        pointer-events: none;
+        position: absolute;
+        right: 4px;
+        box-sizing: border-box;
+        border-radius: 4px;
+        top: 2px;
+        transition: .3s cubic-bezier(.25, .8, .5, 1);
+      }
     }
   }
 }

@@ -63,7 +63,8 @@ function programFromJson(json: ProgramJson): Program {
     return {
         id: json.id,
         name: json.name,
-        owner: json.owner ? userFromJson(json.owner) : null
+        owner: json.owner ? userFromJson(json.owner) : null,
+        createdAt: moment(json.created_at).toDate()
     }
 }
 

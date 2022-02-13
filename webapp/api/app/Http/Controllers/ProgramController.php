@@ -169,8 +169,9 @@ class ProgramController extends Controller
                 $name = $requestFile->getClientOriginalName();
                 $program = new Program($name, $path, new \DateTime());
                 if ($allPrograms->contains('name', $program->name)) {
-                    $existsPrograms[] = $program;
-                    continue;
+                    //$existsPrograms[] = $program;
+                    //continue;
+                    $program->delete();
                 }
 
                 $content = $requestFile->get();

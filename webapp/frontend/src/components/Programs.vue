@@ -168,9 +168,11 @@
         <v-card-title class="headline">Add programs</v-card-title>
         <v-card-subtitle><small>Use SHIFT or CTRL with the mouse to select multiple items.</small></v-card-subtitle>
         <program-data-list
-            :user="currentUser"
             height="600"
+            :user="user"
+            :exists-programs="files"
             :selected.sync="addProgramItems"
+            :key="programAddDialogKey"
         />
         <v-card-actions>
           <span>Total selected: {{ addProgramItems.length }}</span>
@@ -189,14 +191,12 @@
 
 <script lang="ts">
 import {Component, Prop, Ref, Vue, Watch} from "vue-property-decorator";
-import {Folder, Program, UploadFileRequest, User, UserProfile} from "@/store/models";
+import {Folder, Program, User} from "@/store/models";
 import {expiredAtInterval, formatDate, isExpired} from "@/utils/dateUtils";
 import {ResizeObserver} from "@juggle/resize-observer";
-import UserModule from "@/store/modules/user";
 import programService from "@/service/api/programService";
 import saveDownloadFile from "@/utils/download-file";
 import {EventBus} from "@/utils/event-bus";
-import moment from "moment";
 import MessageDialog from "@/components/dialogs/MessageDialog.vue";
 import ProgramDataList from "@/components/ProgramDataList.vue";
 import CreateFolderDialog from "@/components/dialogs/CreateFolderDialog.vue";
@@ -234,6 +234,7 @@ export default class Programs extends BaseVueComponent {
 
   private isProgramAddDialogShow = false;
   private addProgramItems: Program[] = [];
+  private programAddDialogKey = 0;
 
   private listHeight = this.getHeight();
 
@@ -293,6 +294,7 @@ export default class Programs extends BaseVueComponent {
   }
 
   private onAddPrograms(folder: Folder) {
+    this.programAddDialogKey += 1;
     this.isProgramAddDialogShow = true;
   }
 

@@ -6,7 +6,7 @@
         <v-tab v-if="canManageUsers">Professional</v-tab>
         <v-tab v-if="canManageUsers">S.Professional</v-tab>
         <v-tab v-if="canManageOwnUsers || canManageUsers">Users</v-tab>
-        <v-tab v-if="canManagePrograms">Programs</v-tab>
+        <v-tab v-if="canUploadPrograms">Programs</v-tab>
       </v-tabs>
       <v-tabs-items v-model="tab">
         <v-tab-item v-if="canManageUsers">
@@ -26,25 +26,22 @@
         </v-tab-item>
       </v-tabs-items>
     </div>
-    <user-profile-details v-else :user="currentUser"/>
+    <user-profile-details v-else-if="currentUser" :user="currentUser"/>
   </v-container>
 </template>
 
 <script lang="ts">
-import {Component, Vue} from "vue-property-decorator";
+import {Component} from "vue-property-decorator";
 import UserProfileTable from "@/components/UserProfileTable.vue";
-import UserModule, {Role} from "@/store/modules/user"
-import UserProfileInfo from "@/components/UserProfileInfo.vue";
+import {Role} from "@/store/modules/user"
 import UserProfileDetails from "@/components/UserProfileDetails.vue";
 import {UserFilter} from "@/service/api/userService";
 import ProgramDataTable from "@/components/ProgramDataTable.vue";
-import ProgramHistoryDataTable from "@/components/ProgramHistoryDataTable.vue";
 import BaseVueComponent from "@/components/BaseVueComponent";
 
 @Component({
   components: {
-    ProgramHistoryDataTable,
-    ProgramDataTable, UserProfileDetails, UserProfileInfo, UserProfileTable
+    ProgramDataTable, UserProfileDetails, UserProfileTable
   }
 })
 export default class HomePageView extends BaseVueComponent {

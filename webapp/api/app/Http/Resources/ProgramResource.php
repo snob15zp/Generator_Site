@@ -26,7 +26,7 @@ class ProgramResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'created_at' => $this->createdAt,
+            'created_at' => $this->createdAt->format("c"),
             'owner' => $this->owner != null ? new SimpleUserResource($this->owner) : null
         ];
     }

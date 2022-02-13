@@ -92,6 +92,12 @@ class Program
         Storage::put($this->fileName(), $content);
     }
 
+    public function delete()
+    {
+        $fileName = $this->fileName();
+        if (Storage::exists($fileName)) Storage::delete($fileName);
+    }
+
     public function fileName(): string
     {
         return $this->path . DIRECTORY_SEPARATOR . $this->name;

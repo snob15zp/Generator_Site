@@ -56,6 +56,7 @@ export default class AppBar extends Vue {
 
   logout() {
     UserModule.logout().then(() => {
+      UserModule.reset();
       this.$router.push("/login");
     });
   }

@@ -18,14 +18,14 @@
     <v-card tile outlined class="mt-2" v-if="user && !isRoleUser">
       <v-tabs v-model="tab">
         <v-tab v-if="canManageOwnUsers || canManageUsers">Users</v-tab>
-        <v-tab v-if="canUploadPrograms && canUserUploadPrograms">Programs</v-tab>
+        <v-tab v-if="canUploadPrograms">Programs</v-tab>
       </v-tabs>
       <v-tabs-items v-model="tab">
         <v-tab-item v-if="canManageOwnUsers || canManageUsers">
           <user-profile-table :filter="userFilter" :height="height"/>
         </v-tab-item>
-        <v-tab-item v-if="canUploadPrograms && canUserUploadPrograms">
-          <program-data-table :user="user" :height="height" v-if="canManagePrograms"/>
+        <v-tab-item v-if="canUploadPrograms">
+          <program-data-table :user="user" :height="height"/>
         </v-tab-item>
       </v-tabs-items>
     </v-card>
@@ -34,19 +34,18 @@
 
 <script lang="ts">
 
-import {Component, Vue} from "vue-property-decorator";
+import {Component} from "vue-property-decorator";
 import userService, {UserFilter} from "@/service/api/userService";
-import UserModule, {Role} from "@/store/modules/user";
+import {Role} from "@/store/modules/user";
 import {EventBus} from "@/utils/event-bus";
 import Programs from "@/components/Programs.vue";
 import UserProfileInfo from "@/components/UserProfileInfo.vue";
 import UserProfileTable from "@/components/UserProfileTable.vue";
 import ProgramDataTable from "@/components/ProgramDataTable.vue";
-import ProgramHistoryDataTable from "@/components/ProgramHistoryDataTable.vue";
 import BaseVueComponent from "@/components/BaseVueComponent";
 
 @Component({
-  components: {ProgramHistoryDataTable, UserProfileInfo, Programs, UserProfileTable, ProgramDataTable}
+  components: {UserProfileInfo, Programs, UserProfileTable, ProgramDataTable}
 })
 export default class UserView extends BaseVueComponent {
   private height: number | null = null;
@@ -60,7 +59,7 @@ export default class UserView extends BaseVueComponent {
   }
 
   private get canUserUploadPrograms() {
-    return this.user?.role == Role.Admin || this.user?.role == Role.SuperProfessional;
+    return this.canUploadPrograms || this.canAttachPrograms;
   }
 
   get user() {
