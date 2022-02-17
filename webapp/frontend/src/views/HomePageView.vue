@@ -6,7 +6,7 @@
         <v-tab v-if="canManageUsers">Professional</v-tab>
         <v-tab v-if="canManageUsers">S.Professional</v-tab>
         <v-tab v-if="canManageOwnUsers || canManageUsers">Users</v-tab>
-        <v-tab v-if="canUploadPrograms">Programs</v-tab>
+        <v-tab v-if="canManagePrograms">Programs</v-tab>
       </v-tabs>
       <v-tabs-items v-model="tab">
         <v-tab-item v-if="canManageUsers">
@@ -21,8 +21,8 @@
         <v-tab-item v-if="canManageOwnUsers || canManageUsers">
           <user-profile-table :filter="userFilter" :height="height"/>
         </v-tab-item>
-        <v-tab-item v-if="canUploadPrograms">
-          <program-data-table :user="currentUser" :height="height" v-if="canManagePrograms"/>
+        <v-tab-item v-if="canManagePrograms">
+          <program-data-table :user="currentUser" :height="height"/>
         </v-tab-item>
       </v-tabs-items>
     </div>

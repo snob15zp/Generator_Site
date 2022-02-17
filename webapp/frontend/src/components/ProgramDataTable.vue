@@ -36,7 +36,7 @@
         :single-select="false"
         :height="height"
         item-key="id"
-        show-select>
+        :show-select="canUploadPrograms">
       <template v-slot:top>
         <v-toolbar flat>
           <!-- Search bar -->

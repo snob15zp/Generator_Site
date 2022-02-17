@@ -1,6 +1,6 @@
 module.exports = {
-    publicPath: process.env.NODE_ENV === 'production' ? '/device/' : '/',
-    //publicPath: '/',
+    //publicPath: process.env.NODE_ENV === 'production' ? '/device/' : '/',
+    publicPath: '/',
     transpileDependencies: ["vuetify", 'vuex-module-decorators'],
     devServer: {
         port: 8090,
