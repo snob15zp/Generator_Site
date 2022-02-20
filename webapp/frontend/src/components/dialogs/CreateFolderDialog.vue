@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="visibleSync" max-width="800px" @click:outside="onClosed">
+  <v-dialog v-model="visibleSync" max-width="800px" @click:outside="onCancel">
     <v-card>
       <v-card-title class="headline">Create Folder</v-card-title>
       <v-divider></v-divider>
@@ -137,10 +137,6 @@ export default class CreateFolderDialog extends BaseVueComponent {
     return this.programRadioGroup == ProgramOptions.UPLOAD;
   }
 
-  private dismiss() {
-    this.visibleSync = false;
-  }
-
   private get visibleSync() {
     return this.visible;
   }
@@ -151,10 +147,6 @@ export default class CreateFolderDialog extends BaseVueComponent {
 
   private save(date: string) {
     this.menuRef!.save(date);
-  }
-
-  private onClosed() {
-    this.cancel()
   }
 
   private cancel() {
@@ -227,6 +219,12 @@ export default class CreateFolderDialog extends BaseVueComponent {
       cancelSource: this.cancelSource
     } as UploadFileRequest)
         .then(() => Promise.resolve(folder));
+  }
+
+  @Emit("dismiss")
+  private dismiss() {
+    this.visibleSync = false;
+    return false;
   }
 
   @Emit('failed')

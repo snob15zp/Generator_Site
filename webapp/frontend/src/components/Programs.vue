@@ -17,7 +17,7 @@
       <v-row dense justify="space-between">
         <!-- Folders -->
         <v-col cols="4">
-          <v-list class="overflow-y-auto" nav :height="listHeight">
+          <v-list class="overflow-y-auto" nav :height="listHeight" :key="folderListKey">
             <v-list-item-group active-class="primary--text" v-model="selected">
               <v-list-item v-for="folder in folders" :key="folder.id">
                 <v-list-item-avatar>
@@ -157,6 +157,7 @@
         v-model="isCreateDialogShow"
         :user="user"
         :renew-folder="renewFolder"
+        @dismiss="onCreateFolderCancel"
         @success="onCreateFolderSuccess"
         @failed="onCreateFolderFailed"
     />
@@ -218,6 +219,7 @@ export default class Programs extends BaseVueComponent {
   @Ref() readonly container: Vue | undefined;
   @Ref() readonly messageDialog: MessageDialog | undefined;
 
+  private folderListKey = 0;
   private folders: Folder[] = [];
   private files: Program[] = [];
 
@@ -413,6 +415,7 @@ export default class Programs extends BaseVueComponent {
     this.foldersLoading = true;
     programService.fetchFolders(this.user)
         .then((folders) => {
+          this.folderListKey++;
           this.folders = folders.sort((a, b) => a.expiredAt.getTime() - b.expiredAt.getTime());
           if (this.folders && this.folders.length > 0) {
             this.selected = 0;
@@ -461,15 +464,22 @@ export default class Programs extends BaseVueComponent {
   }
 
   private onCreateFolderSuccess(folder: Folder) {
+    this.onCreateFolderCancel();
     this.folders.push(folder);
     this.folders = this.folders.sort((a, b) => a.expiredAt.getTime() - b.expiredAt.getTime());
+    this.folderListKey++;
     this.selected = this.folders.indexOf(folder);
   }
 
   private onCreateFolderFailed(e: Error) {
+    this.onCreateFolderCancel();
     EventBus.$emit("error", new Error("Unable to upload files"));
     this.messageDialog?.show("Error", e.message, ['OK'])
         .then(() => this.fetchFolders());
+  }
+
+  private onCreateFolderCancel() {
+    this.renewFolder = null;
   }
 
   private deleteFolder(folder: Folder) {

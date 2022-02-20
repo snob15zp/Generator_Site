@@ -47,7 +47,9 @@ function userFromJson(json: UserJson): User {
         profile: userProfileFromJson(json.profile),
         privileges: json.privileges,
         token: json.token,
-        role: Role.parse(json.role)
+        role: Role.parse(json.role),
+        createdAt: moment(json.created_at).toDate(),
+        updatedAt: moment(json.updated_at).toDate(),
     } as User;
 }
 

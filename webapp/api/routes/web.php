@@ -55,13 +55,13 @@ $router->group(['prefix' => 'folders'], function () use ($router) {
     $router->delete('/{folderId}/programs', ['middleware' => 'auth', 'uses' => 'ProgramController@deleteFromFolder']);
 });
 
-//$router->group(['prefix' => 'programs'], function () use ($router) {
-//    $router->post('/', ['middleware' => 'auth', 'uses' => 'ProgramController@create']);
+$router->group(['prefix' => 'programs'], function () use ($router) {
+    $router->get('/migrate', ['uses' => 'ProgramController@migrate']);
 //    $router->get('/{id}/download', ['middleware' => 'auth', 'uses' => 'ProgramController@download']);
 //    $router->delete('/{id}', ['middleware' => 'auth', 'uses' => 'ProgramController@delete']);
 //    $router->delete('/', ['middleware' => 'auth', 'uses' => 'ProgramController@deleteAll']);
 //    $router->get('/', ['middleware' => 'auth', 'uses' => 'ProgramController@getAll']);
-//});
+});
 
 $router->group(['prefix' => 'firmware'], function () use ($router) {
     $router->get('/', 'FirmwareController@getAll');

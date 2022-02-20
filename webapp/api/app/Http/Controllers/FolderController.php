@@ -59,10 +59,16 @@ class FolderController extends Controller
         if ($oldFolder == null) {
             throw new ApiException(ErrorStatusCodes::$RESOURCE_NOT_FOUND, 404);
         }
-        $programs = $oldFolder->programs()->get();
+        $programs = Program::fetchAllFromFolder($oldFolder);
         //$oldFolder->delete();
+        $path = Program::folderPath($folder);
+        if(!Storage::exists($path)) Storage::makeDirectory($path);
 
-        $folder->programs()->attach($programs);
+        $programs->each(function ($program) use ($path, $oldFolder) {
+            $from = Program::folderPath($oldFolder) . DIRECTORY_SEPARATOR . $program->name;
+            $to = $path . DIRECTORY_SEPARATOR . $program->name;
+            Storage::copy($from, $to);
+        });
         return new FolderResource($folder);
     }
 

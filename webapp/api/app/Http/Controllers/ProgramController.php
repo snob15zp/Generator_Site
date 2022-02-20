@@ -20,9 +20,39 @@ use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use SebastianBergmann\Diff\Utils\FileUtils;
 
 class ProgramController extends Controller
 {
+    public function migrate(Request $request)
+    {
+        collect(Storage::allFiles("programs"))->each(function ($file) {
+            if (str_ends_with($file, ".txt")) {
+                preg_match_all("/programs\/(\d+)\/([^\/]+)\/(.*)/", $file, $matches);
+                $userId = $matches[1][0];
+                $folderName = $matches[2][0];
+                $programName = $matches[3][0];
+                $folder = Folder::query()
+                    ->where('user_id', '=', $userId)
+                    ->where('name', '=', $folderName)
+                    ->first();
+                if ($folder != null) {
+                    $path = Program::folderPath($folder);
+                    if (!Storage::exists($path)) Storage::makeDirectory($path);
+                    $to = $path . DIRECTORY_SEPARATOR . $programName;
+                    Storage::copy($file, $to);
+                    if (!$folder->is_encrypted) {
+                        $fullPath = Storage::disk('local')->path($to);
+                        $data = Files::encryptData(file_get_contents($fullPath));
+                        file_put_contents($fullPath, $data);
+
+                    }
+                }
+            }
+        });
+        return "OK";
+    }
+
     public function getAllForFolder(Request $request, $folderId): JsonResponse
     {
         $folder = $this->getFolderById($folderId);

@@ -9,6 +9,8 @@ export interface UserJson {
     password?: string;
     profile: UserProfileJson;
     role: string;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface UserProfileJson {
@@ -20,9 +22,9 @@ export interface UserProfileJson {
     address?: string;
     date_of_birth?: string;
     email: string;
-    created_at: string;
-    updated_at?: string;
     password?: string;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface Link {
