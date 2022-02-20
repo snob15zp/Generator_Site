@@ -15,11 +15,6 @@
       <!--        <v-btn icon @click="onClickDeleteUser">-->
       <!--          <v-icon>mdi-account-minus</v-icon>-->
       <!--        </v-btn>-->
-      <div class="text-body-1" v-if="software">
-        <v-btn small color="primary" link :href="fileUrl">Download software
-          <v-icon right dark small>mdi-download</v-icon>
-        </v-btn>
-      </div>
     </v-card-title>
     <v-card-subtitle class="font-weight-bold pb-0">{{ userRoleName }}</v-card-subtitle>
     <v-card-text>
@@ -59,6 +54,11 @@
           </v-list-item>
         </v-list>
       </v-expand-transition>
+      <div class="text-body-1" v-if="software">
+        <v-btn small color="primary" link :href="fileUrl">Download software
+          <v-icon right dark small>mdi-download</v-icon>
+        </v-btn>
+      </div>
     </v-card-text>
   </v-card>
 </template>

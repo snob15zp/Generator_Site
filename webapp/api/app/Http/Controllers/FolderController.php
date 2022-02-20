@@ -5,10 +5,10 @@ namespace App\Http\Controllers;
 use App\Exceptions\ApiException;
 use App\Http\Resources\FolderResource;
 use App\Models\Folder;
-use App\Models\FolderProgram;
 use App\Models\Program;
 use App\Models\User;
 use App\Models\UserPrivileges;
+use App\Models\UserRole;
 use App\Utils\Files;
 use App\Utils\HashUtils;
 use Carbon\Carbon;
@@ -23,7 +23,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Vinkla\Hashids\Facades\Hashids;
 
 class FolderController extends Controller
 {
@@ -141,7 +140,9 @@ class FolderController extends Controller
     public function download(Request $request, $id): BinaryFileResponse
     {
         $user = $request->user();
-        return $this->createZip($user, $id, true);
+        // Decrypt only for admin
+        // TODO Maybe should parse UserAgent for a specify the source: browser, PC or android application.
+        return $this->createZip($user, $id, $user->hasRole(UserRole::ROLE_ADMIN));
     }
 
     public function prepareDownload(Request $request, string $id): string
@@ -159,12 +160,14 @@ class FolderController extends Controller
         $this->canUserDownloadFolder($folder, $user);
 
         try {
-            $files = collect($folder->programs)->map(function ($program) {
-                return $program->name;
+            $files = Program::fetchAllFromFolder($folder)->map(function ($p) {
+                return $p->name;
             });
-            Log::info($files);
-
-            $zipFile = Files::makeZipWithFiles($folder->name, Storage::path(Program::root()), $files->all(), $decryptFiles);
+            $zipFile = Files::makeZipWithFiles(
+                $folder->name,
+                Storage::path(Program::folderPath($folder)),
+                $files->all(),
+                $decryptFiles);
             return response()->download($zipFile, $folder->name . '.zip', [
                 'Content-Length' => filesize($zipFile),
                 'Content-Type' => 'application/zip'

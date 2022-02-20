@@ -33,7 +33,7 @@ class Files
         $tempFileUri = $zipArchivePath . '/' . $name . '.zip';
         if (file_exists($tempFileUri)) unlink($tempFileUri);
 
-        Log::info('Create zip archive: ' . $tempFileUri);
+        Log::info('Create zip archive: ' . $tempFileUri . ', decrypt: ' . ($decrypt ? "yes" : "no"));
         Log::info('file path: ' . $path);
         if ($zip->open($tempFileUri, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
             // Add File in ZipArchive
