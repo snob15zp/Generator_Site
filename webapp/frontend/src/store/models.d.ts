@@ -159,7 +159,7 @@ export interface FirmwareJson {
     id: string;
     active: boolean;
     version: string;
-    createdAt: string;
+    created_at: string;
     files: FirmwareFilesJson[];
 }
 
@@ -171,7 +171,7 @@ export interface SoftwareJson {
     id: string;
     active: boolean;
     version: string;
-    createdAt: string;
+    created_at: string;
     file: string;
     fileUrl: string;
 }

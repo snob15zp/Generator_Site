@@ -94,7 +94,7 @@ function firmwareFromJson(json: FirmwareJson): Firmware {
         id: json.id,
         active: Boolean(json.active),
         version: json.version,
-        createdAt: moment(json.createdAt).toDate(),
+        createdAt: moment(json.created_at).toDate(),
         files: json.files.map($fileJson => {
             return {
                 fileName: $fileJson.name
@@ -108,7 +108,7 @@ function softwareFromJson(json: SoftwareJson): Software {
         id: json.id,
         active: Boolean(json.active),
         version: json.version,
-        createdAt: moment(json.createdAt).toDate(),
+        createdAt: moment(json.created_at).toDate(),
         file: json.file,
         fileUrl: json.fileUrl
     } as Software;
